@@ -31,12 +31,6 @@ mount /data 2>/dev/null
 
 ui_print "- You're installing module from ZIP file"
 
-abort() {
-  rmdir "$MODUPDATEPATH"
-  rmdir "$MODPATH"
-  exit 1
-}
-
 grep_prop() {
   local REGEX="s/^$1=//p"
   shift
