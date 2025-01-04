@@ -1,2 +1,2 @@
-# zapret-magisk
-🖥 Bypass internet-censorship via DPI modification from Magisk module
+> [!CAUTION]
+> I am not responsible for any of your actions! Use this module at your risk!
