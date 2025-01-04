@@ -68,43 +68,13 @@ else
     iptMultiPort "udp" "$udp_ports";
 fi
 
-check_nfqws_running() {
-    if pgrep -x "nfqws" > /dev/null; then
-        return 0
-    else
-        return 1
-    fi
-}
-
-get_current_interface() {
-    ip link | grep -E '^[0-9]+:' | awk '{print $2, $9}' | grep 'UP'
-}
-previous_interface=""
-
-if check_nfqws_running; then
-    exit 0
-fi
-
 while true; do
     if ! pgrep -x "nfqws" > /dev/null; then
-	   # echo "[$(date)] nfqws not started, restarting..." >> "$MODDIR/logs.txt"
-	   "$MODDIR/nfqws" --uid=0:0 --bind-fix4 --qnum=200 $config > /dev/null &
-	   # echo "[$(date)] nfqws - PID $NFQWS_PID" >> "$MODDIR/logs_watchdog.txt"
+	   "$MODDIR/nfqws" --uid=0:0 --bind-fix4 --qnum=200 $config > /dev/null
     fi
     if ! iptables -t mangle -L POSTROUTING | grep -q "NFQUEUE"; then
-        # echo "[$(date)] iptables rules missing, re-adding..." >> "$MODDIR/logs.txt"
         iptMultiPort "tcp" "$tcp_ports";
         iptMultiPort "udp" "$udp_ports";
     fi
-    current_interfaces=$(get_current_interfaces)
-    if [ "$current_interfaces" != "$previous_interfaces" ]; then
-        pkill nfqws
-        # echo "[$(date)] Network interfaces status changed. nfqws process restarted." >> "$MODDIR/logs_watchdog.txt"
-        sleep 3
-        iptMultiPort "tcp" "$tcp_ports";
-        iptMultiPort "udp" "$udp_ports";
-        "$MODDIR/nfqws" --uid=0:0 --qnum=200 $config > /dev/null &
-    fi
-    previous_interfaces=$current_interfaces
-    sleep 15
+    sleep 5
 done
