@@ -169,3 +169,5 @@ jobs:
             > I am not responsible for any of your actions! Use this module at your risk!
           files: |
             zapret-Magisk.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
