@@ -1,3 +1,4 @@
+
 #!/system/bin/sh
 
 MODID=zapret
