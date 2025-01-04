@@ -3,6 +3,16 @@ MODID=zapret
 MODPATH=/data/adb/modules/$MODID
 MODUPDATEPATH=/data/adb/modules_update/$MODID
 
+grep_get_prop() {
+  local result=$(grep_prop $@)
+  if [ -z "$result" ]; then
+    # Fallback to getprop
+    getprop "$1"
+  else
+    echo $result
+  fi
+}
+
 if [[ -d "$MODUPDATEPATH" ]]; then
   ui_print "- Moving update files to module directory"
   mkdir -p "$MODPATH"
@@ -32,36 +42,10 @@ if [[ -d "$MODUPDATEPATH" ]]; then
   rmdir "$MODUPDATEPATH"
 fi
 
-abort() {
-  rmdir "$MODUPDATEPATH"
-  rmdir "$MODPATH"
-  exit 1
-}
-
-grep_prop() {
-  local REGEX="s/^$1=//p"
-  shift
-  local FILES=$@
-  [ -z "$FILES" ] && FILES='/system/build.prop'
-  cat $FILES 2>/dev/null | dos2unix | sed -n "$REGEX" | head -n 1
-}
-
-grep_get_prop() {
-  local result=$(grep_prop $@)
-  if [ -z "$result" ]; then
-    # Fallback to getprop
-    getprop "$1"
-  else
-    echo $result
-  fi
-}
-
 check_requirements() {
-  case "$ARCH" in
-    arm)
-      BINARY=nfqws-arm
-      ;;
-    arm64)
+  ABI=$(grep_get_prop ro.product.cpu.abi)
+  case "$ABI" in
+    arm64-v8a)
       BINARY=nfqws-aarch64
       ;;
     x86)
@@ -71,14 +55,15 @@ check_requirements() {
       BINARY=nfqws-x86_x64
       ;;
     *)
-      ui_print "! Device Architecture: $ARCH"
-      abort
+      ABI=armeabi-v7a
+      BINARY=nfqws-arm
       ;;
   esac
-  ui_print "- Device Architecture: $ARCH"
+  ui_print "- Device Architecture: $ABI"
   mv "$MODPATH/$BINARY" "$MODPATH/nfqws"
   rm "$MODPATH/nfqws-"*
 
+  API=$(grep_get_prop ro.build.version.sdk)
   if [ -n "$API" ]; then
     ui_print "- Device Android API: $API"
     if [ "$API" -lt 27 ]; then
