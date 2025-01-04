@@ -156,25 +156,6 @@ jobs:
         run: |
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
-
-      - name: Push update.json
-        run: |
-          echo '{
-            "version": "${{ env.versionCode }}",
-            "versionCode": "${{ env.versionCode }}",
-            "zipUrl": "https://github.com/${{ github.repository }}/releases/download/${{ env.version }}/zapret-Magisk.zip",
-            "changelog": "https://raw.githubusercontent.com/${{ github.repository }}/main/CHANGELOG.md"
-          }' > new_update.json
-          if [[ -f update.json ]]; then
-            if cmp -s update.json new_update.json; then
-              echo "No changes to update.json. Skipping commit."
-              exit 0
-            fi
-          fi
-          mv new_update.json update.json
-          git add update.json
-          git commit -m "${{ env.version }}/${{ env.versionCode }}"
-          git push origin HEAD:main --force
           
       - name: Upload release assets
         uses: softprops/action-gh-release@v2
