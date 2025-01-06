@@ -147,6 +147,11 @@ jobs:
           cd ..
           7z a zapret-Magisk.zip ./module/*
 
+      - name: Set up Git
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          
       - name: Push update.json
         run: |
           echo '{
@@ -172,11 +177,6 @@ jobs:
           name: zapret-Magisk
           path: zapret-Magisk.zip
           if-no-files-found: error
-
-      - name: Set up Git
-        run: |
-          git config --global user.name "github-actions"
-          git config --global user.email "github-actions@github.com"
           
       - name: Upload release assets
         uses: softprops/action-gh-release@v2
