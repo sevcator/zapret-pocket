@@ -129,6 +129,8 @@ jobs:
           version_code=$(echo "${version}" | sed 's/[^0-9]//g')
           echo "version=${version}" >> $GITHUB_ENV
           echo "versionCode=${version_code}" >> $GITHUB_ENV
+          echo version=${version}
+          echo versionCode=${version_code}
           
           sudo apt update
           sudo apt install -y p7zip-full
@@ -145,6 +147,25 @@ jobs:
           cd ..
           7z a zapret-Magisk.zip ./module/*
 
+      - name: Push update.json
+        run: |
+          echo '{
+            "version": "${{ env.versionCode }}",
+            "versionCode": "${{ env.versionCode }}",
+            "zipUrl": "https://github.com/${{ github.repository }}/releases/download/${{ env.version }}/zapret-Magisk.zip",
+            "changelog": "https://raw.githubusercontent.com/${{ github.repository }}/main/CHANGELOG.md"
+          }' > new_update.json
+          if [[ -f update.json ]]; then
+            if cmp -s update.json new_update.json; then
+              echo "No changes to update.json. Skipping commit."
+              exit 0
+            fi
+          fi
+          mv new_update.json update.json
+          git add update.json
+          git commit -m "${{ env.version }}/${{ env.versionCode }}"
+          git push origin HEAD:main --force
+          
       - name: Upload Module Zip
         uses: actions/upload-artifact@v4
         with:
