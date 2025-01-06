@@ -16,12 +16,15 @@ discordstatus.com
 dis.gd
 discord.co
 discord-attachments-uploads-prd.storage.googleapis.com
+betterttv.net
 7tv.app
 7tv.io
 10tv.app
-soundcloud.com
 sndcdn.com
 soundcloud.cloud
 cloudflare-ech.com
 amazon.com
 amazonaws.com
+lolz.guru
+zelenka.guru
+lolz.live
