@@ -63,30 +63,27 @@ rm -rf "$MODPATH/customize.sh"
 rm -rf "$MODPATH/sevcator.sh"
 rm -rf "$MODPATH/google.txt"
 
-for DIR in "$MODPATH" "$MODUPDATEDIR"; do
-  for FILE in "$DIR"/*; do
-    if [ -f "$FILE" ]; then
-      chmod 755 "$FILE"
-      chown root:root "$FILE"
+set_perm_recursive $MODPATH 0 2000 0755 0755
+set_perm_recursive $MODUPDATEPATH 0 2000 0755 0755
+
+for FILE in "$MODPATH"/*.txt; do
+  if [ -f "$FILE" ]; then
+    BASE_FILE="$MODUPDATEPATH/$(basename "$FILE")"
+    if [ -f "$BASE_FILE" ]; then
+      FILE_SIZE=$(stat -c%s "$FILE")
+      BASE_FILE_SIZE=$(stat -c%s "$BASE_FILE")
+      if [ "$FILE_SIZE" -gt "$BASE_FILE_SIZE" ]; then
+        rm "$BASE_FILE"
+        if [ ! -f "$FILE" ]; then
+          ui_print "! Failed to delete $BASE_FILE"
+        fi
+      fi
     fi
-  done
+  fi
 done
 
 if [[ -d "$MODUPDATEPATH" ]]; then
-  for file in "$MODUPDATEPATH"/*; do
-    filename=$(basename "$file")
-
-    if [[ -f "$file" && -f "$MODPATH/$filename" ]]; then
-      size_update=$(stat -c%s "$file")
-      size_existing=$(stat -c%s "$MODPATH/$filename")
-
-      if [[ $size_update -le $size_existing ]]; then
-        rm "$file"
-      fi
-    fi
-  done
-  
-  ui_print "- Reboot to take changes after update!"
+  ui_print "- Seems you update the module ^_^"
 fi
 
 ui_print "********************************************************"

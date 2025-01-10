@@ -3,12 +3,19 @@
 
 MODPATH=/data/adb/modules/zapret
 
-if pgrep -x "nfqws" > /dev/null; then
+echo "***********************"
+echo "zapret Diagnostic Tool"
+echo "***********************"
+
+if pgrep -x nfqws > /dev/null; then
     echo "- nfqws is running"
     exit
 else
     echo "- nfqws is not running"
 fi
+
+echo "- Terminating process"
+pkill nfqws
 
 if pgrep -f "$MODPATH/zapret.sh" > /dev/null || pgrep -f "$MODPATH/service.sh" > /dev/null; then
     echo "- Service script is runnning"
