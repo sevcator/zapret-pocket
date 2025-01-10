@@ -6,7 +6,10 @@ boot_wait() {
 
 boot_wait
 
-source $MODDIR/load_config.sh
+MODPATH=/data/adb/modules/zapret
+MODUPDATEPATH=/data/adb/modules_update/zapret
+
+$MODDIR/load_config.sh
 
 tcp_ports="$(echo $config | grep -oE 'filter-tcp=[0-9,-]+' | sed -e 's/.*=//g' -e 's/,/\n/g' -e 's/ /,/g' | sort -un)";
 udp_ports="$(echo $config | grep -oE 'filter-udp=[0-9,-]+' | sed -e 's/.*=//g' -e 's/,/\n/g' -e 's/ /,/g' | sort -un)";
