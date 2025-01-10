@@ -5,20 +5,15 @@ boot_wait() {
 boot_wait
 
 MODDIR=/data/adb/modules/zapret
-hostlist="--hostlist-exclude=$MODDIR/exclude.txt --hostlist-auto=$MODDIR/autohostlist.txt"
-config="--filter-tcp=80 --dpi-desync=fake,fakedsplit --dpi-desync-autottl=2 --dpi-desync-fooling=md5sig --dpi-desync-fake-tls=$MODDIR/tls.bin $hostist --new"
-config="$config --filter-tcp=443 --hostlist=$MODDIR/google.txt --dpi-desync=fake,multidisorder --dpi-desync-split-pos=1,midsld --dpi-desync-repeats=11 --dpi-desync-fooling=md5sig --dpi-desync-fake-tls=$MODDIR/tls.bin --new"
-config="$config --filter-tcp=80 --hostlist=$MODDIR/google.txt --dpi-desync=fake,multidisorder --dpi-desync-split-pos=1,midsld --dpi-desync-repeats=11 --dpi-desync-fooling=md5sig --dpi-desync-fake-tls=$MODDIR/tls.bin --new"
-config="$config --filter-tcp=443 --dpi-desync=fake,multidisorder --dpi-desync-split-pos=midsld --dpi-desync-repeats=6 --dpi-desync-fooling=badseq,md5sig --dpi-desync-fake-tls=$MODDIR/tls.bin $hostlist --new"
-config="$config --filter-udp=443 --hostlist=$MODDIR/google.txt --dpi-desync=fake --dpi-desync-repeats=11 --dpi-desync-fake-quic=$MODDIR/quic.bin --new"
-config="$config --filter-udp=80 --hostlist=$MODDIR/google.txt --dpi-desync=fake --dpi-desync-repeats=11 --dpi-desync-fake-quic=$MODDIR/quic.bin --new"
-config="$config --filter-udp=80 --dpi-desync=fake --dpi-desync-repeats=11 $hostlist --new"
-config="$config --filter-udp=443 --dpi-desync=fake --dpi-desync-repeats=11 $hostlist --new"
-config="$config --filter-udp=50000-50099 --ipset=$MODDIR/ipset-discord.txt --dpi-desync=fake --dpi-desync-repeats=6 --dpi-desync-any-protocol --dpi-desync-cutoff=n4"
+source $MODDIR/load_config.sh
 
 tcp_ports="$(echo $config | grep -oE 'filter-tcp=[0-9,-]+' | sed -e 's/.*=//g' -e 's/,/\n/g' -e 's/ /,/g' | sort -un)";
 udp_ports="$(echo $config | grep -oE 'filter-udp=[0-9,-]+' | sed -e 's/.*=//g' -e 's/,/\n/g' -e 's/ /,/g' | sort -un)";
 sysctl net.netfilter.nf_conntrack_tcp_be_liberal=1 > /dev/null;
+
+if [ "$(cat /proc/net/ip_tables_targets | grep -c 'NFQUEUE')" == "0" ]; then
+    exit
+done
 
 iptAdd() {
     iptDPort="$iMportD $2"; iptSPort="$iMportS $2";
@@ -38,35 +33,30 @@ iptMultiPort() {
     done
 }
 
-if [ "$(cat /proc/net/ip_tables_targets | grep -c 'NFQUEUE')" == "0" ]; then
-    echo "Error - very bad iptables, script will not work"
-    exit
+if [ "$(cat /proc/net/ip_tables_matches | grep -c 'multiport')" != "0" ]; then
+    iMportS="-m multiport --sports"
+    iMportD="-m multiport --dports"
 else
-    if [ "$(cat /proc/net/ip_tables_matches | grep -c 'multiport')" != "0" ]; then
-        iMportS="-m multiport --sports"
-        iMportD="-m multiport --dports"
-    else
-        iMportS="--sport"
-        iMportD="--dport"
-    fi
-
-    if [ "$(cat /proc/net/ip_tables_matches | grep -c 'connbytes')" != "0" ]; then
-        iCBo="-m connbytes --connbytes-dir=original --connbytes-mode=packets --connbytes 1:12"
-        iCBr="-m connbytes --connbytes-dir=reply --connbytes-mode=packets --connbytes 1:3"
-    else
-        iCBo=""
-        iCBr=""
-    fi
-
-    if [ "$(cat /proc/net/ip_tables_matches | grep -c 'mark')" != "0" ]; then
-        iMark="-m mark ! --mark 0x40000000/0x40000000"
-    else
-        iMark=""
-    fi
-
-    iptMultiPort "tcp" "$tcp_ports";
-    iptMultiPort "udp" "$udp_ports";
+    iMportS="--sport"
+    iMportD="--dport"
 fi
+
+if [ "$(cat /proc/net/ip_tables_matches | grep -c 'connbytes')" != "0" ]; then
+    iCBo="-m connbytes --connbytes-dir=original --connbytes-mode=packets --connbytes 1:12"
+    iCBr="-m connbytes --connbytes-dir=reply --connbytes-mode=packets --connbytes 1:3"
+else
+    iCBo=""
+    iCBr=""
+fi
+
+if [ "$(cat /proc/net/ip_tables_matches | grep -c 'mark')" != "0" ]; then
+    iMark="-m mark ! --mark 0x40000000/0x40000000"
+else
+    iMark=""
+fi
+
+iptMultiPort "tcp" "$tcp_ports";
+iptMultiPort "udp" "$udp_ports";
 
 while true; do
     if ! pgrep -x "nfqws" > /dev/null; then
