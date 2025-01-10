@@ -189,6 +189,6 @@ jobs:
           prerelease: false
           draft: false
           body: |
-            ⚠ Please report problems, on GitHub issues or [directly me](https://sevcator.github.io/).
+            ⚠ Please report problems on [GitHub issues](https://github.com/${{ github.repository }}/issues) or [directly me](https://sevcator.github.io/).
           files: |
             zapret-Magisk.zip
