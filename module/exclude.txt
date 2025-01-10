@@ -1,6 +1,7 @@
 mvd.ru
 gov.ru
-rutube.ru
 vk.ru
 vk.com
-soundcloud.com
+gosuslugi.ru
+rutube.ru
+plvideo.ru
