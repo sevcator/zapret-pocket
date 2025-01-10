@@ -1,20 +1,10 @@
-# sevcator.github.io
+# If you don't know what you're doing, don't touch anything
+
 MODID=zapret
 MODPATH=/data/adb/modules/$MODID
 MODUPDATEPATH=/data/adb/modules_update/$MODID
 
-grep_get_prop() {
-  local result=$(grep_prop $@)
-  if [ -z "$result" ]; then
-    # Fallback to getprop
-    getprop "$1"
-  else
-    echo $result
-  fi
-}
-
 if [[ -d "$MODUPDATEPATH" ]]; then
-  ui_print "- Moving update files to module directory"
   mkdir -p "$MODPATH"
 
   for file in "$MODUPDATEPATH"/*; do
@@ -60,14 +50,12 @@ check_requirements() {
       ;;
   esac
   ui_print "- Device Architecture: $ABI"
-  mv "$MODPATH/$BINARY" "$MODPATH/nfqws"
-  rm "$MODPATH/nfqws-"*
 
   API=$(grep_get_prop ro.build.version.sdk)
   if [ -n "$API" ]; then
     ui_print "- Device Android API: $API"
-    if [ "$API" -lt 27 ]; then
-      ui_print "! Device Android API: required 27 (Android 7.1)"
+    if [ "$API" -lt 28 ]; then
+      ui_print "! Device Android API: At least required 28 (Android 9)"
       abort
     fi
   else
@@ -81,21 +69,27 @@ check_requirements() {
     ui_print "! Busybox: Not found"
     abort
   fi
+
+  if which iptables > /dev/null 2>&1; then
+    ui_print "- iptables: Installed"
+  else
+    ui_print "! iptables: Not found"
+    abort
+  fi
 }
 
 check_requirements
 
+mv "$MODPATH/$BINARY" "$MODPATH/nfqws"
+rm "$MODPATH/nfqws-"*
 rm -rf "$MODPATH/update"
 rm -rf "$MODPATH/skip_mount"
 rm -rf "$MODPATH/remove"
 rm -rf "$MODPATH/disable"
-
-# The steps of installing module (Main part)
-ui_print "- Removing unnecessary files"
 rm -rf "$MODPATH/customize.sh"
 rm -rf "$MODPATH/sevcator.sh"
+rm -rf "$MODPATH/google.txt"
 
-ui_print "- Setting permissions"
 for FILE in "$MODPATH"/*; do
   if [ -f "$FILE" ]; then
     chmod 755 "$FILE"
