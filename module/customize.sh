@@ -1,7 +1,7 @@
 # If you don't know what you're doing, don't touch anything
 
-MODPATH=/data/adb/modules/$MODID
-MODUPDATEPATH=/data/adb/modules_update/$MODID
+MODPATH=/data/adb/modules/zapret
+MODUPDATEPATH=/data/adb/modules_update/zapret
 
 check_requirements() {
   ABI=$(grep_get_prop ro.product.cpu.abi)
