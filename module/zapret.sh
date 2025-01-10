@@ -9,7 +9,7 @@ boot_wait
 MODPATH=/data/adb/modules/zapret
 MODUPDATEPATH=/data/adb/modules_update/zapret
 
-$MODDIR/load_config.sh
+$MODPATH/load_config.sh
 
 tcp_ports="$(echo $config | grep -oE 'filter-tcp=[0-9,-]+' | sed -e 's/.*=//g' -e 's/,/\n/g' -e 's/ /,/g' | sort -un)";
 udp_ports="$(echo $config | grep -oE 'filter-udp=[0-9,-]+' | sed -e 's/.*=//g' -e 's/,/\n/g' -e 's/ /,/g' | sort -un)";
@@ -64,7 +64,7 @@ fi
 
 while true; do
     if ! pgrep -x "nfqws" > /dev/null; then
-	   "$MODDIR/nfqws" --uid=0:0 --bind-fix4 --bind-fix6 --qnum=200 $config > /dev/null
+	   "$MODPATH/nfqws" --uid=0:0 --bind-fix4 --bind-fix6 --qnum=200 $config > /dev/null
     fi
     if ! iptables -t mangle -L POSTROUTING | grep -q "NFQUEUE"; then
         iptMultiPort "tcp" "$tcp_ports";
