@@ -1,4 +1,4 @@
 #!/system/bin/sh
 
 MODPATH=/data/adb/modules/zapret
-su -c "$MODDIR/zapret.sh"
+su -c "$MODPATH/zapret.sh"
