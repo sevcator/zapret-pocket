@@ -1,36 +1,7 @@
 # If you don't know what you're doing, don't touch anything
 
-MODID=zapret
 MODPATH=/data/adb/modules/$MODID
 MODUPDATEPATH=/data/adb/modules_update/$MODID
-
-if [[ -d "$MODUPDATEPATH" ]]; then
-  mkdir -p "$MODPATH"
-
-  for file in "$MODUPDATEPATH"/*; do
-    filename=$(basename "$file")
-
-    if [[ -f "$file" && "$file" == *.txt ]]; then
-      if [[ -f "$MODPATH/$filename" ]]; then
-        size_update=$(stat -c%s "$file")
-        size_existing=$(stat -c%s "$MODPATH/$filename")
-
-        if [[ $size_update -gt $size_existing ]]; then
-          ui_print "- Updating $filename"
-          mv "$file" "$MODPATH"
-        else
-          rm "$MODPATH/$filename"
-        fi
-      else
-        mv "$file" "$MODPATH"
-      fi
-    else
-      mv "$file" "$MODPATH"
-    fi
-  done
-
-  rmdir "$MODUPDATEPATH"
-fi
 
 check_requirements() {
   ABI=$(grep_get_prop ro.product.cpu.abi)
@@ -90,12 +61,30 @@ rm -rf "$MODPATH/customize.sh"
 rm -rf "$MODPATH/sevcator.sh"
 rm -rf "$MODPATH/google.txt"
 
-for FILE in "$MODPATH"/*; do
-  if [ -f "$FILE" ]; then
-    chmod 755 "$FILE"
-    chown root:root "$FILE"
-  fi
+for DIR in "$MODPATH" "$MODUPDATEDIR"; do
+  for FILE in "$DIR"/*; do
+    if [ -f "$FILE" ]; then
+      chmod 755 "$FILE"
+      chown root:root "$FILE"
+    fi
+  done
 done
+
+if [[ -d "$MODUPDATEPATH" ]]; then
+  for file in "$MODUPDATEPATH"/*; do
+    filename=$(basename "$file")
+
+    if [[ -f "$file" && -f "$MODPATH/$filename" ]]; then
+      size_update=$(stat -c%s "$file")
+      size_existing=$(stat -c%s "$MODPATH/$filename")
+
+      if [[ $size_update -le $size_existing ]]; then
+        rm "$file"
+      fi
+    fi
+  done
+  ui_print "- Reboot to take changes after update!"
+fi
 
 ui_print "********************************************************"
 ui_print "       THIS MODULE IS FOR EDUCATIONAL PURPOSES!"
