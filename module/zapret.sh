@@ -1,7 +1,7 @@
 # If you don't know what you're doing, don't touch anything
 
 boot_wait() {
-    while [[ -z $(getprop sys.boot_completed) ]]; do sleep 2; done
+    while [[ -z $(getprop sys.boot_completed) ]]; do sleep 5; done
 }
 
 boot_wait
