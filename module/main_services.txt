@@ -16,3 +16,6 @@ yt-video-upload.l.google.com
 wide-youtube.l.google.com
 youtubekids.com
 ggpht.com
+soundcloud.com
+sndcdn.com
+soundcloud.cloud
