@@ -185,8 +185,6 @@ jobs:
           prerelease: false
           draft: false
           body: |
-            ## [My Social Networks](https://sevcator.github.io)
-            > [!CAUTION]
-            > I am not responsible for any of your actions! Use this module at your risk!
+            ⚠ Please report problems, on GitHub issues or [directly me](https://sevcator.github.io/).
           files: |
             zapret-Magisk.zip
