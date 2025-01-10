@@ -1,11 +1,9 @@
 discord.com
-gateway.discord.gg
-cdn.discordapp.com
+discord.gg
+discordapp.com
 discordapp.net
 discordapp.com
 discord.gg
-media.discordapp.net
-images-ext-1.discordapp.net
 discord.app
 discord.media
 discordcdn.com
