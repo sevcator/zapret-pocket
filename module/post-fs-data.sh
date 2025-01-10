@@ -1,2 +1,2 @@
 #!/system/bin/sh
-MODDIR=/data/adb/modules/zapret
+MODDIR=/data/adb/modules/$MODID
