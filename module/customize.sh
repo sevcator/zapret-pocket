@@ -53,6 +53,8 @@ check_requirements
 
 mv "$MODPATH/$BINARY" "$MODPATH/nfqws"
 rm "$MODPATH/nfqws-"*
+mv "$MODUPDATEPATH/$BINARY" "$MODUPDATEPATH/nfqws"
+rm "$MODUPDATEPATH/nfqws-"*
 rm -rf "$MODPATH/update"
 rm -rf "$MODPATH/skip_mount"
 rm -rf "$MODPATH/remove"
@@ -83,6 +85,7 @@ if [[ -d "$MODUPDATEPATH" ]]; then
       fi
     fi
   done
+  
   ui_print "- Reboot to take changes after update!"
 fi
 
