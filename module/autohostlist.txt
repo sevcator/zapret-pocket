@@ -20,8 +20,6 @@ betterttv.net
 7tv.app
 7tv.io
 10tv.app
-sndcdn.com
-soundcloud.cloud
 cloudflare-ech.com
 amazon.com
 amazonaws.com
