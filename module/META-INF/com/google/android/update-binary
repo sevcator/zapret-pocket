@@ -1,8 +1,5 @@
 #!/sbin/sh
-
-#################
-# Initialization
-#################
+# github.com/topjohnwu/Magisk/blob/master/scripts/module_installer.sh
 
 umask 022
 
@@ -16,61 +13,14 @@ require_new_magisk() {
   exit 1
 }
 
-#########################
-# Load util_functions.sh
-#########################
-
 OUTFD=$2
 ZIPFILE=$3
 
-MODID=zapret
-MODPATH=/data/adb/modules/$MODID
-MODUPDATEPATH=/data/adb/modules_update/$MODID
-
 mount /data 2>/dev/null
 
-ui_print "- You're installing module from ZIP file"
+[ -f /data/adb/magisk/util_functions.sh ] || require_new_magisk
+. /data/adb/magisk/util_functions.sh
+[ $MAGISK_VER_CODE -lt 20400 ] && require_new_magisk
 
-grep_prop() {
-  local REGEX="s/^$1=//p"
-  shift
-  local FILES=$@
-  [ -z "$FILES" ] && FILES='/system/build.prop'
-  cat $FILES 2>/dev/null | dos2unix | sed -n "$REGEX" | head -n 1
-}
-
-print_title() {
-  local len line1len line2len bar
-  line1len=$(echo -n $1 | wc -c)
-  line2len=$(echo -n $2 | wc -c)
-  len=$line2len
-  [ $line1len -gt $line2len ] && len=$line1len
-  len=$((len + 2))
-  bar=$(printf "%${len}s" | tr ' ' '*')
-  ui_print "$bar"
-  ui_print " $1 "
-  [ "$2" ] && ui_print " $2 "
-  ui_print "$bar"
-}
-
-extract_module_files() {
-  ui_print "- Extracting module files"
-  unzip -o "$ZIPFILE" -x 'META-INF/*' -d $MODPATH >&2
-}
-
-extract_module_files
-rmdir "$MODUPDATEPATH"
-MODNAME=$(grep_prop name $MODPATH/module.prop)
-MODAUTH=$(grep_prop author $MODPATH/module.prop)
-print_title "$MODNAME" "by $MODAUTH"
-
-ui_print "- Fixing scripts syntax"
-for FILE in "$MODPATH"/*.sh; do
-  if [ -f "$FILE" ]; then
-    sed -i 's/\r$//' "$FILE"
-  fi
-done
-
-. $MODPATH/sevcator.sh
-
+install_module
 exit 0
