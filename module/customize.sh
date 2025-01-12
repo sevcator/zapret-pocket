@@ -55,13 +55,14 @@ mv "$MODPATH/$BINARY" "$MODPATH/nfqws"
 rm "$MODPATH/nfqws-"*
 mv "$MODUPDATEPATH/$BINARY" "$MODUPDATEPATH/nfqws"
 rm "$MODUPDATEPATH/nfqws-"*
+rm "$MODUPDATEPATH/nfqws-"*
 rm -rf "$MODPATH/update"
 rm -rf "$MODPATH/skip_mount"
 rm -rf "$MODPATH/remove"
 rm -rf "$MODPATH/disable"
 rm -rf "$MODPATH/customize.sh"
 rm -rf "$MODPATH/sevcator.sh"
-rm -rf "$MODPATH/google.txt"
+rm -rf "$MODUPDATEPATH/customize.sh"
 
 set_perm_recursive $MODPATH 0 2000 0755 0755
 set_perm_recursive $MODUPDATEPATH 0 2000 0755 0755
