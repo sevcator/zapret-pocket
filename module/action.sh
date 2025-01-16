@@ -7,13 +7,6 @@ echo "***********************"
 echo "zapret Diagnostic Tool"
 echo "***********************"
 
-if pgrep -x nfqws > /dev/null; then
-    echo "- nfqws is running"
-    exit
-else
-    echo "- nfqws is not running"
-fi
-
 echo "- Terminating process"
 pkill nfqws
 
