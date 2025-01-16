@@ -21,3 +21,10 @@ ggpht.com
 soundcloud.com
 sndcdn.com
 soundcloud.cloud
+tiktokcdn.com
+tiktokv.com
+tiktokcdn-eu.com
+ttlivecdn.com
+tiktokcdn-us.com
+tiktok.com
+tiktokv.us
