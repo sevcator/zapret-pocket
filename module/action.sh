@@ -12,6 +12,8 @@ if pgrep -f "$MODPATH/zapret.sh" > /dev/null || pgrep -f "$MODPATH/service.sh" >
     echo "- Terminating process"
     pkill nfqws
 else
+    echo "- Terminating process"
+    pkill nfqws
     echo "- Service script is not runnning"
 
     echo "- Starting service"
