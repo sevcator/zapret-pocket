@@ -83,10 +83,6 @@ for FILE in "$MODPATH"/*.txt; do
   fi
 done
 
-if [[ -d "$MODUPDATEPATH" ]]; then
-  ui_print "- Seems you update the module ^_^"
-fi
-
 ui_print "********************************************************"
 ui_print "       THIS MODULE IS FOR EDUCATIONAL PURPOSES!"
 ui_print "    THE OWNER IS NOT RESPONSIBLE FOR YOUR ACTIONS!"
