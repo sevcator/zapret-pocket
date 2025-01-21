@@ -27,3 +27,5 @@ ttlivecdn.com
 tiktokcdn-us.com
 tiktok.com
 tiktokv.us
+ibyteimg.com
+ibytedtos.com
