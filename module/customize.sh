@@ -1,25 +1,20 @@
-# If you don't know what you're doing, don't touch anything
-
 MODPATH=/data/adb/modules/zapret
 MODUPDATEPATH=/data/adb/modules_update/zapret
 
 check_requirements() {
   ABI=$(grep_get_prop ro.product.cpu.abi)
-  case "$ABI" in
-    arm64-v8a)
-      BINARY=nfqws-aarch64
-      ;;
-    x86)
-      BINARY=nfqws-x86
-      ;;
-    x86_64)
-      BINARY=nfqws-x86_x64
-      ;;
-    *)
-      ABI=armeabi-v7a
-      BINARY=nfqws-arm
-      ;;
-  esac
+  if [ "$ABI" = "arm64-v8a" ]; then
+    BINARY=nfqws-aarch64
+  elif [ "$ABI" = "x86_64" ]; then
+    BINARY=nfqws-x86_x64
+  elif [ "$ABI" = "armeabi-v7a" ]; then
+    BINARY=nfqws-arm
+  elif [ "$ABI" = "x86" ]; then
+    BINARY=nfqws-x86
+  else
+    ui_print "! Invaild Device Architecture"
+    abort
+  fi
   ui_print "- Device Architecture: $ABI"
 
   API=$(grep_get_prop ro.build.version.sdk)
@@ -45,6 +40,11 @@ check_requirements() {
     ui_print "- iptables: Installed"
   else
     ui_print "! iptables: Not found"
+    abort
+  fi
+
+  if [ "$(cat /proc/net/ip_tables_targets | grep -c 'NFQUEUE')" == "0" ]; then
+    ui_print "! Bad iptables"
     abort
   fi
 }
@@ -74,9 +74,9 @@ for FILE in "$MODPATH"/*.txt; do
       FILE_SIZE=$(stat -c%s "$FILE")
       BASE_FILE_SIZE=$(stat -c%s "$BASE_FILE")
       if [ "$FILE_SIZE" -gt "$BASE_FILE_SIZE" ]; then
-        rm "$BASE_FILE"
+        mv -f "$FILE" "$BASE_FILE"
         if [ ! -f "$FILE" ]; then
-          ui_print "! Failed to delete $BASE_FILE"
+          ui_print "! Failed to update files in udpate dir"
         fi
       fi
     fi
