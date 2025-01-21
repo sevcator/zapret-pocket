@@ -13,7 +13,6 @@ MODUPDATEPATH=/data/adb/modules_update/zapret
 
 tcp_ports="$(echo $config | grep -oE 'filter-tcp=[0-9,-]+' | sed -e 's/.*=//g' -e 's/,/\n/g' -e 's/ /,/g' | sort -un)";
 udp_ports="$(echo $config | grep -oE 'filter-udp=[0-9,-]+' | sed -e 's/.*=//g' -e 's/,/\n/g' -e 's/ /,/g' | sort -un)";
-sysctl net.netfilter.nf_conntrack_tcp_be_liberal=1 > /dev/null;
 
 iptAdd() {
     iptDPort="$iMportD $2"; iptSPort="$iMportS $2";
