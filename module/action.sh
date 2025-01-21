@@ -7,11 +7,10 @@ echo "***********************"
 echo "zapret Diagnostic Tool"
 echo "***********************"
 
-echo "- Terminating process"
-pkill nfqws
-
 if pgrep -f "$MODPATH/zapret.sh" > /dev/null || pgrep -f "$MODPATH/service.sh" > /dev/null; then
     echo "- Service script is runnning"
+    echo "- Terminating process"
+    pkill nfqws
 else
     echo "- Service script is not runnning"
 
