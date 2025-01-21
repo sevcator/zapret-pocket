@@ -74,10 +74,7 @@ for FILE in "$MODPATH"/*.txt; do
       FILE_SIZE=$(stat -c%s "$FILE")
       BASE_FILE_SIZE=$(stat -c%s "$BASE_FILE")
       if [ "$FILE_SIZE" -gt "$BASE_FILE_SIZE" ]; then
-        mv -f "$FILE" "$BASE_FILE"
-        if [ ! -f "$FILE" ]; then
-          ui_print "! Failed to update files in udpate dir"
-        fi
+        cp -f "$FILE" "$BASE_FILE"
       fi
     fi
   fi
