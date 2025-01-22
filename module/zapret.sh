@@ -11,6 +11,8 @@ MODUPDATEPATH=/data/adb/modules_update/zapret
 
 . $MODPATH/load-config.sh
 
+sysctl net.netfilter.nf_conntrack_tcp_be_liberal=1 > /dev/null;
+
 tcp_ports="$(echo $config | grep -oE 'filter-tcp=[0-9,-]+' | sed -e 's/.*=//g' -e 's/,/\n/g' -e 's/ /,/g' | sort -un)";
 udp_ports="$(echo $config | grep -oE 'filter-udp=[0-9,-]+' | sed -e 's/.*=//g' -e 's/,/\n/g' -e 's/ /,/g' | sort -un)";
 
@@ -63,7 +65,7 @@ fi
 
 while true; do
     if ! pgrep -x "nfqws" > /dev/null; then
-	    "$MODPATH/nfqws" --uid=0:0 --bind-fix4 --qnum=200 $config > /dev/null
+	    "$MODPATH/nfqws" --uid=0:0 --qnum=200 $config > /dev/null
 	fi
     sleep 5
 done
