@@ -1,4 +1,4 @@
-# If you don't know what you're doing, don't touch anything
+# If you don't know what you're doing, don't touch anything on this script
 
 boot_wait() {
     while [[ -z $(getprop sys.boot_completed) ]]; do sleep 5; done
@@ -9,7 +9,17 @@ boot_wait
 MODPATH=/data/adb/modules/zapret
 MODUPDATEPATH=/data/adb/modules_update/zapret
 
-. $MODPATH/load-config.sh
+CURRENT_TACTIC=$(cat "$MODDIR/current-tactic")
+if [ -f "$MODPATH/current-tactic" ]; then
+    CURRENT_TACTIC=$(cat "$MODPATH/current-tactic")
+    if [ -f "$MODPATH/tactics/$CURRENT_TACTIC.sh" ]; then
+        . "$MODPATH/tactics/$CURRENT_TACTIC.sh"
+    else
+        exit
+    fi
+else
+    exit
+fi
 
 sysctl net.netfilter.nf_conntrack_tcp_be_liberal=1 > /dev/null;
 
