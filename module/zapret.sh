@@ -22,6 +22,9 @@ else
 fi
 
 sysctl net.netfilter.nf_conntrack_tcp_be_liberal=1 > /dev/null;
+sysctl net.ipv6.conf.all.disable_ipv6=1 > /dev/null;
+sysctl net.ipv6.conf.default.disable_ipv6=1 > /dev/null;
+sysctl net.ipv6.conf.lo.disable_ipv6=1 > /dev/null;
 
 tcp_ports="$(echo $config | grep -oE 'filter-tcp=[0-9,-]+' | sed -e 's/.*=//g' -e 's/,/\n/g' -e 's/ /,/g' | sort -un)";
 udp_ports="$(echo $config | grep -oE 'filter-udp=[0-9,-]+' | sed -e 's/.*=//g' -e 's/,/\n/g' -e 's/ /,/g' | sort -un)";
