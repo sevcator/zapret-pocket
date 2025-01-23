@@ -80,6 +80,12 @@ for FILE in "$MODPATH"/*.txt; do
   fi
 done
 
+for FILE in "$MODPATH"/*.sh; do
+  if [[ -f "$FILE" ]]; then
+    sed -i 's/\r$//' "$FILE"
+  fi
+done
+
 ui_print "********************************************************"
 ui_print "       THIS MODULE IS FOR EDUCATIONAL PURPOSES!"
 ui_print "    THE OWNER IS NOT RESPONSIBLE FOR YOUR ACTIONS!"
