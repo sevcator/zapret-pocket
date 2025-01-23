@@ -1,20 +1,24 @@
 #!/system/bin/sh
 
 MODPATH=/data/adb/modules/zapret
+CURRENTTACTIC=$(cat $MODPATH/current-tactic)
 
 start_service() {
-    $MODPATH/zapret.sh &
-    echo "- Started"
+    if pgrep -f nfqws > /dev/null; then
+        nohup $MODPATH/service.sh > /dev/null 2>&1 &
+        echo "- Service started"
+    else
+        echo "! nfqws is already started"
+    fi
 }
 
 stop_service() {
     iptables -t mangle -F PREROUTING
     iptables -t mangle -F POSTROUTING
-    kill "$(pidof $nfqws)"
-    for pid in $(grep -l "zapret.sh" /proc/*/cmdline | awk -F'/' '{print $3}'); do
-        pkill -9 $pid
+    for pid in $(pgrep -f zapret.sh); do
+        kill -9 $pid
     done
-    echo "- Stopped"
+    echo "- Service stopped"
 }
 
 toggle_service() {
@@ -32,18 +36,17 @@ restart_service() {
 }
 
 select_tactic() {
-    echo "Available tactics:"
+    echo "- Available tactics:"
     for tactic in $MODPATH/tactics/*.sh; do
         echo "$(basename $tactic .sh)"
     done
-    echo "Enter the tactic name (without .sh):"
+    echo "- Enter the tactic:"
     read user_tactic
     if [ -f "$MODPATH/tactics/$user_tactic.sh" ]; then
-        echo "Selected tactic: $user_tactic"
         echo "$user_tactic" > "$MODPATH/current-tactic"
-        echo "Tactic saved to $MODPATH/current-tactic"
+        echo "- Done!"
     else
-        echo "Error: Tactic '$user_tactic' not found!"
+        echo "! Invaild name of tactic"
     fi
 }
 
@@ -58,7 +61,11 @@ elif [ "$1" == "restart" ]; then
 elif [ "$1" == "tactic" ]; then
     select_tactic
 else
-    echo "Available commands:"
+    echo "zapret @ <3"
+    echo ""
+    echo "- Current tactic: $CURRENTTACTIC"
+    echo ""
+    echo "- Available commands:"
     echo "zapret start - Start the zapret service"
     echo "zapret stop - Stop the zapret service"
     echo "zapret restart - Restart the zapret service"
