@@ -3,7 +3,13 @@
 MODPATH=/data/adb/modules/zapret
 MODUPDATEPATH=/data/adb/modules_update/zapret
 
-su -c "pkill -f '/data/adb/service.d/zapret.sh'"
+sysctl net.netfilter.nf_conntrack_tcp_be_liberal=1 > /dev/null;
+sysctl net.ipv6.conf.all.disable_ipv6=1 > /dev/null;
+sysctl net.ipv6.conf.default.disable_ipv6=1 > /dev/null;
+sysctl net.ipv6.conf.lo.disable_ipv6=1 > /dev/null;
+for pid in $(grep -l "zapret.sh" /proc/*/cmdline | awk -F'/' '{print $3}'); do
+    su -c "pkill -9 $pid"
+done
 su -c "pkill -f '${MODDIR}/zapret.sh'"
 su -c "pkill -f '${MODDIR}/service.sh'"
 su -c 'pkill nfqws'
