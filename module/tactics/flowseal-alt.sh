@@ -1,7 +1,8 @@
 #!/bin/bash
 
 # Values
-hostlist="--hostlist-exclude=$MODPATH/list-exclude.txt --hostlist-auto=$MODPATH/list.txt"
+autohostlist="--hostlist-exclude=$MODPATH/list-exclude.txt --hostlist-auto=$MODPATH/list-auto.txt"
+hostlist="--hostlist=$MODPATH/list.txt"
 
 # Zapret Configuration
 config="--filter-udp=443 $autohostlist --dpi-desync=fake --dpi-desync-repeats=11 --new"
