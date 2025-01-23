@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/system/bin/bash
 MODPATH=/data/adb/modules/zapret
 
 echo "***********************"
