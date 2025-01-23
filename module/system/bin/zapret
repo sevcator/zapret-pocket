@@ -1,0 +1,67 @@
+#!/system/bin/sh
+
+MODPATH=/data/adb/modules/zapret
+
+start_service() {
+    $MODPATH/zapret.sh &
+    echo "- Started"
+}
+
+stop_service() {
+    iptables -t mangle -F PREROUTING
+    iptables -t mangle -F POSTROUTING
+    kill "$(pidof $nfqws)"
+    for pid in $(grep -l "zapret.sh" /proc/*/cmdline | awk -F'/' '{print $3}'); do
+        pkill -9 $pid
+    done
+    echo "- Stopped"
+}
+
+toggle_service() {
+    if pgrep -f zapret.sh > /dev/null; then
+        stop_service
+    else
+        start_service
+    fi
+}
+
+restart_service() {
+    stop_service
+    sleep 1
+    start_service
+}
+
+select_tactic() {
+    echo "Available tactics:"
+    for tactic in $MODPATH/tactics/*.sh; do
+        echo "$(basename $tactic .sh)"
+    done
+    echo "Enter the tactic name (without .sh):"
+    read user_tactic
+    if [ -f "$MODPATH/tactics/$user_tactic.sh" ]; then
+        echo "Selected tactic: $user_tactic"
+        echo "$user_tactic" > "$MODPATH/current-tactic"
+        echo "Tactic saved to $MODPATH/current-tactic"
+    else
+        echo "Error: Tactic '$user_tactic' not found!"
+    fi
+}
+
+if [ "$1" == "start" ]; then
+    start_service
+elif [ "$1" == "stop" ]; then
+    stop_service
+elif [ "$1" == "toggle" ]; then
+    toggle_service
+elif [ "$1" == "restart" ]; then
+    restart_service
+elif [ "$1" == "tactic" ]; then
+    select_tactic
+else
+    echo "Available commands:"
+    echo "zapret start - Start the zapret service"
+    echo "zapret stop - Stop the zapret service"
+    echo "zapret restart - Restart the zapret service"
+    echo "zapret toggle - Start/stop the zapret service"
+    echo "zapret tactic - Pick a tactic for DPI modification"
+fi;
