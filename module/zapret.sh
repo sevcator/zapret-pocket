@@ -9,6 +9,12 @@ boot_wait
 MODPATH=/data/adb/modules/zapret
 MODUPDATEPATH=/data/adb/modules_update/zapret
 
+for FILE in "$MODPATH/tactics"/*.sh; do
+  if [[ -f "$FILE" ]]; then
+    sed -i 's/\r$//' "$FILE"
+  fi
+done
+
 if [ ! -f "$MODPATH/current-tactic" ]; then
     exit
 fi
