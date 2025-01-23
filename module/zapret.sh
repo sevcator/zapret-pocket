@@ -9,17 +9,12 @@ boot_wait
 MODPATH=/data/adb/modules/zapret
 MODUPDATEPATH=/data/adb/modules_update/zapret
 
-CURRENT_TACTIC=$(cat "$MODDIR/current-tactic")
-if [ -f "$MODPATH/current-tactic" ]; then
-    CURRENT_TACTIC=$(cat "$MODPATH/current-tactic")
-    if [ -f "$MODPATH/tactics/$CURRENT_TACTIC.sh" ]; then
-        . "$MODPATH/tactics/$CURRENT_TACTIC.sh"
-    else
-        exit
-    fi
-else
+if [ ! -f "$MODPATH/current-tactic" ]; then
     exit
 fi
+
+CURRENTTACTIC=$(cat $MODPATH/current-tactic)
+. "$MODPATH/tactics/$CURRENTTACTIC.sh"
 
 sysctl net.netfilter.nf_conntrack_tcp_be_liberal=1 > /dev/null;
 sysctl net.ipv6.conf.all.disable_ipv6=1 > /dev/null;
