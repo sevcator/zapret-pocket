@@ -56,8 +56,6 @@ rm "$MODPATH/nfqws-"*
 mv "$MODUPDATEPATH/$BINARY" "$MODUPDATEPATH/nfqws"
 rm "$MODUPDATEPATH/nfqws-"*
 rm "$MODUPDATEPATH/nfqws-"*
-rm -rf "$MODPATH/update"
-rm -rf "$MODPATH/skip_mount"
 rm -rf "$MODPATH/remove"
 rm -rf "$MODPATH/disable"
 rm -rf "$MODPATH/customize.sh"
