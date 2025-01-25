@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # Values
+autohostlist="--hostlist-auto=$MODPATH/list-auto.txt"
 hostlist="--hostlist=$MODPATH/list.txt"
 
 # Zapret Configuration
