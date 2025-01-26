@@ -137,7 +137,7 @@ jobs:
           cd module
 
           echo "id=zapret" > module.prop
-          echo "name=zapret" >> module.prop
+          echo "name=zapret For Magisk" >> module.prop
           echo "version=${version}" >> module.prop
           echo "versionCode=${version_code}" >> module.prop
           echo "author=sevcator, bol-van, ImMALWARE, Fenrir-0xFF, Flowseal" >> module.prop
