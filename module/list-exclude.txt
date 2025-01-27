@@ -1,6 +1,7 @@
 soundcloud.com
 googlesyndication.com
 googleadservices.com
+googleoptimize.com
 doubleclick.net
 mvd.ru
 gov.ru
