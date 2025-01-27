@@ -37,9 +37,6 @@ discord-attachments-uploads-prd.storage.googleapis.com
 10tv.app
 cloudflare-ech.com
 betterttv.net
-7tv.app
-7tv.io
-10tv.app
 lolz.guru
 zelenka.guru
 secure.soundcloud.com
