@@ -1,6 +1,7 @@
 googlevideo.com
 play.google.com
 youtu.be
+yt.be
 youtube.com
 youtubei.googleapis.com
 youtubeembeddedplayer.googleapis.com
