@@ -41,3 +41,4 @@ lolz.guru
 zelenka.guru
 secure.soundcloud.com
 steamstatic.com
+pages.dev
