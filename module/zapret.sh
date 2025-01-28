@@ -22,7 +22,7 @@ fi
 CURRENTTACTIC=$(cat $MODPATH/current-tactic)
 . "$MODPATH/tactics/$CURRENTTACTIC.sh"
 
-content update --uri content://telephony/carriers --bind type:s:default --bind protocol:s:IP --bind roaming_protocol:s:IP --where "current=1" > /dev/null;
+content update --uri content://telephony/carriers --bind protocol:s:IP --bind roaming_protocol:s:IP --where "current=1" > /dev/null;
 sysctl net.netfilter.nf_conntrack_tcp_be_liberal=1 > /dev/null;
 sysctl net.ipv6.conf.all.disable_ipv6=1 > /dev/null;
 sysctl net.ipv6.conf.default.disable_ipv6=1 > /dev/null;
