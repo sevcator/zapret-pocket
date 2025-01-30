@@ -81,6 +81,6 @@ fi
 while true; do
     if ! pgrep -x "nfqws" > /dev/null; then
 	    "$MODPATH/nfqws" --uid=0:0 --qnum=200 $config > /dev/null
-	fi
+    fi
     sleep 5
 done
