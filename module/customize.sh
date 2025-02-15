@@ -1,5 +1,6 @@
 MODPATH=/data/adb/modules/zapret
 MODUPDATEPATH=/data/adb/modules_update/zapret
+SYSTEM_XBIN=$MODULE_DIR/system/xbin
 
 check_requirements() {
   ABI=$(grep_get_prop ro.product.cpu.abi)
@@ -29,13 +30,6 @@ check_requirements() {
     exit 1
   fi
 
-  if which busybox > /dev/null 2>&1; then
-    ui_print "- Busybox: Installed"
-  else
-    ui_print "! Busybox: Not found"
-    abort
-  fi
-
   if which iptables > /dev/null 2>&1; then
     ui_print "- iptables: Installed"
   else
@@ -45,6 +39,27 @@ check_requirements() {
 
   if [ "$(cat /proc/net/ip_tables_targets | grep -c 'NFQUEUE')" == "0" ]; then
     ui_print "! Bad iptables"
+    abort
+  fi
+
+  if which busybox > /dev/null 2>&1; then
+    ui_print "- Busybox: Installed"
+  elif [ ! -f "/data/adb/magisk/busybox" ]; then
+    ui_print "- Installing Busybox"
+
+    if ! mkdir -p "$SYSTEM_XBIN"; then
+        abort "! Failed creating folder"
+    fi  
+
+    if ! cp "$BUSYBOX_PATH" "$SYSTEM_XBIN/"; then
+        abort "! Failed copying binary"
+    fi  
+
+    if ! set_perm_recursive "$SYSTEM_XBIN" 0 2000 0755 0755; then
+        abort "! Failed setting permissions for BusyBox binary"
+    fi
+  else
+    ui_print "! Busybox: Not found"
     abort
   fi
 }
