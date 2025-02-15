@@ -22,7 +22,6 @@ fi
 CURRENTTACTIC=$(cat $MODPATH/current-tactic)
 . "$MODPATH/tactics/$CURRENTTACTIC.sh"
 
-content update --uri content://telephony/carriers --bind protocol:s:IP --bind roaming_protocol:s:IP --where "current=1" > /dev/null;
 sysctl net.netfilter.nf_conntrack_tcp_be_liberal=1 > /dev/null;
 sysctl net.ipv6.conf.all.disable_ipv6=1 > /dev/null;
 sysctl net.ipv6.conf.default.disable_ipv6=1 > /dev/null;
@@ -35,6 +34,8 @@ iptAdd() {
     iptDPort="$iMportD $2"; iptSPort="$iMportS $2";
     iptables -t mangle -I POSTROUTING -p $1 $iptDPort $iCBo $iMark -j NFQUEUE --queue-num 200 --queue-bypass;
     iptables -t mangle -I PREROUTING -p $1 $iptSPort $iCBr $iMark -j NFQUEUE --queue-num 200 --queue-bypass;
+    ip6tables -t mangle -I POSTROUTING -p $1 $iptDPort $iCBo $iMark -j NFQUEUE --queue-num 200 --queue-bypass;
+    ip6tables -t mangle -I PREROUTING -p $1 $iptSPort $iCBr $iMark -j NFQUEUE --queue-num 200 --queue-bypass;
 }
 
 iptMultiPort() {
