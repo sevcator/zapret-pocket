@@ -19,7 +19,7 @@
 # How to use
 1. Download module from [Releases](https://github.com/sevcator/zapret-magisk/releases)
 2. Flash it and reboot device
-3w. Enjoy! 🎉
+3. Enjoy! 🎉
 
 # Contributing
 Feel free to contribute to this project by submitting issues or pull requests.
