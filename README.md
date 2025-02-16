@@ -8,7 +8,7 @@
        height="128">
 </p>
 
-<p align="center">zapret for Magisk</p>
+<h1 align="center">zapret for Magisk</h1>
 
 <hr>
 
