@@ -2,7 +2,11 @@ soundcloud.com
 googlesyndication.com
 googleadservices.com
 googleoptimize.com
+googleapis.com
+google.com
 doubleclick.net
+tiktokv.com
+tiktok.com
 mvd.ru
 gov.ru
 vk.ru
