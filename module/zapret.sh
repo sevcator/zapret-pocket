@@ -1,7 +1,7 @@
 # If you don't know what you're doing, don't touch anything on this script
 
 boot_wait() {
-    while [[ -z $(getprop sys.boot_completed) ]]; do sleep 5; done
+    while [[ -z $(getprop sys.boot_completed) ]]; do sleep 2; done
 }
 
 boot_wait
@@ -23,10 +23,10 @@ CURRENTTACTIC=$(cat $MODPATH/current-tactic)
 . "$MODPATH/tactics/$CURRENTTACTIC.sh"
 
 # Disable IPv6, if zapret still not works, try this.
-# sysctl net.netfilter.nf_conntrack_tcp_be_liberal=1 > /dev/null;
 # sysctl net.ipv6.conf.all.disable_ipv6=1 > /dev/null;
 # sysctl net.ipv6.conf.default.disable_ipv6=1 > /dev/null;
-sysctl net.ipv6.conf.lo.disable_ipv6=1 > /dev/null;
+# sysctl net.ipv6.conf.lo.disable_ipv6=1 > /dev/null;
+sysctl net.netfilter.nf_conntrack_tcp_be_liberal=1 > /dev/null;
 
 tcp_ports="$(echo $config | grep -oE 'filter-tcp=[0-9,-]+' | sed -e 's/.*=//g' -e 's/,/\n/g' -e 's/ /,/g' | sort -un)";
 udp_ports="$(echo $config | grep -oE 'filter-udp=[0-9,-]+' | sed -e 's/.*=//g' -e 's/,/\n/g' -e 's/ /,/g' | sort -un)";
