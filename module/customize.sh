@@ -1,6 +1,7 @@
 MODPATH=/data/adb/modules/zapret
 MODUPDATEPATH=/data/adb/modules_update/zapret
 SYSTEM_XBIN=$MODULE_DIR/system/xbin
+BUSYBOX_PATH=/data/adb/magisk/busybox
 
 check_requirements() {
   ABI=$(grep_get_prop ro.product.cpu.abi)
@@ -44,60 +45,60 @@ check_requirements() {
 
   if which busybox > /dev/null 2>&1; then
     ui_print "- Busybox: Installed"
-  elif [ ! -f "/data/adb/magisk/busybox" ]; then
-    ui_print "- Installing Busybox"
-
-    if ! mkdir -p "$SYSTEM_XBIN"; then
-        abort "! Failed creating folder"
-    fi  
-
-    if ! cp "$BUSYBOX_PATH" "$SYSTEM_XBIN/"; then
-        abort "! Failed copying binary"
-    fi  
-
-    if ! set_perm_recursive "$SYSTEM_XBIN" 0 2000 0755 0755; then
-        abort "! Failed setting permissions for BusyBox binary"
-    fi
   else
     ui_print "! Busybox: Not found"
-    abort
+    BUSYBOX_REQUIRED=1
   fi
 }
 
 check_requirements
 
-mv "$MODPATH/$BINARY" "$MODPATH/nfqws"
-rm "$MODPATH/nfqws-"*
-mv "$MODUPDATEPATH/$BINARY" "$MODUPDATEPATH/nfqws"
-rm "$MODUPDATEPATH/nfqws-"*
-rm "$MODUPDATEPATH/nfqws-"*
-rm -rf "$MODPATH/remove"
-rm -rf "$MODPATH/disable"
-rm -rf "$MODPATH/customize.sh"
-rm -rf "$MODPATH/sevcator.sh"
-rm -rf "$MODUPDATEPATH/customize.sh"
+if [ -f "$MODPATH/list-auto.txt" ]; then
+    mv "$MODPATH/list-auto.txt" "$MODUPDATEPATH/list-auto.txt" 2>/dev/null
+fi
 
-set_perm_recursive $MODPATH 0 2000 0755 0755
-set_perm_recursive $MODUPDATEPATH 0 2000 0755 0755
-
-for FILE in "$MODPATH"/*.txt; do
-  if [ -f "$FILE" ]; then
-    BASE_FILE="$MODUPDATEPATH/$(basename "$FILE")"
-    if [ -f "$BASE_FILE" ]; then
-      FILE_SIZE=$(stat -c%s "$FILE")
-      BASE_FILE_SIZE=$(stat -c%s "$BASE_FILE")
-      if [ "$FILE_SIZE" -gt "$BASE_FILE_SIZE" ]; then
-        cp -f "$FILE" "$BASE_FILE"
-      fi
+if [ -f "$MODPATH/current-tactic" ]; then
+    TACTIC=$(cat "$MODPATH/current-tactic")
+    TACTIC_FILE="$MODUPDATEPATH/tactics/${TACTIC}.sh"
+    if [ -f "$TACTIC_FILE" ]; then
+        mv "$MODPATH/current-tactic" "$MODUPDATEPATH/current-tactic" 2>/dev/null
     fi
-  fi
-done
+fi
+
+su -c 'pkill nfqws'
+su -c 'pkill zapret'
+su -c 'iptables -t mangle -F PREROUTING'
+su -c 'iptables -t mangle -F POSTROUTING'
+rm -rf "$MODPATH"
+mkdir -p "$MODPATH"
+
+if [ "$BUSYBOX_REQUIRED" -eq 1 ] && [ ! -f "$BUSYBOX_PATH" ]; then
+    ui_print "- Installing Busybox"
+
+    if ! mkdir -p "$SYSTEM_XBIN"; then
+        abort "! Failed creating folder"
+    fi
+    
+    if ! cp "$BUSYBOX_PATH" "$SYSTEM_XBIN/"; then
+        abort "! Failed copying binary"
+    fi
+
+    set_perm_recursive "$SYSTEM_XBIN" 0 2000 0755 0755
+fi
 
 for FILE in "$MODPATH"/*.sh; do
   if [[ -f "$FILE" ]]; then
     sed -i 's/\r$//' "$FILE"
   fi
 done
+
+for FILE in "$MODPATH/tactics/"*.sh; do
+  if [[ -f "$FILE" ]]; then
+    sed -i 's/\r$//' "$FILE"
+  fi
+done
+
+set_perm_recursive $MODPATH 0 2000 0755 0755
 
 ui_print "********************************************************"
 ui_print "       THIS MODULE IS FOR EDUCATIONAL PURPOSES!"
