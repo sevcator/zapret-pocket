@@ -77,7 +77,8 @@ if [ -d "$MODUPDATEPATH" ]; then
     fi
 
     rm -rf "$MODPATH"
-    mkdir -p "$MODPATH"
+    cp -r "$MODUPDATEPATH/"* "$MODPATH/"
+    rm -rf "$MODUPDATEPATH"
 fi
 
 if [ "$BUSYBOX_REQUIRED" -eq 1 ] && [ ! -f "$BUSYBOX_PATH" ]; then
