@@ -65,20 +65,19 @@ if [ -d "$MODUPDATEPATH" ]; then
     ui_print "- Updating the module"
 
     if [ -f "$MODPATH/list-auto.txt" ]; then
-        mv "$MODPATH/list-auto.txt" "$MODUPDATEPATH/list-auto.txt" 2>/dev/null
+        mv "$MODPATH/list-auto.txt" "$MODUPDATEPATH/list-auto.txt"
     fi
 
     if [ -f "$MODPATH/current-tactic" ]; then
         TACTIC=$(cat "$MODPATH/current-tactic")
         TACTIC_FILE="$MODUPDATEPATH/tactics/${TACTIC}.sh"
         if [ -f "$TACTIC_FILE" ]; then
-            mv "$MODPATH/current-tactic" "$MODUPDATEPATH/current-tactic" 2>/dev/null
+            mv "$MODPATH/current-tactic" "$MODUPDATEPATH/current-tactic"
         fi
     fi
 
     rm -rf "$MODPATH"
-    cp -r "$MODUPDATEPATH/"* "$MODPATH/"
-    rm -rf "$MODUPDATEPATH"
+    mv "$MODUPDATEPATH" "$MODPATH"
 fi
 
 if [ "$BUSYBOX_REQUIRED" -eq 1 ] && [ ! -f "$BUSYBOX_PATH" ]; then
@@ -106,6 +105,9 @@ for FILE in "$MODPATH/tactics/"*.sh; do
     sed -i 's/\r$//' "$FILE"
   fi
 done
+
+mv "$MODPATH/$BINARY" "$MODPATH/nfqws"
+rm -f "$MODPATH/nfqws-"*
 
 set_perm_recursive $MODPATH 0 2000 0755 0755
 settings put global private_dns_mode off
