@@ -53,18 +53,6 @@ check_requirements() {
 
 check_requirements
 
-if [ -f "$MODPATH/list-auto.txt" ]; then
-    mv "$MODPATH/list-auto.txt" "$MODUPDATEPATH/list-auto.txt" 2>/dev/null
-fi
-
-if [ -f "$MODPATH/current-tactic" ]; then
-    TACTIC=$(cat "$MODPATH/current-tactic")
-    TACTIC_FILE="$MODUPDATEPATH/tactics/${TACTIC}.sh"
-    if [ -f "$TACTIC_FILE" ]; then
-        mv "$MODPATH/current-tactic" "$MODUPDATEPATH/current-tactic" 2>/dev/null
-    fi
-fi
-
 for pid in $(pgrep -f zapret.sh); do
     kill -9 $pid
 done
@@ -72,8 +60,25 @@ su -c 'pkill nfqws'
 su -c 'pkill zapret'
 su -c 'iptables -t mangle -F PREROUTING'
 su -c 'iptables -t mangle -F POSTROUTING'
-rm -rf "$MODPATH"
-mkdir -p "$MODPATH"
+
+if [ -d "$MODUPDATEPATH" ]; then
+    ui_print "- Updating the module"
+
+    if [ -f "$MODPATH/list-auto.txt" ]; then
+        mv "$MODPATH/list-auto.txt" "$MODUPDATEPATH/list-auto.txt" 2>/dev/null
+    fi
+
+    if [ -f "$MODPATH/current-tactic" ]; then
+        TACTIC=$(cat "$MODPATH/current-tactic")
+        TACTIC_FILE="$MODUPDATEPATH/tactics/${TACTIC}.sh"
+        if [ -f "$TACTIC_FILE" ]; then
+            mv "$MODPATH/current-tactic" "$MODUPDATEPATH/current-tactic" 2>/dev/null
+        fi
+    fi
+
+    rm -rf "$MODPATH"
+    mkdir -p "$MODPATH"
+fi
 
 if [ "$BUSYBOX_REQUIRED" -eq 1 ] && [ ! -f "$BUSYBOX_PATH" ]; then
     ui_print "- Installing Busybox"
