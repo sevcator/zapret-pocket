@@ -107,6 +107,8 @@ for FILE in "$MODPATH/tactics/"*.sh; do
 done
 
 set_perm_recursive $MODPATH 0 2000 0755 0755
+settings put global private_dns_mode off
+ui_print "- The Private DNS has been disabled, if you need enable them, turn it back"
 
 ui_print "********************************************************"
 ui_print "       THIS MODULE IS FOR EDUCATIONAL PURPOSES!"
