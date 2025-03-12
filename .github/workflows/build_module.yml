@@ -193,7 +193,7 @@ jobs:
           prerelease: false
           draft: false
           body: |
-            📝 Please report problems on [GitHub issues](https://github.com/${{ github.repository }}/issues) or [directly me](https://sevcator.github.io/)
+            📝 Please report problems on [GitHub issues](https://github.com/${{ github.repository }}/issues) or [directly message me](https://sevcator.github.io/)
             🔑 SHA256: ${{ env.SHA256 }}
           files: |
             zapret-Magisk.zip
