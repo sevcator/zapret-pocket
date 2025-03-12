@@ -16,13 +16,8 @@
   
 <p align="center"> </a> <a href="https://sevcator.github.io"> <img src="https://img.shields.io/badge/GitHub-Homepage-000000?logo=github" alt="GitHub - Homepage"> </a> </p>
 
-# How to use
-1. Download module from [Releases](https://github.com/sevcator/zapret-magisk/releases)
-2. Flash it and reboot device
-3. Enjoy! 🎉
+# License
+This project is licensed. See the [LICENSE](https://raw.githubusercontent.com/sevcator/zapret-magisk/refs/heads/main/LICENSE) file for details.
 
 # Contributing
 Feel free to contribute to this project by submitting issues or pull requests.
-
-# Problems
-Report in the [Issues](https://github.com/sevcator/zapret-magisk/issues) or directly in social networks
