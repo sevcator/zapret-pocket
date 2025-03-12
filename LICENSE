@@ -1,0 +1,13 @@
+This project includes components under different licenses:
+
+1. **GNU General Public License v2.0 (GPL-2.0)**:
+   - Applies to custom scripts and netfilter components.
+   - Copyright (C) 2025 sevcator
+   - Full text: https://www.gnu.org/licenses/gpl-2.0.txt
+
+2. **MIT License**:
+   - Applies to zapret binaries.
+   - Copyright (c) 2016-2025 bol-van
+   - Full text: https://github.com/bol-van/zapret/blob/master/docs/LICENSE.txt
+
+The licenses apply to their respective components. For further details, see individual files.
