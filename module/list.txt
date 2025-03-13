@@ -51,6 +51,8 @@ t.co
 tiktok.com
 tiktok.net
 tiktokcdn.com
+tiktokcdn-us.com
+tiktokcdn-eu.com
 tiktokv.com
 musica.ly
 muscdn.com
