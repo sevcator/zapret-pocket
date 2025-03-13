@@ -9,16 +9,6 @@ mount /data 2>/dev/null
 
 # Check requirements
 check_requirements() {
-  API=$(grep_get_prop ro.build.version.sdk)
-  if [ -n "$API" ]; then
-    ui_print "- Device Android API: $API"
-    if [ "$API" -lt 28 ]; then
-      abort "! Minimum required API 28 (Android 9)"
-    fi
-  else
-    abort "! Failed to detect Android API"
-  fi
-
   if command -v iptables >/dev/null 2>&1; then
     ui_print "- iptables: Found"
   else
@@ -37,6 +27,16 @@ check_requirements() {
   if ! command -v busybox >/dev/null 2>&1; then
     ui_print "- Busybox: Not found, will install"
     BUSYBOX_REQUIRED=1
+  fi
+
+  API=$(grep_get_prop ro.build.version.sdk)
+  if [ -n "$API" ]; then
+    ui_print "- Device Android API: $API"
+    if [ "$API" -lt 28 ]; then
+      abort "! Minimum required API 28 (Android 9)"
+    fi
+  else
+    abort "! Failed to detect Android API"
   fi
 }
 
