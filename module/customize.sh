@@ -1,41 +1,30 @@
+# Variables
 MODPATH=/data/adb/modules/zapret
 MODUPDATEPATH=/data/adb/modules_update/zapret
 SYSTEM_XBIN=$MODULE_DIR/system/xbin
 BUSYBOX_PATH=/data/adb/magisk/busybox
 
-check_requirements() {
-  ABI=$(grep_get_prop ro.product.cpu.abi)
-  if [ "$ABI" = "arm64-v8a" ]; then
-    BINARY=nfqws-aarch64
-  elif [ "$ABI" = "x86_64" ]; then
-    BINARY=nfqws-x86_x64
-  elif [ "$ABI" = "armeabi-v7a" ]; then
-    BINARY=nfqws-arm
-  elif [ "$ABI" = "x86" ]; then
-    BINARY=nfqws-x86
-  else
-    ui_print "! Invaild Device Architecture"
-    abort
-  fi
-  ui_print "- Device Architecture: $ABI"
+# Check if /data is mounted
+if ! mountpoint -q /data; then
+    mount /data 2>/dev/null || abort "! Failed to mount /data"
+fi
 
+# Check requirements
+check_requirements() {
   API=$(grep_get_prop ro.build.version.sdk)
   if [ -n "$API" ]; then
     ui_print "- Device Android API: $API"
     if [ "$API" -lt 28 ]; then
-      ui_print "! Device Android API: At least required 28 (Android 9)"
-      abort
+      abort "! Minimum required API 28 (Android 9)"
     fi
   else
-    ui_print "! Device Android API: Error"
-    exit 1
+    abort "! Failed to detect Android API"
   fi
 
-  if which iptables > /dev/null 2>&1; then
-    ui_print "- iptables: Installed"
+  if command -v iptables >/dev/null 2>&1; then
+    ui_print "- iptables: Found"
   else
-    ui_print "! iptables: Not found"
-    abort
+    abort "! iptables not found"
   fi
 
   if [ "$(cat /proc/net/ip_tables_targets | grep -c 'NFQUEUE')" == "0" ]; then
@@ -43,24 +32,42 @@ check_requirements() {
     abort
   fi
 
-  if which busybox > /dev/null 2>&1; then
-    ui_print "- Busybox: Installed"
-  else
-    ui_print "! Busybox: Not found"
+    if [ "$(cat /proc/net/ip_tables_targets | grep -c 'NFQUEUE')" == "0" ]; then
+    abort "! Incompatible iptables version"
+  fi
+
+  if ! command -v busybox >/dev/null 2>&1; then
+    ui_print "- Busybox: Not found, will install"
     BUSYBOX_REQUIRED=1
   fi
 }
 
-check_requirements
+# Get binary to use from device architecture
+binary_by_architecture() {
+  ABI=$(grep_get_prop ro.product.cpu.abi)
+  case $ABI in
+    arm64-v8a) BINARY=nfqws-aarch64 ;;
+    x86_64) BINARY=nfqws-x86_x64 ;;
+    armeabi-v7a) BINARY=nfqws-arm ;;
+    x86) BINARY=nfqws-x86 ;;
+    *) abort "! Unsupported Architecture: $ABI" ;;
+  esac
+  ui_print "- Device Architecture: $ABI"
+}
 
+check_requirements
+binary_by_architecture
+
+# Kill watchdog and zapret
 for pid in $(pgrep -f zapret.sh); do
     kill -9 $pid
 done
-su -c 'pkill nfqws'
-su -c 'pkill zapret'
-su -c 'iptables -t mangle -F PREROUTING'
-su -c 'iptables -t mangle -F POSTROUTING'
+pkill nfqws
+pkill zapret
+iptables -t mangle -F PREROUTING
+iptables -t mangle -F POSTROUTING
 
+# Save files if module is updating
 if [ -d "$MODUPDATEPATH" ]; then
     ui_print "- Updating the module"
 
@@ -80,6 +87,7 @@ if [ -d "$MODUPDATEPATH" ]; then
     mv "$MODUPDATEPATH" "$MODPATH"
 fi
 
+# Install Busybox if need (only Magisk users)
 if [ "$BUSYBOX_REQUIRED" -eq 1 ] && [ ! -f "$BUSYBOX_PATH" ]; then
     ui_print "- Installing Busybox"
 
@@ -106,12 +114,12 @@ for FILE in "$MODPATH/tactics/"*.sh; do
   fi
 done
 
+# Final steps
 mv "$MODPATH/$BINARY" "$MODPATH/nfqws"
 rm -f "$MODPATH/nfqws-"*
-
 set_perm_recursive $MODPATH 0 2000 0755 0755
+
 settings put global private_dns_mode off
-ui_print "- The Private DNS has been disabled, if you need enable them, turn it back"
 
 ui_print "********************************************************"
 ui_print "       THIS MODULE IS FOR EDUCATIONAL PURPOSES!"
