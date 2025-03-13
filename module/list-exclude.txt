@@ -4,9 +4,8 @@ googleadservices.com
 googleoptimize.com
 googleapis.com
 google.com
+fastly-edge.com
 doubleclick.net
-tiktokv.com
-tiktok.com
 mvd.ru
 gov.ru
 vk.ru
