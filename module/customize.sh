@@ -4,10 +4,8 @@ MODUPDATEPATH=/data/adb/modules_update/zapret
 SYSTEM_XBIN=$MODULE_DIR/system/xbin
 BUSYBOX_PATH=/data/adb/magisk/busybox
 
-# Check if /data is mounted
-if ! mountpoint -q /data; then
-    mount /data 2>/dev/null || abort "! Failed to mount /data"
-fi
+# Mount /data if need
+mount /data 2>/dev/null || abort "! Failed to mount /data"
 
 # Check requirements
 check_requirements() {
