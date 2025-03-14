@@ -12,7 +12,7 @@ check_requirements() {
   if command -v iptables >/dev/null 2>&1; then
     ui_print "- iptables: Found"
   else
-    abort "! iptables not found"
+    abort "! iptables: Not found"
   fi
 
   if [ "$(cat /proc/net/ip_tables_targets | grep -c 'NFQUEUE')" == "0" ]; then
@@ -21,12 +21,14 @@ check_requirements() {
   fi
 
     if [ "$(cat /proc/net/ip_tables_targets | grep -c 'NFQUEUE')" == "0" ]; then
-    abort "! Incompatible iptables version"
+    abort "! Bad iptables"
   fi
 
   if ! command -v busybox >/dev/null 2>&1; then
-    ui_print "- Busybox: Not found, will install"
+    ui_print "! Busybox: Not found"
     BUSYBOX_REQUIRED=1
+  else
+    ui_print "- Busybox: Found"
   fi
 
   API=$(grep_get_prop ro.build.version.sdk)
