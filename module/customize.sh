@@ -66,7 +66,7 @@ done
 pkill nfqws
 pkill zapret
 
-# Remove rules for iptables
+# Reset rules for iptables
 iptables -t mangle -F POSTROUTING
 iptables -t mangle -F PREROUTING
 ip6tables -t mangle -F POSTROUTING
