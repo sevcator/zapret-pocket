@@ -8,7 +8,17 @@ sysctl net.netfilter.nf_conntrack_tcp_be_liberal=0 > /dev/null;
 for pid in $(pgrep -f zapret.sh); do
     kill -9 $pid
 done
-su -c 'pkill nfqws'
-su -c 'pkill zapret'
-su -c 'iptables -t mangle -F PREROUTING'
-su -c 'iptables -t mangle -F POSTROUTING'
+pkill nfqws
+pkill zapret
+iptables -t mangle -F POSTROUTING
+iptables -t mangle -F PREROUTING
+ip6tables -t mangle -F POSTROUTING
+ip6tables -t mangle -F PREROUTING
+iptables -F OUTPUT
+iptables -F FORWARD
+iptables -t nat -F OUTPUT
+iptables -t nat -F PREROUTING
+ip6tables -F OUTPUT
+ip6tables -F FORWARD
+ip6tables -t nat -F OUTPUT
+ip6tables -t nat -F PREROUTING
