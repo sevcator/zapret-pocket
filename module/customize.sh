@@ -55,17 +55,16 @@ binary_by_architecture() {
   ui_print "- Device Architecture: $ABI"
 }
 
+# Run this steps
 check_requirements
 binary_by_architecture
 
-# Kill watchdog and zapret
+# Kill watchdog script and zapret
 for pid in $(pgrep -f zapret.sh); do
     kill -9 $pid
 done
 pkill nfqws
 pkill zapret
-iptables -t mangle -F PREROUTING
-iptables -t mangle -F POSTROUTING
 
 # Save files if module is updating
 if [ -d "$MODUPDATEPATH" ]; then
@@ -114,16 +113,26 @@ for FILE in "$MODPATH/tactics/"*.sh; do
   fi
 done
 
-# Final steps
+# Final steps of work with files
 mv "$MODPATH/$BINARY" "$MODPATH/nfqws"
 rm -f "$MODPATH/nfqws-"*
 set_perm_recursive $MODPATH 0 2000 0755 0755
 
+# Disable Private DNS
+ui_print "- Disabling Private DNS"
 settings put global private_dns_mode off
 
-ui_print "********************************************************"
-ui_print "       THIS MODULE IS FOR EDUCATIONAL PURPOSES!"
-ui_print "    THE OWNER IS NOT RESPONSIBLE FOR YOUR ACTIONS!"
-ui_print "********************************************************"
-ui_print "           github.com/sevcator/zapret-magisk            "
-ui_print "********************************************************"
+# Disable Tethering Hardware Acceleration
+ui_print "- Disabling Tethering Hardware Acceleration"
+settings put global tether_offload_disabled 1
+
+# Create rules for iptables
+ui_print "- Creating rules iptables"
+iptables -I OUTPUT -p udp --dport 853 -j DROP
+iptables -I OUTPUT -p tcp --dport 853 -j DROP
+iptables -I FORWARD -p udp --dport 853 -j DROP
+iptables -I FORWARD -p tcp --dport 853 -j DROP
+iptables -t nat -I OUTPUT -p udp --dport 53 -j DNAT --to 1.1.1.1:53
+iptables -t nat -I OUTPUT -p tcp --dport 53 -j DNAT --to 1.1.1.1:53
+iptables -t nat -I PREROUTING -p udp --dport 53 -j DNAT --to 1.1.1.1:53
+iptables -t nat -I PREROUTING -p tcp --dport 53 -j DNAT --to 1.1.1.1:53
