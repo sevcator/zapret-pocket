@@ -23,7 +23,7 @@ stop_service() {
 }
 
 toggle_service() {
-    if pgrep -f zapret.sh > /dev/null; then
+    if pgrep -f nfqws > /dev/null; then
         stop_service
     else
         start_service
@@ -63,7 +63,7 @@ elif [ "$1" == "restart" ]; then
 elif [ "$1" == "tactic" ]; then
     select_tactic
 else
-    echo "zapret @ <3"
+    echo "zapret @ github.com/sevcator/zapret-magisk <3"
     echo ""
     echo "- Current tactic: $CURRENTTACTIC"
     echo ""
