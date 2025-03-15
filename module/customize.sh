@@ -66,6 +66,20 @@ done
 pkill nfqws
 pkill zapret
 
+# Remove rules for iptables
+iptables -t mangle -F POSTROUTING
+iptables -t mangle -F PREROUTING
+ip6tables -t mangle -F POSTROUTING
+ip6tables -t mangle -F PREROUTING
+iptables -F OUTPUT
+iptables -F FORWARD
+iptables -t nat -F OUTPUT
+iptables -t nat -F PREROUTING
+ip6tables -F OUTPUT
+ip6tables -F FORWARD
+ip6tables -t nat -F OUTPUT
+ip6tables -t nat -F PREROUTING
+
 # Save files if module is updating
 if [ -d "$MODUPDATEPATH" ]; then
     ui_print "- Updating the module"
