@@ -1,4 +1,5 @@
 #!/bin/bash
+# Default zapret configuration (https://github.com/bol-van/zapret-win-bundle)
 
 # Values
 autohostlist="--hostlist-exclude=$MODPATH/list-exclude.txt --hostlist-auto=$MODPATH/list-auto.txt"
