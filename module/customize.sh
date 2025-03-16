@@ -154,7 +154,3 @@ ip6tables -I OUTPUT -p udp --dport 853 -j DROP
 ip6tables -I OUTPUT -p tcp --dport 853 -j DROP
 ip6tables -I FORWARD -p udp --dport 853 -j DROP
 ip6tables -I FORWARD -p tcp --dport 853 -j DROP
-ip6tables -t nat -I OUTPUT -p udp --dport 53 -j DNAT --to-destination [2606:4700:4700::1111]:53
-ip6tables -t nat -I OUTPUT -p tcp --dport 53 -j DNAT --to-destination [2606:4700:4700::1111]:53
-ip6tables -t nat -I PREROUTING -p udp --dport 53 -j DNAT --to-destination [2606:4700:4700::1111]:53
-ip6tables -t nat -I PREROUTING -p tcp --dport 53 -j DNAT --to-destination [2606:4700:4700::1111]:53
