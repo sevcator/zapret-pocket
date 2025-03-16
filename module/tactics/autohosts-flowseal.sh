@@ -1,4 +1,5 @@
 #!/bin/bash
+# zapret-discord-youtube by Flowseal (https://github.com/Flowseal/zapret-discord-youtube)
 
 # Values
 autohostlist="--hostlist-exclude=$MODPATH/list-exclude.txt --hostlist-auto=$MODPATH/list-auto.txt"
