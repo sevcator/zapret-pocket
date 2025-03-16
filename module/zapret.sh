@@ -22,6 +22,11 @@ fi
 CURRENTTACTIC=$(cat $MODPATH/current-tactic)
 . "$MODPATH/tactics/$CURRENTTACTIC.sh"
 
+
+sysctl net.ipv6.conf.all.disable_ipv6=1 > /dev/null;
+sysctl net.ipv6.conf.default.disable_ipv6=1 > /dev/null;
+sysctl net.ipv6.conf.lo.disable_ipv6=1 > /dev/null;
+
 iptables -I OUTPUT -p udp --dport 853 -j DROP
 iptables -I OUTPUT -p tcp --dport 853 -j DROP
 iptables -I FORWARD -p udp --dport 853 -j DROP
