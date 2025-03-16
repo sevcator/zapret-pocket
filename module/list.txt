@@ -1,3 +1,4 @@
+www.google.com
 connectivitycheck.gstatic.com
 googlevideo.com
 play.google.com
