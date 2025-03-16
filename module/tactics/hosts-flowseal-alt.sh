@@ -1,4 +1,5 @@
 #!/bin/bash
+# zapret-discord-youtube by Flowseal (https://github.com/Flowseal/zapret-discord-youtube)
 
 # Values
 hostlist="--hostlist=$MODPATH/list.txt"
