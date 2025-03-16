@@ -1,4 +1,5 @@
 #!/bin/bash
+# Default zapret configuration (https://github.com/bol-van/zapret-win-bundle)
 
 # Values
 hostlist="--hostlist=$MODPATH/list.txt"
