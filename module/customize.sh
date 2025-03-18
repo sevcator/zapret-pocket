@@ -141,7 +141,7 @@ if [ ! -f "$MODPATH/list-auto.txt" ]; then
     touch "$MODPATH/list-auto.txt"
 fi
 REQUIRED_DOMAINS=("www.google.com" "google.com" "connectivitycheck.gstatic.com")
-for DOMAIN in "${REQUIRED_DOMAINS[@]}"; do
+for DOMAIN in $REQUIRED_DOMAINS; do
     if ! grep -qi "^$DOMAIN$" "$MODPATH/list-auto.txt"; then
         echo "$DOMAIN" >> "$MODPATH/list-auto.txt"
     fi
