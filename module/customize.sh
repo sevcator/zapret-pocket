@@ -4,10 +4,9 @@ MODUPDATEPATH=/data/adb/modules_update/zapret
 SYSTEM_XBIN=$MODULE_DIR/system/xbin
 BUSYBOX_PATH=/data/adb/magisk/busybox
 
-# Mount /data
+ui_print "- Mounting /data"
 mount /data 2>/dev/null
 
-# Check requirements
 check_requirements() {
   if command -v iptables >/dev/null 2>&1; then
     ui_print "- iptables: Found"
@@ -15,13 +14,19 @@ check_requirements() {
     abort "! iptables: Not found"
   fi
 
+  if command -v ip6tables >/dev/null 2>&1; then
+    ui_print "- ip6tables: Found"
+  else
+    abort "! ip6tables: Not found"
+  fi
+
   if [ "$(cat /proc/net/ip_tables_targets | grep -c 'NFQUEUE')" == "0" ]; then
     ui_print "! Bad iptables"
     abort
   fi
 
-    if [ "$(cat /proc/net/ip_tables_targets | grep -c 'NFQUEUE')" == "0" ]; then
-    abort "! Bad iptables"
+  if [ "$(cat /proc/net/ip6_tables_targets | grep -c 'NFQUEUE')" == "0" ]; then
+    abort "! Bad ip6tables"
   fi
 
   if ! command -v busybox >/dev/null 2>&1; then
@@ -42,7 +47,6 @@ check_requirements() {
   fi
 }
 
-# Get binary to use from device architecture
 binary_by_architecture() {
   ABI=$(grep_get_prop ro.product.cpu.abi)
   case $ABI in
@@ -55,18 +59,20 @@ binary_by_architecture() {
   ui_print "- Device Architecture: $ABI"
 }
 
-# Run this steps
+ui_print "- Checking requirements"
 check_requirements
+ui_print "- Selecting a binary for use"
 binary_by_architecture
+ui_print "- Binary: $BINARY"
 
-# Kill watchdog script and zapret
+ui_print "- Killing zapret"
 for pid in $(pgrep -f zapret.sh); do
     kill -9 $pid
 done
 pkill nfqws
 pkill zapret
 
-# Reset rules for iptables
+ui_print "- Cleaning rules from iptables"
 iptables -t mangle -F POSTROUTING
 iptables -t mangle -F PREROUTING
 ip6tables -t mangle -F POSTROUTING
@@ -80,9 +86,8 @@ ip6tables -F FORWARD
 ip6tables -t nat -F OUTPUT
 ip6tables -t nat -F PREROUTING
 
-# Save files if module is updating
 if [ -d "$MODUPDATEPATH" ]; then
-    ui_print "- Updating the module"
+    ui_print "- Saving files, because you update the module"
 
     if [ -f "$MODPATH/list-auto.txt" ]; then
         mv "$MODPATH/list-auto.txt" "$MODUPDATEPATH/list-auto.txt"
@@ -100,9 +105,13 @@ if [ -d "$MODUPDATEPATH" ]; then
     mv "$MODUPDATEPATH" "$MODPATH"
 fi
 
-# Install Busybox if need (only Magisk users)
-if [ "$BUSYBOX_REQUIRED" -eq 1 ] && [ ! -f "$BUSYBOX_PATH" ]; then
-    ui_print "- Installing Busybox"
+if [ "$BUSYBOX_REQUIRED" -eq 1 ]; then
+    if [ ! -f "$BUSYBOX_PATH" ]; then
+        ui_print "! You don't have the built-in Magisk Busybox"
+        abort "! Please install Busybox manually"
+    fi
+
+    ui_print "- Using built-in Magisk Busybox"
 
     if ! mkdir -p "$SYSTEM_XBIN"; then
         abort "! Failed creating folder"
@@ -115,42 +124,38 @@ if [ "$BUSYBOX_REQUIRED" -eq 1 ] && [ ! -f "$BUSYBOX_PATH" ]; then
     set_perm_recursive "$SYSTEM_XBIN" 0 2000 0755 0755
 fi
 
+ui_print "- Fixing syntax error in scripts"
 for FILE in "$MODPATH"/*.sh; do
   if [[ -f "$FILE" ]]; then
     sed -i 's/\r$//' "$FILE"
   fi
 done
-
 for FILE in "$MODPATH/tactics/"*.sh; do
   if [[ -f "$FILE" ]]; then
     sed -i 's/\r$//' "$FILE"
   fi
 done
 
-# Final steps of work with files
+ui_print "- Fixing Chrome error @ t.me/sevcator/883"
+if [ ! -f "$MODPATH/list-auto.txt" ]; then
+    touch "$MODPATH/list-auto.txt"
+fi
+REQUIRED_DOMAINS=("www.google.com" "google.com" "connectivitycheck.gstatic.com")
+for DOMAIN in "${REQUIRED_DOMAINS[@]}"; do
+    if ! grep -qi "^$DOMAIN$" "$MODPATH/list-auto.txt"; then
+        echo "$DOMAIN" >> "$MODPATH/list-auto.txt"
+    fi
+done
+
+ui_print "- Removing unnecessary binaries"
 mv "$MODPATH/$BINARY" "$MODPATH/nfqws"
 rm -f "$MODPATH/nfqws-"*
+
+ui_print "- Setting permissions"
 set_perm_recursive $MODPATH 0 2000 0755 0755
 
-# Disable Private DNS
 ui_print "- Disabling Private DNS"
 settings put global private_dns_mode off
 
-# Disable Tethering Hardware Acceleration
 ui_print "- Disabling Tethering Hardware Acceleration"
 settings put global tether_offload_disabled 1
-
-# Create rules for iptables
-ui_print "- Creating rules iptables"
-iptables -I OUTPUT -p udp --dport 853 -j DROP
-iptables -I OUTPUT -p tcp --dport 853 -j DROP
-iptables -I FORWARD -p udp --dport 853 -j DROP
-iptables -I FORWARD -p tcp --dport 853 -j DROP
-iptables -t nat -I OUTPUT -p udp --dport 53 -j DNAT --to 1.1.1.1:53
-iptables -t nat -I OUTPUT -p tcp --dport 53 -j DNAT --to 1.1.1.1:53
-iptables -t nat -I PREROUTING -p udp --dport 53 -j DNAT --to 1.1.1.1:53
-iptables -t nat -I PREROUTING -p tcp --dport 53 -j DNAT --to 1.1.1.1:53
-ip6tables -I OUTPUT -p udp --dport 853 -j DROP
-ip6tables -I OUTPUT -p tcp --dport 853 -j DROP
-ip6tables -I FORWARD -p udp --dport 853 -j DROP
-ip6tables -I FORWARD -p tcp --dport 853 -j DROP
