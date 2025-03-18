@@ -57,15 +57,15 @@ binary_by_architecture() {
     *) abort "! Unsupported Architecture: $ABI" ;;
   esac
   ui_print "- Device Architecture: $ABI"
+  ui_print "- Binary: $BINARY"
 }
 
 ui_print "- Checking requirements"
 check_requirements
-ui_print "- Selecting a binary for use"
+ui_print "- Choosing the binary according to Device Architecture"
 binary_by_architecture
-ui_print "- Binary: $BINARY"
 
-ui_print "- Killing zapret"
+ui_print "- Terminating processes"
 for pid in $(pgrep -f zapret.sh); do
     kill -9 $pid
 done
@@ -83,8 +83,6 @@ iptables -t nat -F OUTPUT
 iptables -t nat -F PREROUTING
 ip6tables -F OUTPUT
 ip6tables -F FORWARD
-ip6tables -t nat -F OUTPUT
-ip6tables -t nat -F PREROUTING
 
 if [ -d "$MODUPDATEPATH" ]; then
     ui_print "- Saving files, because you update the module"
@@ -124,7 +122,7 @@ if [ "$BUSYBOX_REQUIRED" -eq 1 ]; then
     set_perm_recursive "$SYSTEM_XBIN" 0 2000 0755 0755
 fi
 
-ui_print "- Fixing syntax error in scripts"
+ui_print "- Fixing syntax error in bash scripts"
 for FILE in "$MODPATH"/*.sh; do
   if [[ -f "$FILE" ]]; then
     sed -i 's/\r$//' "$FILE"
@@ -136,7 +134,7 @@ for FILE in "$MODPATH/tactics/"*.sh; do
   fi
 done
 
-ui_print "- Fixing Chrome error @ t.me/sevcator/883"
+ui_print "- Fixing Chrome problem @ t.me/sevcator/883"
 if [ ! -f "$MODPATH/list-auto.txt" ]; then
     touch "$MODPATH/list-auto.txt"
 fi
