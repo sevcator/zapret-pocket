@@ -70,10 +70,10 @@ addMultiPort() {
 
 if [ "$(cat /proc/net/ip_tables_targets | grep -c 'NFQUEUE')" == "0" ]; then
     exit
-else
+fi
 if [ "$(cat /proc/net/ip6_tables_targets | grep -c 'NFQUEUE')" == "0" ]; then
     exit
-else
+fi
 
 if [ "$(cat /proc/net/ip_tables_matches | grep -c 'multiport')" != "0" ]; then
     iMportS="-m multiport --sports"
