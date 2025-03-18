@@ -56,13 +56,13 @@ binary_by_architecture() {
     x86) BINARY=nfqws-x86 ;;
     *) abort "! Unsupported Architecture: $ABI" ;;
   esac
-  ui_print "- Device Architecture: $ABI"
+  ui_print "- Device architecture: $ABI"
   ui_print "- Binary: $BINARY"
 }
 
 ui_print "- Checking requirements"
 check_requirements
-ui_print "- Choosing the binary according to Device Architecture"
+ui_print "- Choosing the binary according to device architecture"
 binary_by_architecture
 
 ui_print "- Terminating processes"
@@ -85,7 +85,7 @@ ip6tables -F OUTPUT
 ip6tables -F FORWARD
 
 if [ -d "$MODUPDATEPATH" ]; then
-    ui_print "- Saving files, because you update the module"
+    ui_print "- Backing up old module files"
 
     if [ -f "$MODPATH/list-auto.txt" ]; then
         mv "$MODPATH/list-auto.txt" "$MODUPDATEPATH/list-auto.txt"
@@ -138,7 +138,7 @@ ui_print "- Fixing Chrome problem @ t.me/sevcator/883"
 if [ ! -f "$MODPATH/list-auto.txt" ]; then
     touch "$MODPATH/list-auto.txt"
 fi
-REQUIRED_DOMAINS=("www.google.com" "google.com" "connectivitycheck.gstatic.com")
+REQUIRED_DOMAINS="www.google.com google.com connectivitycheck.gstatic.com"
 for DOMAIN in $REQUIRED_DOMAINS; do
     if ! grep -qi "^$DOMAIN$" "$MODPATH/list-auto.txt"; then
         echo "$DOMAIN" >> "$MODPATH/list-auto.txt"
