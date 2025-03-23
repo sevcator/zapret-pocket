@@ -29,13 +29,6 @@ check_requirements() {
     abort "! Bad ip6tables"
   fi
 
-  if ! command -v busybox >/dev/null 2>&1; then
-    ui_print "! Busybox: Not found"
-    BUSYBOX_REQUIRED=1
-  else
-    ui_print "- Busybox: Found"
-  fi
-
   API=$(grep_get_prop ro.build.version.sdk)
   if [ -n "$API" ]; then
     ui_print "- Device Android API: $API"
@@ -106,25 +99,6 @@ if [ -d "$MODUPDATEPATH" ]; then
     mkdir -p "$MODPATH"
     cp -rf "$MODUPDATEPATH"/* "$MODPATH"/
     rm -rf "$MODUPDATEPATH"
-fi
-
-if [ "$BUSYBOX_REQUIRED" -eq 1 ]; then
-    if [ ! -f "$BUSYBOX_PATH" ]; then
-        ui_print "! You don't have the built-in Magisk Busybox"
-        abort "! Please install Busybox manually"
-    fi
-
-    ui_print "- Using built-in Magisk Busybox"
-
-    if ! mkdir -p "$SYSTEM_XBIN"; then
-        abort "! Failed creating folder"
-    fi
-    
-    if ! cp "$BUSYBOX_PATH" "$SYSTEM_XBIN/"; then
-        abort "! Failed copying binary"
-    fi
-
-    set_perm_recursive "$SYSTEM_XBIN" 0 2000 0755 0755
 fi
 
 ui_print "- Fixing syntax error in bash scripts"
