@@ -63,15 +63,17 @@ done
 pkill nfqws
 pkill zapret
 
-ui_print "- Cleaning rules from iptables"
+ui_print "- Cleaning iptables rules"
 iptables -t mangle -F POSTROUTING
 iptables -t mangle -F PREROUTING
-ip6tables -t mangle -F POSTROUTING
-ip6tables -t mangle -F PREROUTING
 iptables -F OUTPUT
 iptables -F FORWARD
 iptables -t nat -F OUTPUT
 iptables -t nat -F PREROUTING
+
+ui_print "- Cleaning ip6tables rules"
+ip6tables -t mangle -F POSTROUTING
+ip6tables -t mangle -F PREROUTING
 ip6tables -F OUTPUT
 ip6tables -F FORWARD
 
@@ -122,12 +124,10 @@ for DOMAIN in $REQUIRED_DOMAINS; do
     fi
 done
 
-ui_print "- Removing unnecessary binaries"
 mv "$MODPATH/nfqws-$ABI" "$MODPATH/nfqws" 2>/dev/null || abort "! Binary not found"
 rm -f "$MODPATH/nfqws-"*
-
 if [ ! -f "$MODPATH/nfqws" ]; then
-  abort "! nfqws not found"
+  abort "! Binary not found (2)"
 fi
 
 ui_print "- Setting permissions"
