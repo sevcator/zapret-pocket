@@ -7,7 +7,6 @@ boot_wait() {
 boot_wait
 
 MODPATH=/data/adb/modules/zapret
-MODUPDATEPATH=/data/adb/modules_update/zapret
 
 for FILE in "$MODPATH/tactics"/*.sh; do
   if [[ -f "$FILE" ]]; then
@@ -24,8 +23,8 @@ if [ ! -f "$MODPATH/current-dns" ]; then
 fi
 
 CURRENTTACTIC=$(cat $MODPATH/current-tactic)
-. "$MODPATH/tactics/$CURRENTTACTIC.sh"
 CURRENTDNS=$(cat $MODPATH/current-dns)
+. "$MODPATH/tactics/$CURRENTTACTIC.sh"
 
 sysctl net.ipv6.conf.all.disable_ipv6=1 > /dev/null;
 sysctl net.ipv6.conf.default.disable_ipv6=1 > /dev/null;
