@@ -9,8 +9,4 @@ fastly-edge.com
 doubleclick.net
 mvd.ru
 gov.ru
-vk.ru
-vk.com
 gosuslugi.ru
-rutube.ru
-plvideo.ru
