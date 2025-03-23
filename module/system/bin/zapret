@@ -78,6 +78,8 @@ elif [ "$1" == "restart" ]; then
     restart_service
 elif [ "$1" == "tactic" ]; then
     select_tactic
+elif [ "$1" == "dns" ]; then
+    select_dns
 else
     echo "zapret @ github.com/sevcator/zapret-magisk <3"
     echo ""
@@ -89,4 +91,5 @@ else
     echo "zapret restart - Restart the zapret service"
     echo "zapret toggle - Start/stop the zapret service"
     echo "zapret tactic - Pick a tactic for DPI modification"
+    echo "zapret dns - Pick a DNS address"
 fi;
