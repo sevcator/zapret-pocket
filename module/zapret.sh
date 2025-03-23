@@ -19,6 +19,10 @@ if [ ! -f "$MODPATH/current-tactic" ]; then
     exit
 fi
 
+if [ ! -f "$MODPATH/current-dns" ]; then
+    exit
+fi
+
 CURRENTTACTIC=$(cat $MODPATH/current-tactic)
 . "$MODPATH/tactics/$CURRENTTACTIC.sh"
 CURRENTDNS=$(cat $MODPATH/current-dns)
