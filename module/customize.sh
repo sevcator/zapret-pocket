@@ -1,8 +1,6 @@
 # Variables
 MODPATH=/data/adb/modules/zapret
 MODUPDATEPATH=/data/adb/modules_update/zapret
-SYSTEM_XBIN=$MODULE_DIR/system/xbin
-BUSYBOX_PATH=/data/adb/magisk/busybox
 
 ui_print "- Mounting /data"
 mount -o remount,rw /data || abort "! Failed to remount /data"
