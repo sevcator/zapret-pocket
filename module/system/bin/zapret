@@ -2,6 +2,7 @@
 
 MODPATH=/data/adb/modules/zapret
 CURRENTTACTIC=$(cat $MODPATH/current-tactic)
+CURRENTTACTIC=$(cat $MODPATH/current-dns)
 
 start_service() {
     if pgrep -f nfqws > /dev/null; then
@@ -55,23 +56,19 @@ select_tactic() {
 select_dns() {
     echo "- Enter the DNS address (IPv4):"
     read user_dns
-    if [[ ! $user_tactic =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]; then
-        echo "! Invaild DNS address"
+    if ! echo "$user_dns" | grep -qE '^([0-9]{1,3}\.){3}[0-9]{1,3}$'; then
+        echo "! Invalid DNS address"
         return 1
     fi
-    if ping -c 1 -W 2 "$user_tactic" &> /dev/null; then
-        echo "$user_tactic" > "$MODPATH/current-dns"
-        echo "- Done!"
-        echo "- Run 'zapret restart' to use this config now"
-    else
-        echo "! DNS address unreachable"
-    fi
+    echo "$user_dns" > "$MODPATH/current-dns"
+    echo "- Done!"
+    echo "- Run 'zapret restart' to use this config now"
 }
 
 if [ "$1" == "start" ]; then
     start_service
 elif [ "$1" == "stop" ]; then
-    stop_service
+    stop_service    
 elif [ "$1" == "toggle" ]; then
     toggle_service
 elif [ "$1" == "restart" ]; then
@@ -84,6 +81,7 @@ else
     echo "zapret @ github.com/sevcator/zapret-magisk <3"
     echo ""
     echo "- Current tactic: $CURRENTTACTIC"
+    echo "- Current DNS: $CURRENTDNS"
     echo ""
     echo "- Available commands:"
     echo "zapret start - Start the zapret service"
