@@ -52,6 +52,22 @@ select_tactic() {
     fi
 }
 
+select_dns() {
+    echo "- Enter the DNS address (IPv4):"
+    read user_dns
+    if [[ ! $user_tactic =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]; then
+        echo "! Invaild DNS address"
+        return 1
+    fi
+    if ping -c 1 -W 2 "$user_tactic" &> /dev/null; then
+        echo "$user_tactic" > "$MODPATH/current-dns"
+        echo "- Done!"
+        echo "- Run 'zapret restart' to use this config now"
+    else
+        echo "! DNS address unreachable"
+    fi
+}
+
 if [ "$1" == "start" ]; then
     start_service
 elif [ "$1" == "stop" ]; then
