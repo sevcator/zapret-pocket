@@ -5,7 +5,7 @@ SYSTEM_XBIN=$MODULE_DIR/system/xbin
 BUSYBOX_PATH=/data/adb/magisk/busybox
 
 ui_print "- Mounting /data"
-mount /data 2>/dev/null
+mount -o remount,rw /data || abort "! Failed to remount /data"
 
 check_requirements() {
   if command -v iptables >/dev/null 2>&1; then
@@ -99,8 +99,13 @@ if [ -d "$MODUPDATEPATH" ]; then
         fi
     fi
 
-    rm -rf "$MODPATH"
-    mv "$MODUPDATEPATH" "$MODPATH"
+    if [ -f "$MODPATH/current-dns" ]; then
+        mv "$MODPATH/current-dns" "$MODUPDATEPATH/current-dns"
+    fi
+
+    mkdir -p "$MODPATH"
+    cp -rf "$MODUPDATEPATH"/* "$MODPATH"/
+    rm -rf "$MODUPDATEPATH"
 fi
 
 if [ "$BUSYBOX_REQUIRED" -eq 1 ]; then
@@ -146,11 +151,15 @@ for DOMAIN in $REQUIRED_DOMAINS; do
 done
 
 ui_print "- Removing unnecessary binaries"
-mv "$MODPATH/$BINARY" "$MODPATH/nfqws"
+mv "$MODPATH/nfqws-$ABI" "$MODPATH/nfqws" 2>/dev/null || abort "! Binary not found"
 rm -f "$MODPATH/nfqws-"*
 
+if [ ! -f "$MODPATH/nfqws" ]; then
+  abort "! nfqws not found"
+fi
+
 ui_print "- Setting permissions"
-set_perm_recursive $MODPATH 0 2000 0755 0755
+set_perm_recursive "$MODPATH" 0 2000 0755 0755
 
 ui_print "- Disabling Private DNS"
 settings put global private_dns_mode off
