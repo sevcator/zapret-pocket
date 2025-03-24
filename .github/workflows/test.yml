@@ -12,10 +12,13 @@ jobs:
       - name: Send to Telegram
         run: |
           curl -X POST \
-               -F "text=🔔 Test\\n1test" \
-               -F "parse_mode=HTML" \
-               -F "disable_web_page_preview=true" \
-               "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage?chat_id=${TELEGRAM_CHAT_ID_MAIN}"
+            -d '{
+              "chat_id": "'"${TELEGRAM_CHAT_ID_MAIN}"'",
+              "text": "🔔 <b>Test</b>\n\n1test",
+              "parse_mode": "HTML",
+              "disable_web_page_preview": true
+            }' \
+            --url "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage?chat_id=${TELEGRAM_CHAT_ID_MAIN}"
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID_MAIN: ${{ secrets.DIRECT_MESSAGES }}
