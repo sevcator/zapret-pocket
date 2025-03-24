@@ -3,8 +3,11 @@ on:
   workflow_dispatch:
 
 jobs:
+  test-job:  # Добавлено имя job [[6]]
+    runs-on: ubuntu-latest  # Указана среда выполнения
+    steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4  # Правильная вложенность [[6]]
 
       - name: Send to Telegram
         run: |
@@ -14,7 +17,5 @@ jobs:
                -F "disable_web_page_preview=true" \
                "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage?chat_id=${TELEGRAM_CHAT_ID_MAIN}"
         env:
-          VERSION: ${{ github.ref_name }}
-          SHA256: ${{ env.SHA256 }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID_MAIN: ${{ secrets.TELEGRAM_CHAT_ID_MAIN }
+          TELEGRAM_CHAT_ID_MAIN: ${{ secrets.TELEGRAM_CHAT_ID_MAIN }}
