@@ -201,16 +201,22 @@ jobs:
 
       - name: Send to Telegram
         run: |
-          curl -F document=@"zapret-Magisk.zip" \
-               -F "caption=🔔 <b>New release:</b> <a href='https://github.com/${{ github.repository }}/releases/tag/${{ env.version }}'>${VERSION}</a>\\n🔑 <b>SHA256:</b> ${SHA256}" \
-               -F "parse_mode=HTML" \
-               -F "disable_web_page_preview=true" \
-               "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument?chat_id=${TELEGRAM_CHAT_ID}"
           curl -X POST \
-               -F "text=🔔 Новый релиз <b>${VERSION}</b> модуля zapret-magisk вышел! <a href='${RELEASES_TELEGRAM_CHANNEL}'>Подробнее...</a>" \
-               -F "parse_mode=HTML" \
-               -F "disable_web_page_preview=true" \
-               "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage?chat_id=${TELEGRAM_CHAT_ID_MAIN}"
+            -F document=@"zapret-Magisk.zip" \
+            -F chat_id="${TELEGRAM_CHAT_ID}" \
+            -F "caption=🔔 <b>New release:</b> <a href='https://github.com/${GITHUB_REPOSITORY}/releases/tag/${VERSION}'>${VERSION}</a>\n🔑 <b>SHA256:</b> ${SHA256}" \
+            -F parse_mode=HTML \
+            -F disable_web_page_preview=true \
+            "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument?chat_id=${TELEGRAM_CHAT_ID}"
+          curl -X POST \
+            -H "Content-Type: application/json" \
+            -d '{
+              "chat_id": "'"${TELEGRAM_CHAT_ID_MAIN}"'",
+              "text": "🔔 Новый релиз <b>'"${VERSION}"'</b> модуля zapret-magisk вышел! <a href=\"'"${RELEASES_TELEGRAM_CHANNEL}"'\">Подробнее...</a>",
+              "parse_mode": "HTML",
+              "disable_web_page_preview": true
+            }' \
+            "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage?chat_id=${TELEGRAM_CHAT_ID_MAIN}"
         env:
           VERSION: ${{ github.ref_name }}
           SHA256: ${{ env.SHA256 }}
