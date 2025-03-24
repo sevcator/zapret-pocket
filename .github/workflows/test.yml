@@ -1,24 +1,27 @@
-name: Test
+name: Test Telegram Notification
+
 on:
-  workflow_dispatch:
+  workflow_dispatch:  # Ручной запуск workflow
 
 jobs:
-  test-job:  # Добавлено имя job [[6]]
-    runs-on: ubuntu-latest  # Указана среда выполнения
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4  # Правильная вложенность [[6]]
+  send-telegram-notification:
+    runs-on: ubuntu-latest
 
-      - name: Send to Telegram
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Send message to Telegram
         run: |
           curl -X POST \
+            -H "Content-Type: application/json" \
             -d '{
               "chat_id": "'"${TELEGRAM_CHAT_ID_MAIN}"'",
-              "text": "🔔 <b>Test</b>\n\n1test",
+              "text": "🔔 <b>Test Notification</b>\n\nBuild status: Success ✅\nRepository: ${{ github.repository }}\nWorkflow: ${{ github.workflow }}",
               "parse_mode": "HTML",
               "disable_web_page_preview": true
             }' \
-            --url "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage?chat_id=${TELEGRAM_CHAT_ID_MAIN}"
+            "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage"
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID_MAIN: ${{ secrets.DIRECT_MESSAGES }}
+          TELEGRAM_CHAT_ID_MAIN: ${{ secrets.TELEGRAM_CHAT_ID_MAIN }}
