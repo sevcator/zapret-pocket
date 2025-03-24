@@ -185,27 +185,24 @@ jobs:
           name: zapret-Magisk
           path: zapret-Magisk.zip
           if-no-files-found: error
-          
-      - name: Get Release Info
-        id: get_release
-        uses: tj-actions/github-release-info@v1
-        with:
-          tag: ${{ github.ref_name }}
 
       - name: Upload to Release
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.get_release.outputs.upload_url }}
-          asset_path: ./zapret-Magisk.zip
-          asset_name: zapret-Magisk-${{ github.ref_name }}.zip
-          asset_content_type: application/zip
+          fail_on_unmatched_files: true
+          prerelease: false
+          draft: false
+          body: |
+            🔑 SHA256: ${{ env.SHA256 }}
+          files: |
+            zapret-Magisk.zip
 
       - name: Send to Telegram
         run: |
           curl -F document=@"zapret-Magisk.zip" \
-               -F "caption=🔔 <b>New release:</b> <a href='${RELEASE_URL}'>${VERSION}</a>\n🔑 <b>SHA256:</b> ${SHA256}" \
+               -F "caption=🔔 <b>New release:</b> <a href='https://github.com/${{ github.repository }}/releases/tag/${{ env.version }}'>${VERSION}</a>\n🔑 <b>SHA256:</b> ${SHA256}" \
                -F "parse_mode=HTML" \
                -F "disable_web_page_preview=true" \
                "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument?chat_id=${TELEGRAM_CHAT_ID}"
@@ -217,7 +214,6 @@ jobs:
         env:
           VERSION: ${{ github.ref_name }}
           SHA256: ${{ env.SHA256 }}
-          RELEASE_URL: ${{ steps.get_release.outputs.html_url }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           TELEGRAM_CHAT_ID_MAIN: ${{ secrets.TELEGRAM_CHAT_ID_MAIN }}
