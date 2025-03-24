@@ -12,4 +12,4 @@ config="$config --filter-udp=443 $hostlist --dpi-desync=fake --dpi-desync-repeat
 config="$config --filter-udp=443 --dpi-desync=fake --dpi-desync-repeats=8 --dpi-desync-fake-quic=$MODPATH/quic-google.bin $autohostlist --new"
 config="$config --filter-udp=50000-50100 --ipset=$MODPATH/ipset-discord.txt --dpi-desync=fake --dpi-desync-any-protocol --dpi-desync-cutoff=d4 --dpi-desync-repeats=8 --new"
 config="$config --filter-tcp=443 $hostlist --dpi-desync=fake --dpi-desync-ttl=4 --dpi-desync-fake-tls-mod=rnd,rndsni,padencap --new"
-config="$config --filter-tcp=443 --dpi-desync=fake --dpi-desync-ttl=4 --dpi-desync-fake-tls-mod=rnd,rndsni,padencap $autohostlist --new"
+config="$config --filter-tcp=443 --dpi-desync=fake --dpi-desync-ttl=4 --dpi-desync-fake-tls-mod=rnd,rndsni,padencap $autohostlist"
