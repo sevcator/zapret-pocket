@@ -202,12 +202,12 @@ jobs:
       - name: Send to Telegram
         run: |
           curl -F document=@"zapret-Magisk.zip" \
-               -F "caption=🔔 <b>New release:</b> <a href='https://github.com/${{ github.repository }}/releases/tag/${{ env.version }}'>${VERSION}</a>\n🔑 <b>SHA256:</b> ${SHA256}" \
+               -F "caption=🔔 <b>New release:</b> <a href='https://github.com/${{ github.repository }}/releases/tag/${{ env.version }}'>${VERSION}</a>\\n🔑 <b>SHA256:</b> ${SHA256}" \
                -F "parse_mode=HTML" \
                -F "disable_web_page_preview=true" \
                "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument?chat_id=${TELEGRAM_CHAT_ID}"
           curl -X POST \
-               -F "text=🔔 Новый релиз <b>${VERSION}</b> модуля zapret-magisk вышел! <a href='${RELEASES_TELEGRAM_CHANNEL}'>Подробнее</a>" \
+               -F "text=🔔 Новый релиз <b>${VERSION}</b> модуля zapret-magisk вышел! <a href='${RELEASES_TELEGRAM_CHANNEL}'>Подробнее...</a>" \
                -F "parse_mode=HTML" \
                -F "disable_web_page_preview=true" \
                "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage?chat_id=${TELEGRAM_CHAT_ID_MAIN}"
