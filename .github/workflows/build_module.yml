@@ -187,7 +187,7 @@ jobs:
           if-no-files-found: error
 
       - name: Upload to Release
-        uses: actions/upload-release-asset@v1
+        uses: softprops/action-gh-release@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
