@@ -2,7 +2,7 @@
 
 MODPATH=/data/adb/modules/zapret
 CURRENTTACTIC=$(cat $MODPATH/current-tactic)
-CURRENTTACTIC=$(cat $MODPATH/current-dns)
+CURRENTDNS=$(cat $MODPATH/current-dns)
 
 start_service() {
     if pgrep -f nfqws > /dev/null; then
@@ -54,7 +54,8 @@ select_tactic() {
 }
 
 select_dns() {
-    echo "! PLEASE ENTER VAILD DNS ADDRESS OR YOU LOSE ACCESS TO INTERNET"
+    echo "! BE SURE IF DNS SERVER WORKING!"
+    echo "! OTHERWISE YOU LOST INTERNET CONNECTION"
     echo "- Enter the DNS address (IPv4):"
     read user_dns
     if ! echo "$user_dns" | grep -qE '^([0-9]{1,3}\.){3}[0-9]{1,3}$'; then
