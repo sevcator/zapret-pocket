@@ -53,7 +53,7 @@ binary_by_architecture() {
 
 ui_print "- Checking requirements"
 check_requirements
-ui_print "- Choosing the binary according to device architecture"
+ui_print "- Choosing the binary by device architecture"
 binary_by_architecture
 
 ui_print "- Terminating processes"
@@ -78,7 +78,7 @@ ip6tables -F OUTPUT
 ip6tables -F FORWARD
 
 if [ -d "$MODUPDATEPATH" ]; then
-    ui_print "- Backing up old module files"
+    ui_print "- Updating the module"
 
     if [ -f "$MODPATH/list-auto.txt" ]; then
         mv "$MODPATH/list-auto.txt" "$MODUPDATEPATH/list-auto.txt"
@@ -124,7 +124,7 @@ for DOMAIN in $REQUIRED_DOMAINS; do
     fi
 done
 
-mv "$MODPATH/nfqws-$ABI" "$MODPATH/nfqws" 2>/dev/null || abort "! Binary not found"
+mv "$MODPATH/$BINARY" "$MODPATH/nfqws" 2>/dev/null || abort "! Binary not found"
 rm -f "$MODPATH/nfqws-"*
 if [ ! -f "$MODPATH/nfqws" ]; then
   abort "! Binary not found (2)"
