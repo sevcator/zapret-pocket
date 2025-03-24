@@ -200,7 +200,8 @@ jobs:
       - name: Upload to Telegram
         run: |
           curl -F document=@"zapret-Magisk.zip" \
-               -F caption="**🔔 New release**: ${{ env.version }}\n**🔑 SHA256:** ${{ env.SHA256 }}" \
+               -F caption="> 🔔 New release: ${{ env.version }} \
+              > 🔑 SHA256: ${{ env.SHA256 }}" \
                "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument?chat_id=${{ secrets.TELEGRAM_CHAT_ID }}"
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
