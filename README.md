@@ -12,7 +12,7 @@
 
 <hr>
 
-[📢 Telegram Channel](https://t.me/sevcator/921) | [💸 Donate](https://t.me/sevcator/909)
+<h1 align="center">[📢 Telegram Channel](https://t.me/sevcator/921) | [💸 Donate](https://t.me/sevcator/909)</h1>
 
 # License
 This project is licensed. See the [LICENSE](https://raw.githubusercontent.com/sevcator/zapret-magisk/refs/heads/main/LICENSE) file for details.
