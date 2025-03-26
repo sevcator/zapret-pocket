@@ -12,8 +12,7 @@
 
 <hr>
 
-<p align="center"> <a href="https://t.me/send?start=IVIbEVbhIiUw"> <img src="https://img.shields.io/badge/CryptoBot-Donate-000000?logo=contactlesspayment" alt="CryptoBot - Donate"> </p>
-<p align="center"> </a> <a href="https://sevcator.github.io"> <img src="https://img.shields.io/badge/GitHub-Homepage-000000?logo=github" alt="GitHub - Homepage"> </a> </p>
+[📢 Telegram Channel](https://t.me/sevcator/921) | [💸 Donate](https://t.me/sevcator/909)
 
 # License
 This project is licensed. See the [LICENSE](https://raw.githubusercontent.com/sevcator/zapret-magisk/refs/heads/main/LICENSE) file for details.
