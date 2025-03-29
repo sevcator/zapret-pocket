@@ -94,19 +94,21 @@ else
     i6MportD="--dport"
 fi
 
+if iptables -t mangle -A POSTROUTING -p tcp -m connbytes --connbytes-dir=original --connbytes-mode=packets --connbytes 1:12 -j ACCEPT 2>/dev/null; then
+    iptables -t mangle -D POSTROUTING -p tcp -m connbytes --connbytes-dir=original --connbytes-mode=packets --connbytes 1:12 -j ACCEPT 2>/dev/null
+    cbOrig="-m connbytes --connbytes-dir=original --connbytes-mode=packets --connbytes 1:12"
+    cbReply="-m connbytes --connbytes-dir=reply --connbytes-mode=packets --connbytes 1:6"
+else
+    cbOrig=""
+    cbReply=""
+fi
+
 if [ "$(cat /proc/net/ip_tables_matches | grep -c 'connbytes')" != "0" ]; then
-    iCBo="-m connbytes --connbytes-dir=original --connbytes-mode=packets --connbytes 1:12"
-    iCBr="-m connbytes --connbytes-dir=reply --connbytes-mode=packets --connbytes 1:3"
+    iCBo="$cbOrig"
+    iCBr="$cbReply"
 else
     iCBo=""
     iCBr=""
-fi
-if [ "$(cat /proc/net/ip6_tables_matches | grep -c 'connbytes')" != "0" ]; then
-    i6CBo="-m connbytes --connbytes-dir=original --connbytes-mode=packets --connbytes 1:12"
-    i6CBr="-m connbytes --connbytes-dir=reply --connbytes-mode=packets --connbytes 1:3"
-else
-    i6CBo=""
-    i6CBr=""
 fi
 
 if [ "$(cat /proc/net/ip_tables_matches | grep -c 'mark')" != "0" ]; then
