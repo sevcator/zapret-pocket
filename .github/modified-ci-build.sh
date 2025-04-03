@@ -1,4 +1,4 @@
-#! /bin/sh
+#!/bin/sh
 
 PACKAGE_VERSION="$1"
 
