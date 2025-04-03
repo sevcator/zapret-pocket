@@ -93,12 +93,15 @@ jobs:
         run: |
           cd dnscrypt-proxy/dnscrypt-proxy
           curl -sSL "https://raw.githubusercontent.com/${{ github.repository }}/refs/heads/main/.github/modified-ci-build.sh" | bash
-
+          mkdir binaries
+          mv dnscrypt-proxy-* binaries/
+          mv localhost.pem binaries/
+          
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: dnscrypt-proxy
-          path: dnscrypt-proxy-binaries/*
+          path: dnscrypt-proxy/dnscrypt-proxy/binaries/*
 
   build-module:
     name: Magisk Module
