@@ -9,7 +9,7 @@ rm android-ndk-${NDK_VER}-linux-x86_64.zip
 NDK_TOOLS=${HOME}/android-ndk-${NDK_VER}
 export PATH=${PATH}:${NDK_TOOLS}/toolchains/llvm/prebuilt/linux-x86_64/bin
 
-OUTPUT_DIR="dnscrypt-proxy"
+OUTPUT_DIR="dnscrypt-proxy-binaries"
 mkdir -p ${OUTPUT_DIR}
 
 build_android() {
