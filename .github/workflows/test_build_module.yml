@@ -6,7 +6,7 @@ on:
       
 jobs:          
   build-zapret:
-    name: zapret for Android ${{ matrix.abi }}
+    name: zapret for Android (${{ matrix.abi }})
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -89,20 +89,16 @@ jobs:
           check-latest: true
         id: go
           
-      - name: Build all
+      - name: Build All
         run: |
           cd dnscrypt-proxy
-          ls
-          cd dnscrypt-proxy
-          ls
-          curl -o .ci/ci-build.sh "https://raw.githubusercontent.com/${{ github.repository }}/refs/heads/main/.github/modified-ci-build.sh"
-          bash .ci/ci-build.sh
+          curl -sSL "https://raw.githubusercontent.com/${{ github.repository }}/refs/heads/main/.github/modified-ci-build.sh" | bash
 
-      - name: Upload build artifacts
+      - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: dnscrypt-proxy
-          path: dnscrypt-proxy/*
+          path: dnscrypt-proxy-binaries/*
 
   build-module:
     name: Magisk Module
