@@ -91,7 +91,7 @@ jobs:
           
       - name: Build all
         run: |
-          cd dnscrypt-proxy
+          cd dnscrypt-proxy/dnscrypt-proxy
           curl -o .ci/ci-build.sh "https://raw.githubusercontent.com/${{ github.repository }}/refs/heads/main/.github/modified-ci-build.sh"
           bash .ci/ci-build.sh
 
