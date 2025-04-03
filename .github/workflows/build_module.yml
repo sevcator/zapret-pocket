@@ -9,7 +9,7 @@ on:
       
 jobs:          
   build-android:
-    name: Binary for Android ${{ matrix.abi }}
+    name: zapret for Android ${{ matrix.abi }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -75,6 +75,32 @@ jobs:
           path: zapret/binaries/my/nfqws
           if-no-files-found: error
 
+  build:
+    name: dnscrypt-proxy for Android (All)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          repository: DNSCrypt/dnscrypt-proxy
+          path: dnscrypt-proxy
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1
+          check-latest: true
+        id: go
+
+      - name: Build all
+        run: cd dnscrypt-proxy && .ci/ci-build.sh
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dnscrypt-proxy
+          path: dnscrypt-proxy/*
+
   build-module:
     name: Magisk Module
     runs-on: ubuntu-latest
@@ -122,6 +148,12 @@ jobs:
       - name: Rename nfqws to nfqws-x86_x64
         run: |
           mv module/nfqws module/nfqws-x86_x64
+
+      - name: Download dnscrypt-proxy
+        uses: actions/download-artifact@v4
+        with:
+          name: dnscrypt-proxy
+          path: module
           
       - name: Build Magisk Module
         run: |
