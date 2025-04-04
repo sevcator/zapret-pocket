@@ -194,5 +194,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: zapret-Magisk
-          path: zapret-Magisk/module/*
+          path: module/*
           if-no-files-found: error
