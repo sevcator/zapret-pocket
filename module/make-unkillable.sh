@@ -1,11 +1,11 @@
 #!/system/bin/sh
 
-sleep 15
+sleep 9
 
-ZAPRET_PIDS=$(pgrep -f "zapret.sh")
+SCRIPT_PIDS=$(pgrep -f "zapret.sh")
 NFQWS_PIDS=$(pgrep nfqws)
 
-ALL_PIDS="$ZAPRET_PIDS $NFQWS_PIDS"
+ALL_PIDS="$SCRIPT_PIDS $NFQWS_PIDS"
 
 if [ -z "$ALL_PIDS" ]; then
     exit
