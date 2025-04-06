@@ -1,4 +1,5 @@
 #!/bin/bash
+# Not a full original YTDisBystro, something edited
 
 # Zapret Configuration
 config="--filter-tcp=80 --dpi-desync=fake,split2 --dpi-desync-fooling=md5sig --hostlist-exclude=$MODPATH/list-exclude.txt --hostlist-auto=$MODPATH/list-auto.txt --new"
