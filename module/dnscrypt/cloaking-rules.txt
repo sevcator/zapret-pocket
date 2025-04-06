@@ -1,0 +1,110 @@
+################################
+#        Cloaking rules        #
+################################
+
+# The following example rules force "safe" (without adult content) search
+# results from Google, Bing and YouTube.
+#
+# This has to be enabled with the `cloaking_rules` parameter in the main
+# configuration file
+
+
+www.google.*             forcesafesearch.google.com
+
+www.bing.com             strict.bing.com
+
+yandex.ru                familysearch.yandex.ru       # inline comments are allowed after a pound sign
+
+=duckduckgo.com          safe.duckduckgo.com
+
+www.youtube.com          restrictmoderate.youtube.com
+m.youtube.com            restrictmoderate.youtube.com
+youtubei.googleapis.com  restrictmoderate.youtube.com
+youtube.googleapis.com   restrictmoderate.youtube.com
+www.youtube-nocookie.com restrictmoderate.youtube.com
+
+# Multiple IP entries for the same name are supported.
+# In the following example, the same name maps both to IPv4 and IPv6 addresses:
+
+localhost                127.0.0.1
+localhost                ::1
+
+# For load-balancing, multiple IP addresses of the same class can also be
+# provided using the same format, one <pattern> <ip> pair per line.
+
+# ads.*                 192.168.100.1
+# ads.*                 192.168.100.2
+# ads.*                 ::1
+
+# PTR records can be created by setting cloak_ptr in the main configuration file
+# Entries with wild cards will not have PTR records created, but multiple 
+# names for the same IP are supported 
+
+# example.com           192.168.100.1
+# my.example.com        192.168.100.1
+
+## t.me/immalware: hosts file
+instagram.com 157.240.245.174
+www.instagram.com 157.240.245.174
+b.i.instagram.com 157.240.245.174
+z-p42-chat-e2ee-ig.facebook.com 157.240.245.174
+protonmail.com 3.66.189.153
+mail.proton.me 3.66.189.153
+chatgpt.com 204.12.192.222
+ab.chatgpt.com 204.12.192.222
+auth.openai.com 204.12.192.222
+auth0.openai.com 204.12.192.222
+platform.openai.com 204.12.192.222
+cdn.oaistatic.com 204.12.192.222
+files.oaiusercontent.com 204.12.192.222
+cdn.auth0.com 204.12.192.222
+tcr9i.chat.openai.com 204.12.192.222
+webrtc.chatgpt.com 204.12.192.222
+android.chat.openai.com 204.12.192.219
+api.openai.com 204.12.192.222
+operator.chatgpt.com 204.12.192.221
+sora.com 204.12.192.222
+copilot.microsoft.com 204.12.192.222
+sydney.bing.com 204.12.192.222
+edgeservices.bing.com 204.12.192.222
+rewards.bing.com 204.12.192.221
+xsts.auth.xboxlive.com 50.7.85.221
+codeium.com 50.7.87.85
+inference.codeium.com 50.7.85.219
+api.github.com 50.7.87.84
+api.individual.githubcopilot.com 50.7.85.221
+proxy.individual.githubcopilot.com 50.7.87.83
+datalore.jetbrains.com 50.7.85.221
+plugins.jetbrains.com 107.150.34.100
+download.jetbrains.com 204.12.192.222
+elevenlabs.io 204.12.192.222
+api.us.elevenlabs.io 204.12.192.222
+elevenreader.io 204.12.192.222
+truthsocial.com 204.12.192.221
+static-assets-1.truthsocial.com 204.12.192.221
+grok.com 185.250.151.49
+accounts.x.ai 185.250.151.49
+assets.grok.com 185.250.151.49
+api.tidal.com 204.12.192.222
+listen.tidal.com 204.12.192.222
+login.tidal.com 204.12.192.222
+auth.tidal.com 204.12.192.222
+link.tidal.com 204.12.192.222
+dd.tidal.com 204.12.192.222
+resources.tidal.com 204.12.192.222
+images.tidal.com 204.12.192.221
+fsu.fa.tidal.com 204.12.192.222
+geolocation.onetrust.com 204.12.192.222
+api.squareup.com 204.12.192.222
+api-global.squareup.co 204.12.192.222
+claude.ai 204.12.192.222
+www.notion.so 204.12.192.222
+www.canva.com 50.7.85.222
+www.intel.com 204.12.192.222
+www.dell.com 204.12.192.219
+www.tiktok.com 50.7.85.219
+web.archive.org 142.54.189.106
+developer.nvidia.com 204.12.192.220
+builds.parsec.app 107.150.34.99
+soundcloud.com 204.12.192.222
+*.soundcloud.com 204.12.192.222

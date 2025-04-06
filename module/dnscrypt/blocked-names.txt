@@ -1,0 +1,73 @@
+###########################
+#        Blocklist        #
+###########################
+
+## Rules for name-based query blocking, one per line
+##
+## Example of valid patterns:
+##
+## ads.*         | matches anything with an "ads." prefix
+## *.example.com | matches example.com and all names within that zone such as www.example.com
+## example.com   | identical to the above
+## =example.com  | block example.com but not *.example.com
+## *sex*         | matches any name containing that substring
+## ads[0-9]*     | matches "ads" followed by one or more digits
+## ads*.example* | *, ? and [] can be used anywhere, but prefixes/suffixes are faster
+
+## Block domains by syntax
+ad.*
+ads.*
+banner.*
+banners.*
+*.onion
+
+## Yandex
+yandex.ru
+mc.yandex.ru
+an.yandex.ru
+log.strm.yandex.ru
+yabs.yandex.ru
+adfstat.yandex.ru
+push.yandex.ru
+sovetnik.market.yandex.ru
+bs.yandex.ru
+uaas.yandex.ru
+adfox.yandex.ru
+matchid.adfox.yandex.ru
+app.uaas.yandex.ru
+adsdk.yandex.ru
+api.lbs.yandex.ru
+lbs.yandex.ru
+media-adv.market.yandex.ru
+clck.yandex.ru
+informer.yandex.ru
+bs-metadsp.yandex.ru
+market-click-baobab.yandex.ru
+aflt.market.yandex.ru
+tracking.ott.yandex.ru
+matchid-production.adfox.yandex.ru
+click.sender.yandex.ru
+statchecker.yandex.ru
+share.yandex.ru
+metrika.yandex.ru
+direct.yandex.ru
+grade.market.yandex.ru
+api.appmetrica.yandex.ru
+appmetrika.yandex.ru
+awaps.yandex.ru
+awsync.yandex.ru
+bs-meta.yandex.ru
+jstracer.yandex.ru
+kiks.yandex.ru
+redirect.appmetrica.yandex.ru
+web-metrica.yandex.ru
+
+## VK
+ms.vk.com
+*.ms.vk.com
+
+## Rutube
+log.rutube.ru
+ssp.rutube.ru
+yast.rutube.ru
+*.log.rutube.ru
