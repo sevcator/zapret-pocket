@@ -8,7 +8,7 @@ on:
       - '[0-9]+*'
       
 jobs:          
-  build-android:
+  build-zapret:
     name: zapret for Android ${{ matrix.abi }}
     runs-on: ubuntu-latest
     strategy:
@@ -108,7 +108,7 @@ jobs:
   build-module:
     name: Magisk Module
     runs-on: ubuntu-latest
-    needs: build-android
+    needs: [build-zapret, build-dnscrypt]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -157,7 +157,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: dnscrypt-proxy
-          path: module
+          path: module/dnscrypt
           
       - name: Build Magisk Module
         run: |
@@ -173,11 +173,11 @@ jobs:
           cd module
 
           echo "id=zapret" > module.prop
-          echo "name=zapret for Magisk" >> module.prop
+          echo "name=zapret" >> module.prop
           echo "version=${version}" >> module.prop
           echo "versionCode=${version_code}" >> module.prop
-          echo "author=sevcator, bol-van, ImMALWARE, Fenrir-0xFF, Flowseal, elovin, KDS" >> module.prop
-          echo "description=📡 Bypass internet-censorship via DPI modification" >> module.prop
+          echo "author=sevcator, bol-van, DNSCrypt, ImMALWARE, Fenrir-0xFF, Flowseal, elovin" >> module.prop
+          echo "description=⚡ Advanced module for bypass internet-censorship via DPI modification" >> module.prop
           echo "updateJson=https://raw.githubusercontent.com/${{ github.repository }}/refs/heads/main/update.json" >> module.prop
 
           for file in ./*.sh; do
