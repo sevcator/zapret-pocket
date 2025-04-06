@@ -200,14 +200,7 @@ jobs:
             "versionCode": "${{ env.versionCode }}",
             "zipUrl": "https://github.com/${{ github.repository }}/releases/download/${{ env.version }}/zapret-Magisk.zip",
             "changelog": "https://raw.githubusercontent.com/${{ github.repository }}/main/CHANGELOG.md"
-          }' > new_update.json
-          if [[ -f update.json ]]; then
-            if cmp -s update.json new_update.json; then
-              echo "No changes to update.json. Skipping commit."
-              exit 0
-            fi
-          fi
-          mv new_update.json update.json
+          }' > update.json
           git add update.json
           git commit -m "Release ${{ env.version }}"
           git push origin HEAD:main --force || echo "No changes to commit"
