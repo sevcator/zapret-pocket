@@ -114,4 +114,6 @@ settings put global tether_offload_disabled 1
 
 ui_print "* sevcator.t.me / sevcator.github.io *"
 
+ui_print "! Clear DNS Cache and disable Private DNS Server on your browser!"
+
 ui_print "- Reboot to take changes"
