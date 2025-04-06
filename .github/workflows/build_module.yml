@@ -210,7 +210,7 @@ jobs:
           mv new_update.json update.json
           git add update.json
           git commit -m "Release ${{ env.version }}"
-          git push origin HEAD:main --force
+          git push origin HEAD:main --force || echo "No changes to commit"
 
       - name: Calculate SHA-256 checksum
         id: sha256
