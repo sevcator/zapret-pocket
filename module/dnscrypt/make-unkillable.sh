@@ -1,6 +1,6 @@
 #!/system/bin/sh
 
-sleep 15
+sleep 9
 
 SCRIPT_PIDS=$(pgrep -f "dnscrypt.sh")
 DNSCRYPT_PIDS=$(pgrep dnscrypt-proxy)
