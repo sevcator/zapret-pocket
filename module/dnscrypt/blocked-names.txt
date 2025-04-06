@@ -22,7 +22,7 @@ banners.*
 *.onion
 
 ## Yandex
-yandex.ru
+=yandex.ru
 mc.yandex.ru
 an.yandex.ru
 log.strm.yandex.ru
