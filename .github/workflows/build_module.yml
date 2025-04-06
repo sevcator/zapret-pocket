@@ -177,7 +177,7 @@ jobs:
           echo "name=zapret" >> module.prop
           echo "version=${version}" >> module.prop
           echo "versionCode=${version_code}" >> module.prop
-          echo "author=sevcator, bol-van, DNSCrypt, ImMALWARE, Fenrir-0xFF, Flowseal, elovin" >> module.prop
+          echo "author=sevcator, bol-van, DNSCrypt, ImMALWARE, Fenrir-0xFF, Flowseal, elovin, KDS" >> module.prop
           echo "description=⚡ Advanced module for bypass internet-censorship via DPI modification" >> module.prop
           echo "updateJson=https://raw.githubusercontent.com/${{ github.repository }}/refs/heads/main/update.json" >> module.prop
 
