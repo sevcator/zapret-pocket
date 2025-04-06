@@ -1,3 +1,5 @@
+www.google.com
+connectivitycheck.gstatic.com
 googlevideo.com
 play.google.com
 youtu.be
@@ -90,3 +92,4 @@ cf-ipfs.com
 cloudflare-ipfs.com
 cloudflare.net
 cloudflare.com
+pages.dev
