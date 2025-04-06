@@ -1,4 +1,3 @@
-# Variables
 MODPATH=/data/adb/modules/zapret
 MODUPDATEPATH=/data/adb/modules_update/zapret
 
@@ -39,29 +38,45 @@ check_requirements() {
 }
 
 binary_by_architecture() {
-  ABI=$(grep_get_prop ro.product.cpu.abi)
-  case $ABI in
-    arm64-v8a) BINARY=nfqws-aarch64 ;;
-    x86_64) BINARY=nfqws-x86_x64 ;;
-    armeabi-v7a) BINARY=nfqws-arm ;;
-    x86) BINARY=nfqws-x86 ;;
-    *) abort "! Unsupported Architecture: $ABI" ;;
-  esac
-  ui_print "- Device architecture: $ABI"
-  ui_print "- Binary: $BINARY"
+    ABI=$(grep_get_prop ro.product.cpu.abi)
+    case "$ABI" in
+        arm64-v8a)
+            BINARY="nfqws-aarch64"
+            BINARY2="dnscrypt-proxy-arm64"
+            ;;
+        x86_64)
+            BINARY="nfqws-x86_x64"
+            BINARY2="dnscrypt-proxy-x86_64"
+            ;;
+        armeabi-v7a)
+            BINARY="nfqws-arm"
+            BINARY2="dnscrypt-proxy-arm"
+            ;;
+        x86)
+            BINARY="nfqws-x86"
+            BINARY2="dnscrypt-proxy-i386"
+            ;;
+        *)
+            abort "! Unsupported Architecture: $ABI"
+            ;;
+    esac
+    ui_print "- Device architecture: $ABI"
+    ui_print "- zapret binary: $BINARY"
+    ui_print "- dnscrypt-proxy binary: $BINARY2"
 }
 
-ui_print "- Checking requirements"
 check_requirements
-ui_print "- Choosing the binary by device architecture"
 binary_by_architecture
 
-ui_print "- Terminating processes"
 for pid in $(pgrep -f zapret.sh); do
-    kill -9 $pid
+    kill -9 "$pid"
+done
+for pid in $(pgrep -f dnscrypt.sh); do
+    kill -9 "$pid"
 done
 pkill nfqws
 pkill zapret
+pkill dnscrypt-proxy
 
 ui_print "- Cleaning iptables rules"
 iptables -t mangle -F POSTROUTING
@@ -70,71 +85,33 @@ iptables -F OUTPUT
 iptables -F FORWARD
 iptables -t nat -F OUTPUT
 iptables -t nat -F PREROUTING
-
-ui_print "- Cleaning ip6tables rules"
 ip6tables -t mangle -F POSTROUTING
 ip6tables -t mangle -F PREROUTING
 ip6tables -F OUTPUT
 ip6tables -F FORWARD
 
-if [ -d "$MODUPDATEPATH" ]; then
-    ui_print "- Updating the module"
-
-    if [ -f "$MODPATH/list-auto.txt" ]; then
-        mv "$MODPATH/list-auto.txt" "$MODUPDATEPATH/list-auto.txt"
-    fi
-
-    if [ -f "$MODPATH/current-tactic" ]; then
-        TACTIC=$(cat "$MODPATH/current-tactic")
-        TACTIC_FILE="$MODUPDATEPATH/tactics/${TACTIC}.sh"
-        if [ -f "$TACTIC_FILE" ]; then
-            mv "$MODPATH/current-tactic" "$MODUPDATEPATH/current-tactic"
-        fi
-    fi
-
-    if [ -f "$MODPATH/current-dns" ]; then
-        mv "$MODPATH/current-dns" "$MODUPDATEPATH/current-dns"
-    fi
-
-    mkdir -p "$MODPATH"
-    cp -rf "$MODUPDATEPATH"/* "$MODPATH"/
-    rm -rf "$MODUPDATEPATH"
-fi
-
-ui_print "- Fixing syntax error in bash scripts"
-for FILE in "$MODPATH"/*.sh; do
-  if [[ -f "$FILE" ]]; then
-    sed -i 's/\r$//' "$FILE"
-  fi
-done
-for FILE in "$MODPATH/tactics/"*.sh; do
-  if [[ -f "$FILE" ]]; then
-    sed -i 's/\r$//' "$FILE"
-  fi
+for FILE in "$MODPATH"/*.sh "$MODPATH/strategies/"*.sh "$MODUPDATEPATH"/*.sh "$MODUPDATEPATH/strategies/"*.sh; do
+    [ -f "$FILE" ] && sed -i 's/\r$//' "$FILE"
 done
 
-ui_print "- Fixing Chrome problem @ t.me/sevcator/883"
-if [ ! -f "$MODPATH/list-auto.txt" ]; then
-    touch "$MODPATH/list-auto.txt"
-fi
-REQUIRED_DOMAINS="www.google.com google.com connectivitycheck.gstatic.com"
-for DOMAIN in $REQUIRED_DOMAINS; do
-    if ! grep -qi "^$DOMAIN$" "$MODPATH/list-auto.txt"; then
-        echo "$DOMAIN" >> "$MODPATH/list-auto.txt"
-    fi
-done
-
-mv "$MODPATH/$BINARY" "$MODPATH/nfqws" 2>/dev/null || abort "! Binary not found"
+mv "$MODPATH/$BINARY" "$MODPATH/nfqws"
+mv "$MODPATH/dnscrypt/$BINARY2" "$MODPATH/dnscrypt/dnscrypt-proxy"
+mv "$MODUPDATEPATH/$BINARY" "$MODUPDATEPATH/nfqws"
+mv "$MODUPDATEPATH/dnscrypt/$BINARY2" "$MODUPDATEPATH/dnscrypt/dnscrypt-proxy"
 rm -f "$MODPATH/nfqws-"*
-if [ ! -f "$MODPATH/nfqws" ]; then
-  abort "! Binary not found (2)"
-fi
+rm -f "$MODPATH/dnscrypt/dnscrypt-proxy-"*
+rm -f "$MODUPDATEPATH/nfqws-"*
+rm -f "$MODUPDATEPATH/dnscrypt/dnscrypt-proxy-"*
 
-ui_print "- Setting permissions"
 set_perm_recursive "$MODPATH" 0 2000 0755 0755
+set_perm_recursive "$MODUPDATEPATH" 0 2000 0755 0755
 
 ui_print "- Disabling Private DNS"
 settings put global private_dns_mode off
 
 ui_print "- Disabling Tethering Hardware Acceleration"
 settings put global tether_offload_disabled 1
+
+ui_print "* sevcator.t.me / sevcator.github.io *"
+
+ui_print "- Reboot to take changes"
