@@ -90,6 +90,26 @@ ip6tables -t mangle -F PREROUTING
 ip6tables -F OUTPUT
 ip6tables -F FORWARD
 
+if [ -d "$MODUPDATEPATH" ]; then
+    ui_print "- Backing up old files"
+    
+    if [ -f "$MODPATH/list-auto.txt" ]; then
+        cp -f "$MODPATH/list-auto.txt" "$MODUPDATEPATH/list-auto.txt"
+    fi
+
+    if [ -f "$MODPATH/current-tactic" ]; then
+        TACTIC=$(cat "$MODPATH/current-tactic")
+        TACTIC_FILE="$MODUPDATEPATH/tactics/${TACTIC}.sh"
+        if [ -f "$TACTIC_FILE" ]; then
+            cp -f "$MODPATH/current-tactic" "$MODUPDATEPATH/current-tactic"
+        fi
+    fi
+
+    if [ -f "$MODPATH/current-dns" ]; then
+        cp -f "$MODPATH/current-dns" "$MODUPDATEPATH/current-dns"
+    fi
+fi
+
 for FILE in "$MODPATH"/*.sh "$MODPATH/strategies/"*.sh "$MODUPDATEPATH"/*.sh "$MODUPDATEPATH/strategies/"*.sh; do
     [ -f "$FILE" ] && sed -i 's/\r$//' "$FILE"
 done
