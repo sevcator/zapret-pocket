@@ -92,18 +92,19 @@ jobs:
           check-latest: true
         id: go
 
-      - name: Modifiewd ci-build
+      - name: Build All
         run: |
-          curl -o dnscrypt-proxy/.ci/ci-build.sh "https://raw.githubusercontent.com/${{ github.repository }}/refs/heads/main/.github/modified-ci-build.sh"
-
-      - name: Build all
-        run: cd dnscrypt-proxy && .ci/ci-build.sh
-
-      - name: Upload build artifacts
+          cd dnscrypt-proxy/dnscrypt-proxy
+          curl -sSL "https://raw.githubusercontent.com/${{ github.repository }}/refs/heads/main/.github/modified-ci-build.sh" | bash
+          mkdir binaries
+          mv dnscrypt-proxy-* binaries/
+          mv localhost.pem binaries/
+          
+      - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: dnscrypt-proxy
-          path: dnscrypt-proxy/*
+          path: dnscrypt-proxy/dnscrypt-proxy/binaries/*
 
   build-module:
     name: Magisk Module
