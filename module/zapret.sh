@@ -22,7 +22,7 @@ CURRENTSTRATEGY=$(cat $MODPATH/current-strategy)
 CURRENTDNS=$(cat $MODPATH/current-dns)
 . "$MODPATH/strategies/$CURRENTSTRATEGY.sh"
 
-if [ -f "$MODPATH/dnscrypt/enable-dnscrypt" ] && [ "$(cat "$MODPATH/dnscrypt/enable-dnscrypt")" = "1" ]; then
+if [ -f "$MODPATH/enable-dnscrypt" ] && [ "$(cat "$MODPATH/enable-dnscrypt")" = "1" ]; then
     . "$MODPATH/dnscrypt/dnscrypt.sh" &
     CURRENTDNS=127.0.0.2
 else
