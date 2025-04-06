@@ -6,10 +6,8 @@ boot_wait() {
 
 boot_wait
 
-for FILE in "$MODPATH/tactics"/*.sh; do
-  if [[ -f "$FILE" ]]; then
-    sed -i 's/\r$//' "$FILE"
-  fi
+for FILE in "$MODPATH"/*.sh "$MODPATH/strategies/"*.sh; do
+    [ -f "$FILE" ] && sed -i 's/\r$//' "$FILE"
 done
 
 if [ ! -f "$MODPATH/current-strategy" ]; then
