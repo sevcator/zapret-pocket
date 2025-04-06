@@ -1,8 +1,9 @@
 #!/system/bin/sh
 
 MODPATH=/data/adb/modules/zapret
-CURRENTTACTIC=$(cat $MODPATH/current-tactic)
+CURRENTTACTIC=$(cat $MODPATH/current-strategy)
 CURRENTDNS=$(cat $MODPATH/current-dns)
+ENABLEDNSCRYPTFILE="$MODPATH/enable-dnscrypt"
 
 start_service() {
     if pgrep -f nfqws > /dev/null; then
@@ -39,13 +40,13 @@ restart_service() {
 
 select_tactic() {
     echo "- Available tactics:"
-    for tactic in $MODPATH/tactics/*.sh; do
+    for tactic in $MODPATH/strategies/*.sh; do
         echo "$(basename $tactic .sh)"
     done
     echo "- Enter the tactic:"
     read user_tactic
-    if [ -f "$MODPATH/tactics/$user_tactic.sh" ]; then
-        echo "$user_tactic" > "$MODPATH/current-tactic"
+    if [ -f "$MODPATH/strategies/$user_tactic.sh" ]; then
+        echo "$user_tactic" > "$MODPATH/current-strategy"
         echo "- Done!"
         echo "- Run 'zapret restart' to use this config now"
     else
@@ -55,7 +56,8 @@ select_tactic() {
 
 select_dns() {
     echo "! BE SURE IF DNS SERVER WORKING!"
-    echo "! OTHERWISE YOU LOST INTERNET CONNECTION"
+    echo "! OTHERWISE YOU LOST INTERNET CONNECTION!"
+    echo "! Disable DNSCrypt if you need use Plain DNS address"
     echo "- Enter the DNS address (IPv4):"
     read user_dns
     if ! echo "$user_dns" | grep -qE '^([0-9]{1,3}\.){3}[0-9]{1,3}$'; then
@@ -65,6 +67,26 @@ select_dns() {
     echo "$user_dns" > "$MODPATH/current-dns"
     echo "- Done!"
     echo "- Run 'zapret restart' to use this config now"
+}
+
+dnscrypt_control() {
+    if [ -z "$1" ]; then
+        if [ -f "$ENABLEDNSCRYPTFILE" ]; then
+            current_dnscrypt=$(cat "$ENABLEDNSCRYPTFILE")
+            if [ "$current_dnscrypt" = "1" ]; then
+                echo "0" > "$ENABLEDNSCRYPTFILE"
+                echo "- DNSCrypt disabled"
+            else
+                echo "1" > "$ENABLEDNSCRYPTFILE"
+                echo "- DNSCrypt enabled"
+            fi
+        else
+            echo "1" > "$ENABLEDNSCRYPTFILE"
+            echo "- DNSCrypt enabled"
+        fi
+        echo "- Run 'zapret restart' to apply changes"
+        return 0
+    fi
 }
 
 if [ "$1" == "start" ]; then
@@ -79,17 +101,27 @@ elif [ "$1" == "tactic" ]; then
     select_tactic
 elif [ "$1" == "dns" ]; then
     select_dns
+elif [ "$1" == "dnscrypt" ]; then
+    dnscrypt_control
 else
-    echo "zapret @ github.com/sevcator/zapret-magisk <3"
-    echo ""
+    echo "@ GitHub: sevcator/zapret-magisk <3"
     echo "- Current tactic: $CURRENTTACTIC"
-    echo "- Current DNS: $CURRENTDNS"
-    echo ""
+    if [ -f "$ENABLEDNSCRYPTFILE" ]; then
+        ENABLEDNSCRYPT=$(cat "$ENABLEDNSCRYPTFILE")
+        if [ "$ENABLEDNSCRYPT" -eq 1 ]; then
+            echo "- Current DNS: DNSCrypt-Proxy"
+        else
+            echo "- Current DNS: $CURRENTDNS"
+        fi
+    else
+        echo "- Current DNS: $CURRENTDNS"
+    fi
     echo "- Available commands:"
     echo "zapret start - Start the zapret service"
     echo "zapret stop - Stop the zapret service"
     echo "zapret restart - Restart the zapret service"
-    echo "zapret toggle - Start/stop the zapret service"
+    echo "zapret toggle - Toggle the zapret service"
     echo "zapret tactic - Pick a tactic for DPI modification"
-    echo "zapret dns - Pick a DNS address"
+    echo "zapret dns - Pick a plain DNS address"
+    echo "zapret dnscrypt - Toggle the DNSCrypt"
 fi;
