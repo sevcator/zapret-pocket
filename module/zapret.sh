@@ -1,4 +1,4 @@
-# If you don't know what you're doing, don't touch anything on this script
+MODPATH=/data/adb/modules/zapret
 
 boot_wait() {
     while [[ -z $(getprop sys.boot_completed) ]]; do sleep 2; done
@@ -6,15 +6,13 @@ boot_wait() {
 
 boot_wait
 
-MODPATH=/data/adb/modules/zapret
-
 for FILE in "$MODPATH/tactics"/*.sh; do
   if [[ -f "$FILE" ]]; then
     sed -i 's/\r$//' "$FILE"
   fi
 done
 
-if [ ! -f "$MODPATH/current-tactic" ]; then
+if [ ! -f "$MODPATH/current-strategy" ]; then
     exit
 fi
 
@@ -22,10 +20,21 @@ if [ ! -f "$MODPATH/current-dns" ]; then
     exit
 fi
 
-CURRENTTACTIC=$(cat $MODPATH/current-tactic)
+CURRENTSTRATEGY=$(cat $MODPATH/current-strategy)
 CURRENTDNS=$(cat $MODPATH/current-dns)
-. "$MODPATH/tactics/$CURRENTTACTIC.sh"
+. "$MODPATH/strategies/$CURRENTSTRATEGY.sh"
 
+if [ -f "$MODPATH/dnscrypt/enable-dnscrypt" ] && [ "$(cat "$MODPATH/dnscrypt/enable-dnscrypt")" = "1" ]; then
+    . "$MODPATH/dnscrypt/dnscrypt.sh" &
+    CURRENTDNS=127.0.0.2
+else
+    for pid in $(pgrep -f dnscrypt.sh); do
+        kill -9 "$pid"
+    done
+    pkill dnscrypt-proxy
+fi
+
+# Disable IPv6
 sysctl net.ipv6.conf.all.disable_ipv6=1 > /dev/null;
 sysctl net.ipv6.conf.default.disable_ipv6=1 > /dev/null;
 sysctl net.ipv6.conf.lo.disable_ipv6=1 > /dev/null;
@@ -34,6 +43,10 @@ iptables -I OUTPUT -p udp --dport 853 -j DROP
 iptables -I OUTPUT -p tcp --dport 853 -j DROP
 iptables -I FORWARD -p udp --dport 853 -j DROP
 iptables -I FORWARD -p tcp --dport 853 -j DROP
+ip6tables -I OUTPUT -p udp --dport 53 -j DROP
+ip6tables -I OUTPUT -p tcp --dport 53 -j DROP
+ip6tables -I FORWARD -p udp --dport 53 -j DROP
+ip6tables -I FORWARD -p tcp --dport 53 -j DROP
 iptables -t nat -I OUTPUT -p udp --dport 53 -j DNAT --to $CURRENTDNS:53
 iptables -t nat -I OUTPUT -p tcp --dport 53 -j DNAT --to $CURRENTDNS:53
 iptables -t nat -I PREROUTING -p udp --dport 53 -j DNAT --to $CURRENTDNS:53
