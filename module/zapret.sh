@@ -44,6 +44,14 @@ ip6tables -t mangle -F PREROUTING
 ip6tables -F OUTPUT
 ip6tables -F FORWARD
 
+while true; do
+    if ping -c 1 google.com &> /dev/null; then
+        break
+    else
+        sleep 1
+    fi
+done
+
 if [ -f "$MODPATH/current-dns-mode" ] && [ "$(cat "$MODPATH/current-dns-mode")" = "2" ]; then
     . "$MODPATH/dnscrypt/dnscrypt.sh" &
     CURRENTDNS=127.0.0.2
