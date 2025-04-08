@@ -159,6 +159,11 @@ jobs:
         with:
           name: dnscrypt-proxy
           path: module/dnscrypt
+
+      - name: Download blocked-names.txt and cloaking-rules.txt for dnscrypt-proxy
+        run: |
+          wget -N --no-if-modified-since -O module/dnscrypt/blocked-names.txt https://raw.githubusercontent.com/sevcator/dnscrypt-proxy-stuff/refs/heads/main/blocked-names.txt
+          wget -N --no-if-modified-since -O module/dnscrypt/cloaking-rules.txt https://raw.githubusercontent.com/sevcator/dnscrypt-proxy-stuff/refs/heads/main/cloaking-rules.txt
           
       - name: Build Magisk Module
         run: |
@@ -193,7 +198,7 @@ jobs:
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
           
-      - name: Push update.json
+      - name: Push updated files to Main branch
         run: |
           echo '{
             "version": "${{ env.version }}",
@@ -202,6 +207,7 @@ jobs:
             "changelog": "https://raw.githubusercontent.com/${{ github.repository }}/main/CHANGELOG.md"
           }' > update.json
           git add update.json
+          git add module/dnscrypt/blocked-names.txt module/dnscrypt/cloaking-rules.txt
           git commit -m "Release ${{ env.version }}"
           git push origin HEAD:main --force || echo "No changes to commit"
 
