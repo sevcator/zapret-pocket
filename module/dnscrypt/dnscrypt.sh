@@ -1,7 +1,7 @@
 MODPATH=/data/adb/modules/zapret
 
 call_error_notification() {
-    "$MODPATH/call-error-notification.sh" "Curl/wget not found on system"
+    "$MODPATH/log-error.sh" "Curl/wget not found on system"
 }
 
 while true; do
