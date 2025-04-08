@@ -24,8 +24,8 @@ if [ ! -f "$MODPATH/current-dns" ]; then
     exit
 fi
 
-if [ ! -f "$MODPATH/current-dns-selection" ]; then
-    "$MODPATH/log-error.sh" "$MODPATH/current-dns-selection not found!"
+if [ ! -f "$MODPATH/current-dns-mode" ]; then
+    "$MODPATH/log-error.sh" "$MODPATH/current-dns-mode not found!"
     exit
 fi
 
@@ -44,7 +44,7 @@ ip6tables -t mangle -F PREROUTING
 ip6tables -F OUTPUT
 ip6tables -F FORWARD
 
-if [ -f "$MODPATH/current-dns-selection" ] && [ "$(cat "$MODPATH/current-dns-selection")" = "2" ]; then
+if [ -f "$MODPATH/current-dns-mode" ] && [ "$(cat "$MODPATH/current-dns-mode")" = "2" ]; then
     . "$MODPATH/dnscrypt/dnscrypt.sh" &
     CURRENTDNS=127.0.0.2
 else
@@ -54,7 +54,7 @@ else
     pkill dnscrypt-proxy
 fi
 
-if [ "$(cat $MODPATH/current-dns-selection)" != "0" ]; then
+if [ "$(cat $MODPATH/current-dns-mode)" != "0" ]; then
     sysctl net.ipv6.conf.all.disable_ipv6=1 > /dev/null;
     sysctl net.ipv6.conf.default.disable_ipv6=1 > /dev/null;
     sysctl net.ipv6.conf.lo.disable_ipv6=1 > /dev/null;
