@@ -62,22 +62,21 @@ select_dns_mode() {
     echo "0 - Nothing"
     echo "1 - Plain DNS"
     echo "2 - With DNSCrypt"
+    echo "Enter the DNS mode:"
     read -r dns_mode
 
     case "$dns_mode" in
         0)
             echo "0" > "$MODPATH/current-dns-mode"
-            echo "- DNS Mode set to: Nothing"
+            echo "- Done"
             ;;
         1)
-            select_plain_dns
             echo "1" > "$MODPATH/current-dns-mode"
-            echo "- DNS Mode set to: Plain DNS"
+            echo "- Done"
             ;;
         2)
-            dnscrypt_control
             echo "2" > "$MODPATH/current-dns-mode"
-            echo "- DNS Mode set to: DNSCrypt"
+            echo "- Done"
             ;;
         *)
             echo "! Invalid DNS Mode choice"
@@ -87,9 +86,12 @@ select_dns_mode() {
 }
 
 select_plain_dns() {
-    echo "! BE SURE IF DNS SERVER IS WORKING!"
-    echo "! OTHERWISE YOU COULD LOSE INTERNET CONNECTION!"
-    echo "! Disable DNSCrypt if you need to use Plain DNS address"
+    if [ "$CURRENTDNSMODE" -eq 2 ]; then
+        echo "! Please change the DNS mode"
+        return
+    fi
+
+    echo "! Be sure if DNS address in port 53"
     echo "- Enter the DNS address (IPv4):"
     read -r user_dns
 
@@ -104,19 +106,21 @@ select_plain_dns() {
 }
 
 command_info() {
-    echo "@ GitHub: sevcator/zapret-magisk <3"
+    echo "@ Zapret Module - GitHub: sevcator/zapret-magisk <3"
+    echo ""
     echo "- Current strategy: $CURRENTSTRATEGY"
 
     if [ "$CURRENTDNSMODE" -eq 2 ]; then
-        echo "- Current DNS: DNSCrypt-Proxy"
+        echo "- Current DNS Mode: DNSCrypt-Proxy"
     elif [ "$CURRENTDNSMODE" -eq 1 ]; then
-        echo "- Current DNS: $CURRENTDNS"
+        echo "- Current DNS Mode: Plain ($CURRENTDNS)"
     elif [ "$CURRENTDNSMODE" -eq 0 ]; then
-        echo "- Current DNS: None"
+        echo "- Current DNS Mode: None"
     else
-        echo "- Current DNS: $CURRENTDNS"
+        echo "- Current DNS Mode: $CURRENTDNS"
     fi
 
+    echo ""
     echo "- Available commands:"
     echo "zapret start    - Start the zapret service"
     echo "zapret stop     - Stop the zapret service"
@@ -124,7 +128,7 @@ command_info() {
     echo "zapret toggle   - Toggle the zapret service"
     echo "zapret strategy - Pick a strategy for DPI modification"
     echo "zapret dnsmode  - Choose DNS mode"
-    echo "zapret plaindns - Pick a plain DNS address"
+    echo "zapret plaindns - Pick a plain DNS address (need to change DNS mode)"
 }
 
 unknown_command() {
@@ -132,30 +136,33 @@ unknown_command() {
     echo "- Run 'zapret' for a list of available commands."
 }
 
-case "$1" in
-    start)
-        start_service
-        ;;
-    stop)
-        stop_service
-        ;;
-    toggle)
-        toggle_service
-        ;;
-    restart)
-        restart_service
-        ;;
-    strategy)
-        select_tactic
-        ;;
-    dnsmode)
-        select_dns_mode
-        ;;
-    plaindns)
-        select_plain_dns
-        ;;
-    *)
-        unknown_command "$1"
-        command_info
-        ;;
-esac
+if [ -z "$1" ]; then
+    command_info
+else
+    case "$1" in
+        start)
+            start_service
+            ;;
+        stop)
+            stop_service
+            ;;
+        toggle)
+            toggle_service
+            ;;
+        restart)
+            restart_service
+            ;;
+        strategy)
+            select_tactic
+            ;;
+        dnsmode)
+            select_dns_mode
+            ;;
+        plaindns)
+            select_plain_dns
+            ;;
+        *)
+            unknown_command "$1"
+            ;;
+    esac
+fi
