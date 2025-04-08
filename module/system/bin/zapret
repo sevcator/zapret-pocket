@@ -1,7 +1,7 @@
 #!/system/bin/sh
 
 MODPATH=/data/adb/modules/zapret
-CURRENTTACTIC=$(cat $MODPATH/current-strategy)
+CURRENTSTRATEGY=$(cat $MODPATH/current-strategy)
 CURRENTDNS=$(cat $MODPATH/current-dns)
 ENABLEDNSCRYPTFILE="$MODPATH/enable-dnscrypt"
 
@@ -97,15 +97,15 @@ elif [ "$1" == "toggle" ]; then
     toggle_service
 elif [ "$1" == "restart" ]; then
     restart_service
-elif [ "$1" == "tactic" ]; then
-    select_tactic
+elif [ "$1" == "strategy" ]; then
+    select_strategy
 elif [ "$1" == "dns" ]; then
     select_dns
 elif [ "$1" == "dnscrypt" ]; then
     dnscrypt_control
 else
     echo "@ GitHub: sevcator/zapret-magisk <3"
-    echo "- Current tactic: $CURRENTTACTIC"
+    echo "- Current strategy: $CURRENTSTRATEGY"
     if [ -f "$ENABLEDNSCRYPTFILE" ]; then
         ENABLEDNSCRYPT=$(cat "$ENABLEDNSCRYPTFILE")
         if [ "$ENABLEDNSCRYPT" -eq 1 ]; then
@@ -121,7 +121,7 @@ else
     echo "zapret stop - Stop the zapret service"
     echo "zapret restart - Restart the zapret service"
     echo "zapret toggle - Toggle the zapret service"
-    echo "zapret tactic - Pick a tactic for DPI modification"
+    echo "zapret strategy - Pick a strategy for DPI modification"
     echo "zapret dns - Pick a plain DNS address"
     echo "zapret dnscrypt - Toggle the DNSCrypt"
 fi;
