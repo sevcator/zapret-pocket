@@ -2,12 +2,6 @@
 #        Cloaking rules        #
 ################################
 
-# The following example rules force "safe" (without adult content) search
-# results from Google, Bing and YouTube.
-#
-# This has to be enabled with the `cloaking_rules` parameter in the main
-# configuration file
-
 # Multiple IP entries for the same name are supported.
 # In the following example, the same name maps both to IPv4 and IPv6 addresses:
 
@@ -28,13 +22,7 @@ localhost                ::1
 # example.com           192.168.100.1
 # my.example.com        192.168.100.1
 
-## t.me/immalware: hosts file
-instagram.com 157.240.245.174
-www.instagram.com 157.240.245.174
-b.i.instagram.com 157.240.245.174
-z-p42-chat-e2ee-ig.facebook.com 157.240.245.174
-protonmail.com 3.66.189.153
-mail.proton.me 3.66.189.153
+# t.me/immalware hosts
 chatgpt.com 204.12.192.222
 ab.chatgpt.com 204.12.192.222
 auth.openai.com 204.12.192.222
@@ -49,11 +37,37 @@ android.chat.openai.com 204.12.192.219
 api.openai.com 204.12.192.222
 operator.chatgpt.com 204.12.192.221
 sora.com 204.12.192.222
+gemini.google.com 204.12.192.222
+aistudio.google.com 204.12.192.222
+generativelanguage.googleapis.com 204.12.192.222
+aitestkitchen.withgoogle.com 204.12.192.222
+aisandbox-pa.googleapis.com 204.12.192.219
+webchannel-alkalimakersuite-pa.clients6.google.com 204.12.192.222
+alkalimakersuite-pa.clients6.google.com 204.12.192.221
+assistant-s3-pa.googleapis.com 204.12.192.221
+proactivebackend-pa.googleapis.com 204.12.192.222
+o.pki.goog 204.12.192.222
+labs.google 204.12.192.222
+notebooklm.google 204.12.192.222
+notebooklm.google.com 204.12.192.222
 copilot.microsoft.com 204.12.192.222
 sydney.bing.com 204.12.192.222
 edgeservices.bing.com 204.12.192.222
 rewards.bing.com 204.12.192.221
 xsts.auth.xboxlive.com 50.7.85.221
+api.spotify.com 204.12.192.222
+xpui.app.spotify.com 204.12.192.222
+appresolve.spotify.com 204.12.192.222
+login5.spotify.com 204.12.192.222
+login.app.spotify.com 204.12.192.222
+encore.scdn.co 204.12.192.222
+ap-gew1.spotify.com 204.12.192.222
+gew1-spclient.spotify.com 204.12.192.222
+spclient.wg.spotify.com 204.12.192.222
+api-partner.spotify.com 204.12.192.222
+aet.spotify.com 204.12.192.222
+www.spotify.com 204.12.192.222
+accounts.spotify.com 204.12.192.222
 codeium.com 50.7.87.85
 inference.codeium.com 50.7.85.219
 api.github.com 50.7.87.84
@@ -81,7 +95,7 @@ images.tidal.com 204.12.192.221
 fsu.fa.tidal.com 204.12.192.222
 geolocation.onetrust.com 204.12.192.222
 api.squareup.com 204.12.192.222
-api-global.squareup.co 204.12.192.222
+api-global.squareup.com 204.12.192.222
 claude.ai 204.12.192.222
 www.notion.so 204.12.192.222
 www.canva.com 50.7.85.222
@@ -91,5 +105,5 @@ www.tiktok.com 50.7.85.219
 web.archive.org 142.54.189.106
 developer.nvidia.com 204.12.192.220
 builds.parsec.app 107.150.34.99
-soundcloud.com 204.12.192.222
-*.soundcloud.com 204.12.192.222
+soundcloud.com 185.250.151.49
+*.soundcloud.com 185.250.151.49
