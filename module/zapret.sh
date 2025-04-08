@@ -6,19 +6,26 @@ boot_wait() {
 
 boot_wait
 
+call_error() {
+    "$MODPATH/log-error.sh" "Curl/wget not found on system"
+}
+
 for FILE in "$MODPATH"/*.sh "$MODPATH/strategies/"*.sh; do
     [ -f "$FILE" ] && sed -i 's/\r$//' "$FILE"
 done
 
 if [ ! -f "$MODPATH/current-strategy" ]; then
+    "$MODPATH/log-error.sh" "$MODPATH/current-strategy not found!"
     exit
 fi
 
 if [ ! -f "$MODPATH/current-dns" ]; then
+    "$MODPATH/log-error.sh" "$MODPATH/current-dns not found!"
     exit
 fi
 
 if [ ! -f "$MODPATH/current-dns-selection" ]; then
+    "$MODPATH/log-error.sh" "$MODPATH/current-dns-selection not found!"
     exit
 fi
 
@@ -26,7 +33,18 @@ CURRENTSTRATEGY=$(cat $MODPATH/current-strategy)
 CURRENTDNS=$(cat $MODPATH/current-dns)
 . "$MODPATH/strategies/$CURRENTSTRATEGY.sh"
 
-if [ -f "$MODPATH/enable-dnscrypt" ] && [ "$(cat "$MODPATH/enable-dnscrypt")" = "1" ]; then
+iptables -t mangle -F POSTROUTING
+iptables -t mangle -F PREROUTING
+iptables -F OUTPUT
+iptables -F FORWARD
+iptables -t nat -F OUTPUT
+iptables -t nat -F PREROUTING
+ip6tables -t mangle -F POSTROUTING
+ip6tables -t mangle -F PREROUTING
+ip6tables -F OUTPUT
+ip6tables -F FORWARD
+
+if [ -f "$MODPATH/current-dns-selection" ] && [ "$(cat "$MODPATH/current-dns-selection")" = "2" ]; then
     . "$MODPATH/dnscrypt/dnscrypt.sh" &
     CURRENTDNS=127.0.0.2
 else
@@ -88,9 +106,11 @@ addMultiPort() {
 }
 
 if [ "$(cat /proc/net/ip_tables_targets | grep -c 'NFQUEUE')" == "0" ]; then
+    "$MODPATH/log-error.sh" "iptables is bad!"
     exit
 fi
 if [ "$(cat /proc/net/ip6_tables_targets | grep -c 'NFQUEUE')" == "0" ]; then
+    "$MODPATH/log-error.sh" "ip6tables is bad!"
     exit
 fi
 
