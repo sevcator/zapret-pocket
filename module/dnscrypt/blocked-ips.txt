@@ -18,10 +18,11 @@
 ##               https://github.com/d3cim/block
 
 # Blocklist from [https://github.com/DNSCrypt/dnscrypt-proxy/wiki/Filters#dns-rebinding-protection]
-# Localhost rebind protection
+# Localhost rebinding protection
 0.0.0.0
 127.0.0.*
-# RFC1918 rebind protection
+
+# RFC1918 rebinding protection
 10.*
 172.16.*
 172.17.*
