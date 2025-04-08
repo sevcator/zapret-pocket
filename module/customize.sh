@@ -78,7 +78,6 @@ pkill nfqws
 pkill zapret
 pkill dnscrypt-proxy
 
-ui_print "- Cleaning iptables rules"
 iptables -t mangle -F POSTROUTING
 iptables -t mangle -F PREROUTING
 iptables -F OUTPUT
@@ -98,14 +97,26 @@ if [ -d "$MODUPDATEPATH" ]; then
     fi
 
     if [ -f "$MODPATH/current-tactic" ]; then
-        TACTIC=$(cat "$MODPATH/current-tactic")
-        TACTIC_FILE="$MODUPDATEPATH/tactics/${TACTIC}.sh"
-        if [ -f "$TACTIC_FILE" ]; then
-            cp -f "$MODPATH/current-tactic" "$MODUPDATEPATH/current-tactic"
+        STRATEGY=$(cat "$MODPATH/current-tactic")
+        STRATEGY_FILE="$MODUPDATEPATH/strategies/${TACTIC}.sh"
+        if [ -f "$STRATEGY_FILE" ]; then
+            cp -f "$MODPATH/current-tactic" "$MODUPDATEPATH/current-strategy"
+        fi
+    fi
+
+    if [ -f "$MODPATH/current-strategy" ]; then
+        STRATEGY=$(cat "$MODPATH/current-strategy")
+        STRATEGY_FILE="$MODUPDATEPATH/strategies/${TACTIC}.sh"
+        if [ -f "$STRATEGY_FILE" ]; then
+            cp -f "$MODPATH/current-strategy" "$MODUPDATEPATH/current-strategy"
         fi
     fi
 
     if [ -f "$MODPATH/current-dns" ]; then
+        cp -f "$MODPATH/current-dns" "$MODUPDATEPATH/current-dns"
+    fi
+
+    if [ -f "$MODPATH/current-dns-mode" ]; then
         cp -f "$MODPATH/current-dns" "$MODUPDATEPATH/current-dns"
     fi
 fi
