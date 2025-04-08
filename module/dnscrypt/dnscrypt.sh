@@ -1,6 +1,6 @@
 MODPATH=/data/adb/modules/zapret
 
-call_error_notification() {
+call_error() {
     "$MODPATH/log-error.sh" "Curl/wget not found on system"
 }
 
@@ -12,7 +12,7 @@ while true; do
         wget -O "$MODPATH/dnscrypt/blocked-names.txt" "https://raw.githubusercontent.com/sevcator/dnscrypt-proxy-stuff/refs/heads/main/blocked-names.txt"
         wget -O "$MODPATH/dnscrypt/cloaking-rules.txt" "https://raw.githubusercontent.com/sevcator/dnscrypt-proxy-stuff/refs/heads/main/cloaking-rules.txt"
     else
-        call_error_notification
+        call_error
     fi
     
     if ! pgrep -x "dnscrypt-proxy" > /dev/null; then
