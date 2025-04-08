@@ -18,6 +18,10 @@ if [ ! -f "$MODPATH/current-dns" ]; then
     exit
 fi
 
+if [ ! -f "$MODPATH/current-dns-selection" ]; then
+    exit
+fi
+
 CURRENTSTRATEGY=$(cat $MODPATH/current-strategy)
 CURRENTDNS=$(cat $MODPATH/current-dns)
 . "$MODPATH/strategies/$CURRENTSTRATEGY.sh"
@@ -32,27 +36,27 @@ else
     pkill dnscrypt-proxy
 fi
 
-# Disable IPv6
-sysctl net.ipv6.conf.all.disable_ipv6=1 > /dev/null;
-sysctl net.ipv6.conf.default.disable_ipv6=1 > /dev/null;
-sysctl net.ipv6.conf.lo.disable_ipv6=1 > /dev/null;
-
-iptables -I OUTPUT -p udp --dport 853 -j DROP
-iptables -I OUTPUT -p tcp --dport 853 -j DROP
-iptables -I FORWARD -p udp --dport 853 -j DROP
-iptables -I FORWARD -p tcp --dport 853 -j DROP
-ip6tables -I OUTPUT -p udp --dport 53 -j DROP
-ip6tables -I OUTPUT -p tcp --dport 53 -j DROP
-ip6tables -I FORWARD -p udp --dport 53 -j DROP
-ip6tables -I FORWARD -p tcp --dport 53 -j DROP
-iptables -t nat -I OUTPUT -p udp --dport 53 -j DNAT --to $CURRENTDNS:53
-iptables -t nat -I OUTPUT -p tcp --dport 53 -j DNAT --to $CURRENTDNS:53
-iptables -t nat -I PREROUTING -p udp --dport 53 -j DNAT --to $CURRENTDNS:53
-iptables -t nat -I PREROUTING -p tcp --dport 53 -j DNAT --to $CURRENTDNS:53
-ip6tables -I OUTPUT -p udp --dport 853 -j DROP
-ip6tables -I OUTPUT -p tcp --dport 853 -j DROP
-ip6tables -I FORWARD -p udp --dport 853 -j DROP
-ip6tables -I FORWARD -p tcp --dport 853 -j DROP
+if [ "$(cat $MODPATH/current-dns-selection)" != "0" ]; then
+    sysctl net.ipv6.conf.all.disable_ipv6=1 > /dev/null;
+    sysctl net.ipv6.conf.default.disable_ipv6=1 > /dev/null;
+    sysctl net.ipv6.conf.lo.disable_ipv6=1 > /dev/null;
+    iptables -I OUTPUT -p udp --dport 853 -j DROP
+    iptables -I OUTPUT -p tcp --dport 853 -j DROP
+    iptables -I FORWARD -p udp --dport 853 -j DROP
+    iptables -I FORWARD -p tcp --dport 853 -j DROP
+    ip6tables -I OUTPUT -p udp --dport 53 -j DROP
+    ip6tables -I OUTPUT -p tcp --dport 53 -j DROP
+    ip6tables -I FORWARD -p udp --dport 53 -j DROP
+    ip6tables -I FORWARD -p tcp --dport 53 -j DROP
+    iptables -t nat -I OUTPUT -p udp --dport 53 -j DNAT --to $CURRENTDNS:53
+    iptables -t nat -I OUTPUT -p tcp --dport 53 -j DNAT --to $CURRENTDNS:53
+    iptables -t nat -I PREROUTING -p udp --dport 53 -j DNAT --to $CURRENTDNS:53
+    iptables -t nat -I PREROUTING -p tcp --dport 53 -j DNAT --to $CURRENTDNS:53
+    ip6tables -I OUTPUT -p udp --dport 853 -j DROP
+    ip6tables -I OUTPUT -p tcp --dport 853 -j DROP
+    ip6tables -I FORWARD -p udp --dport 853 -j DROP
+    ip6tables -I FORWARD -p tcp --dport 853 -j DROP
+fi
 
 tcp_ports="$(echo $config | grep -oE 'filter-tcp=[0-9,-]+' | sed -e 's/.*=//g' -e 's/,/\n/g' -e 's/ /,/g' | sort -un)";
 udp_ports="$(echo $config | grep -oE 'filter-udp=[0-9,-]+' | sed -e 's/.*=//g' -e 's/,/\n/g' -e 's/ /,/g' | sort -un)";
