@@ -1,15 +1,15 @@
 #!/system/bin/sh
 
-MODPATH=/data/adb/modules/zapret
-CURRENTSTRATEGY=$(cat $MODPATH/current-strategy)
-CURRENTDNS=$(cat $MODPATH/current-dns)
-ENABLEDNSCRYPTFILE="$MODPATH/enable-dnscrypt"
+MODPATH="/data/adb/modules/zapret"
+CURRENTSTRATEGY=$(cat "$MODPATH/current-strategy" 2>/dev/null || echo "Unknown")
+CURRENTDNS=$(cat "$MODPATH/current-dns" 2>/dev/null || echo "Unknown")
+CURRENTDNSMODE=$(cat "$MODPATH/current-dns-mode" 2>/dev/null || echo "Unknown")
 
 start_service() {
-    if pgrep -f nfqws > /dev/null; then
+    if pgrep -f "nfqws" > /dev/null; then
         echo "! nfqws is already started"
     else
-        nohup $MODPATH/service.sh > /dev/null 2>&1 &
+        nohup "$MODPATH/service.sh" > /dev/null 2>&1 &
         echo "- Service started"
     fi
 }
@@ -17,15 +17,17 @@ start_service() {
 stop_service() {
     iptables -t mangle -F PREROUTING
     iptables -t mangle -F POSTROUTING
-    for pid in $(pgrep -f zapret.sh); do
-        kill -9 $pid
+
+    for pid in $(pgrep -f "zapret.sh"); do
+        kill -9 "$pid"
     done
+
     pkill nfqws
     echo "- Service stopped"
 }
 
 toggle_service() {
-    if pgrep -f nfqws > /dev/null; then
+    if pgrep -f "nfqws" > /dev/null; then
         stop_service
     else
         start_service
@@ -40,88 +42,120 @@ restart_service() {
 
 select_tactic() {
     echo "- Available tactics:"
-    for tactic in $MODPATH/strategies/*.sh; do
-        echo "$(basename $tactic .sh)"
+    for tactic in "$MODPATH/strategies"/*.sh; do
+        echo "$(basename "$tactic" .sh)"
     done
     echo "- Enter the tactic:"
-    read user_tactic
+    read -r user_tactic
+
     if [ -f "$MODPATH/strategies/$user_tactic.sh" ]; then
         echo "$user_tactic" > "$MODPATH/current-strategy"
         echo "- Done!"
         echo "- Run 'zapret restart' to use this config now"
     else
-        echo "! Invaild name of tactic"
+        echo "! Invalid tactic name"
     fi
 }
 
-select_dns() {
-    echo "! BE SURE IF DNS SERVER WORKING!"
-    echo "! OTHERWISE YOU LOST INTERNET CONNECTION!"
-    echo "! Disable DNSCrypt if you need use Plain DNS address"
+select_dns_mode() {
+    echo "- Select DNS Mode:"
+    echo "0 - Nothing"
+    echo "1 - Plain DNS"
+    echo "2 - With DNSCrypt"
+    read -r dns_mode
+
+    case "$dns_mode" in
+        0)
+            echo "0" > "$MODPATH/current-dns-mode"
+            echo "- DNS Mode set to: Nothing"
+            ;;
+        1)
+            select_plain_dns
+            echo "1" > "$MODPATH/current-dns-mode"
+            echo "- DNS Mode set to: Plain DNS"
+            ;;
+        2)
+            dnscrypt_control
+            echo "2" > "$MODPATH/current-dns-mode"
+            echo "- DNS Mode set to: DNSCrypt"
+            ;;
+        *)
+            echo "! Invalid DNS Mode choice"
+            ;;
+    esac
+    echo "- Run 'zapret restart' to apply changes"
+}
+
+select_plain_dns() {
+    echo "! BE SURE IF DNS SERVER IS WORKING!"
+    echo "! OTHERWISE YOU COULD LOSE INTERNET CONNECTION!"
+    echo "! Disable DNSCrypt if you need to use Plain DNS address"
     echo "- Enter the DNS address (IPv4):"
-    read user_dns
+    read -r user_dns
+
     if ! echo "$user_dns" | grep -qE '^([0-9]{1,3}\.){3}[0-9]{1,3}$'; then
         echo "! Invalid DNS address"
         return 1
     fi
+
     echo "$user_dns" > "$MODPATH/current-dns"
-    echo "- Done!"
+    echo "- Plain DNS set!"
     echo "- Run 'zapret restart' to use this config now"
 }
 
-dnscrypt_control() {
-    if [ -z "$1" ]; then
-        if [ -f "$ENABLEDNSCRYPTFILE" ]; then
-            current_dnscrypt=$(cat "$ENABLEDNSCRYPTFILE")
-            if [ "$current_dnscrypt" = "1" ]; then
-                echo "0" > "$ENABLEDNSCRYPTFILE"
-                echo "- DNSCrypt disabled"
-            else
-                echo "1" > "$ENABLEDNSCRYPTFILE"
-                echo "- DNSCrypt enabled"
-            fi
-        else
-            echo "1" > "$ENABLEDNSCRYPTFILE"
-            echo "- DNSCrypt enabled"
-        fi
-        echo "- Run 'zapret restart' to apply changes"
-        return 0
-    fi
-}
-
-if [ "$1" == "start" ]; then
-    start_service
-elif [ "$1" == "stop" ]; then
-    stop_service    
-elif [ "$1" == "toggle" ]; then
-    toggle_service
-elif [ "$1" == "restart" ]; then
-    restart_service
-elif [ "$1" == "strategy" ]; then
-    select_strategy
-elif [ "$1" == "dns" ]; then
-    select_dns
-elif [ "$1" == "dnscrypt" ]; then
-    dnscrypt_control
-else
+command_info() {
     echo "@ GitHub: sevcator/zapret-magisk <3"
     echo "- Current strategy: $CURRENTSTRATEGY"
-    if [ -f "$ENABLEDNSCRYPTFILE" ]; then
-        ENABLEDNSCRYPT=$(cat "$ENABLEDNSCRYPTFILE")
-        if [ "$ENABLEDNSCRYPT" -eq 1 ]; then
-            echo "- Current DNS: DNSCrypt-Proxy"
-        else
-            echo "- Current DNS: $CURRENTDNS"
-        fi
+
+    if [ "$CURRENTDNSMODE" -eq 2 ]; then
+        echo "- Current DNS: DNSCrypt-Proxy"
+    elif [ "$CURRENTDNSMODE" -eq 1 ]; then
+        echo "- Current DNS: $CURRENTDNS"
+    elif [ "$CURRENTDNSMODE" -eq 0 ]; then
+        echo "- Current DNS: None"
     else
         echo "- Current DNS: $CURRENTDNS"
     fi
+
     echo "- Available commands:"
-    echo "zapret start - Start the zapret service"
-    echo "zapret stop - Stop the zapret service"
-    echo "zapret restart - Restart the zapret service"
-    echo "zapret toggle - Toggle the zapret service"
+    echo "zapret start    - Start the zapret service"
+    echo "zapret stop     - Stop the zapret service"
+    echo "zapret restart  - Restart the zapret service"
+    echo "zapret toggle   - Toggle the zapret service"
     echo "zapret strategy - Pick a strategy for DPI modification"
-    echo "zapret dns - Pick a plain DNS address"
-    echo "zapret dnscrypt - Toggle the DNSCrypt"
-fi;
+    echo "zapret dnsmode  - Choose DNS mode"
+    echo "zapret plaindns - Pick a plain DNS address"
+}
+
+unknown_command() {
+    echo "! Unknown command: $1"
+    echo "- Run 'zapret' for a list of available commands."
+}
+
+case "$1" in
+    start)
+        start_service
+        ;;
+    stop)
+        stop_service
+        ;;
+    toggle)
+        toggle_service
+        ;;
+    restart)
+        restart_service
+        ;;
+    strategy)
+        select_tactic
+        ;;
+    dnsmode)
+        select_dns_mode
+        ;;
+    plaindns)
+        select_plain_dns
+        ;;
+    *)
+        unknown_command "$1"
+        command_info
+        ;;
+esac
