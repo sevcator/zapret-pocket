@@ -92,46 +92,38 @@ ip6tables -F FORWARD
 if [ -d "$MODUPDATEPATH" ]; then
     ui_print "- Backing up old files"
     
-    if [ -f "$MODPATH/list-auto.txt" ]; then
-        cp -f "$MODPATH/list-auto.txt" "$MODUPDATEPATH/list-auto.txt"
+    if [ -f "$MODPATH/list/list-auto.txt" ]; then
+        cp -f "$MODPATH/list/list-auto.txt" "$MODUPDATEPATH/list/list-auto.txt"
     fi
 
-    if [ -f "$MODPATH/current-tactic" ]; then
-        STRATEGY=$(cat "$MODPATH/current-tactic")
-        STRATEGY_FILE="$MODUPDATEPATH/strategies/${TACTIC}.sh"
+    if [ -f "$MODPATH/config/current-strategy" ]; then
+        STRATEGY=$(cat "$MODPATH/config/current-strategy")
+        STRATEGY_FILE="$MODUPDATEPATH/strategy/${TACTIC}.sh"
         if [ -f "$STRATEGY_FILE" ]; then
-            cp -f "$MODPATH/current-tactic" "$MODUPDATEPATH/current-strategy"
+            cp -f "$MODPATH/config/current-strategy" "$MODUPDATEPATH/config/current-strategy"
         fi
     fi
 
-    if [ -f "$MODPATH/current-strategy" ]; then
-        STRATEGY=$(cat "$MODPATH/current-strategy")
-        STRATEGY_FILE="$MODUPDATEPATH/strategies/${TACTIC}.sh"
-        if [ -f "$STRATEGY_FILE" ]; then
-            cp -f "$MODPATH/current-strategy" "$MODUPDATEPATH/current-strategy"
-        fi
+    if [ -f "$MODPATH/config/current-plain-dns" ]; then
+        cp -f "$MODPATH/config/current-plain-dns" "$MODUPDATEPATH/config/current-plain-dns"
     fi
 
-    if [ -f "$MODPATH/current-dns" ]; then
-        cp -f "$MODPATH/current-dns" "$MODUPDATEPATH/current-dns"
-    fi
-
-    if [ -f "$MODPATH/current-dns-mode" ]; then
-        cp -f "$MODPATH/current-dns" "$MODUPDATEPATH/current-dns"
+    if [ -f "$MODPATH/config/current-dns-mode" ]; then
+        cp -f "$MODPATH/config/current-dns-mode" "$MODUPDATEPATH/config/current-dns-mode"
     fi
 fi
 
-for FILE in "$MODPATH"/*.sh "$MODPATH/strategies/"*.sh "$MODUPDATEPATH"/*.sh "$MODUPDATEPATH/strategies/"*.sh; do
+for FILE in "$MODPATH/zapret/"*.sh "$MODUPDATEPATH/zapret/"*.sh; do
     [ -f "$FILE" ] && sed -i 's/\r$//' "$FILE"
 done
 
-mv "$MODPATH/$BINARY" "$MODPATH/nfqws"
+mv "$MODPATH/zapret/$BINARY" "$MODPATH/zapret/nfqws"
 mv "$MODPATH/dnscrypt/$BINARY2" "$MODPATH/dnscrypt/dnscrypt-proxy"
-mv "$MODUPDATEPATH/$BINARY" "$MODUPDATEPATH/nfqws"
+mv "$MODUPDATEPATH/zapret/$BINARY" "$MODUPDATEPATH/zapret/nfqws"
 mv "$MODUPDATEPATH/dnscrypt/$BINARY2" "$MODUPDATEPATH/dnscrypt/dnscrypt-proxy"
-rm -f "$MODPATH/nfqws-"*
+rm -f "$MODPATH/zapret/nfqws-"*
 rm -f "$MODPATH/dnscrypt/dnscrypt-proxy-"*
-rm -f "$MODUPDATEPATH/nfqws-"*
+rm -f "$MODUPDATEPATH/zapret/nfqws-"*
 rm -f "$MODUPDATEPATH/dnscrypt/dnscrypt-proxy-"*
 
 set_perm_recursive "$MODPATH" 0 2000 0755 0755
@@ -144,7 +136,5 @@ ui_print "- Disabling Tethering Hardware Acceleration"
 settings put global tether_offload_disabled 1
 
 ui_print "* sevcator.t.me / sevcator.github.io *"
-
-ui_print "! Clear DNS Cache and disable Private DNS Server on your browser!"
 
 ui_print "- Reboot to take changes"

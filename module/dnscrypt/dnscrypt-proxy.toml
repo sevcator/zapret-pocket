@@ -4,7 +4,7 @@
 
 listen_addresses = ['127.0.0.2:53']
 
-server_names = ['controld-unfiltered', 'dnscry.pt-anon-moscow-ipv4', 'dns.sb', 'nextdns', 'nextdns-ultralow']
+server_names = ['controld-unfiltered', 'nextdns', 'nextdns-ultralow']
 
 max_clients = 250
 ipv4_servers = true
@@ -19,27 +19,24 @@ disabled_server_names = []
 
 force_tcp = false
 http3 = true
-timeout = 2000
+timeout = 2500
 keepalive = 30
 
 blocked_query_response = 'refused'
 use_syslog = false
 
 cert_refresh_delay = 240
-bootstrap_resolvers = ['1.1.1.1:53', '1.0.0.1:53', '76.76.2.0:53','76.76.10.0:53', '185.222.222.222:53', '45.11.45.11:53', '45.90.28.0:53', '45.90.30.0:53']
+bootstrap_resolvers = ['1.1.1.1:53', '1.0.0.1:53', '76.76.2.0:53','76.76.10.0:53', '45.90.28.0:53', '45.90.30.0:53']
 ignore_system_dns = true
 netprobe_timeout = 10
 netprobe_address = '45.90.28.0:53'
 
-block_ipv6 = true
+block_ipv6 = false
 block_unqualified = true
 block_undelegated = true
 reject_ttl = 10
 
-cache = true
-cache_size = 1024
-cache_min_ttl = 240
-cache_max_ttl = 86400
+cache = false
 
 cloaking_rules = 'cloaking-rules.txt'
 
@@ -58,12 +55,6 @@ skip_incompatible = false
 [static]
 [static.'controld-unfiltered']
 stamp = 'sdns://AgcAAAAAAAAACjc2Ljc2LjIuMTEAFGZyZWVkbnMuY29udHJvbGQuY29tAy9wMA'
-[static.'controld-uncensored']
-stamp = 'sdns://AgcAAAAAAAAACjc2Ljc2LjIuMTEAFGZyZWVkbnMuY29udHJvbGQuY29tCy91bmNlbnNvcmVk'
-[static.'dnscry.pt-anon-moscow-ipv4']
-stamp = 'sdns://gQ45My4xODMuMTA1LjEwOQ'
-[static.'dns.sb']
-stamp = 'sdns://AgcAAAAAAAAADzE4NS4yMjIuMjIyLjIyMiAOp5Svj-oV-Fz-65-8H2VKHLKJ0egmfEgrdPeAQlUFFA8xODUuMjIyLjIyMi4yMjIKL2Rucy1xdWVyeQ'
 [static.'nextdns']
 stamp = 'sdns://AgcAAAAAAAAACjQ1LjkwLjMwLjAgmjo09yfeubylEAPZzpw5-PJ92cUkKQHCurGkTmNaAhkWYW55Y2FzdC5kbnMubmV4dGRucy5pbwovZG5zLXF1ZXJ5'
 [static.'nextdns-ultralow']

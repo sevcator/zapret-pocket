@@ -1,28 +1,21 @@
 #!/system/bin/sh
 
 MODPATH="/data/adb/modules/zapret"
-CURRENTSTRATEGY=$(cat "$MODPATH/current-strategy" 2>/dev/null || echo "Unknown")
-CURRENTDNS=$(cat "$MODPATH/current-dns" 2>/dev/null || echo "Unknown")
-CURRENTDNSMODE=$(cat "$MODPATH/current-dns-mode" 2>/dev/null || echo "Unknown")
+CURRENTSTRATEGY=$(cat "$MODPATH/config/current-strategy" 2>/dev/null || echo "Unknown")
+CURRENTDNS=$(cat "$MODPATH/config/current-plain-dns" 2>/dev/null || echo "Unknown")
+CURRENTDNSMODE=$(cat "$MODPATH/config/current-dns-mode" 2>/dev/null || echo "Unknown")
 
 start_service() {
     if pgrep -f "nfqws" > /dev/null; then
         echo "! nfqws is already started"
     else
-        nohup "$MODPATH/service.sh" > /dev/null 2>&1 &
+        "$MODPATH/service.sh" > /dev/null 2>&1 &
         echo "- Service started"
     fi
 }
 
 stop_service() {
-    iptables -t mangle -F PREROUTING
-    iptables -t mangle -F POSTROUTING
-
-    for pid in $(pgrep -f "zapret.sh"); do
-        kill -9 "$pid"
-    done
-
-    pkill nfqws
+    "$MODPATH/uninstall.sh" > /dev/null 2>&1 &
     echo "- Service stopped"
 }
 
@@ -40,69 +33,96 @@ restart_service() {
     start_service
 }
 
-select_tactic() {
-    echo "- Available tactics:"
-    for tactic in "$MODPATH/strategies"/*.sh; do
-        echo "$(basename "$tactic" .sh)"
-    done
-    echo "- Enter the tactic:"
-    read -r user_tactic
+setup() {
+    clear
+    echo "- Enable advanced rules? (No - 0 / Yes - 1)"
+    echo "If you enable this, will disable DNS-over-TLS, VPN and tethering"
+    echo "This may help to preventing DNS leaks via DNS-over-TLS"
+    echo "- <3 :"
+    read -r rules
+    case "$rules" in
+        0)
+            echo "0" > "$MODPATH/config/current-advanced-rules"
+            ;;
+        1)
+            echo "1" > "$MODPATH/config/current-advanced-rules"
+            ;;
+        *)
+            echo "! Invalid choice"
+            ;;
+    esac
 
-    if [ -f "$MODPATH/strategies/$user_tactic.sh" ]; then
-        echo "$user_tactic" > "$MODPATH/current-strategy"
-        echo "- Done!"
-        echo "- Run 'zapret restart' to use this config now"
-    else
-        echo "! Invalid tactic name"
-    fi
-}
+    echo ""
 
-select_dns_mode() {
-    echo "- Select DNS Mode:"
+    echo "- Select DNS mode:"
     echo "0 - Nothing"
     echo "1 - Plain DNS"
     echo "2 - With DNSCrypt"
-    echo "Enter the DNS mode:"
+    echo "- <3 :"
     read -r dns_mode
-
     case "$dns_mode" in
         0)
-            echo "0" > "$MODPATH/current-dns-mode"
-            echo "- Done"
+            echo "0" > "$MODPATH/config/current-dns-mode"
             ;;
         1)
-            echo "1" > "$MODPATH/current-dns-mode"
-            echo "- Done"
+            echo "! Be sure if DNS address in port 53"
+            echo "- Enter the DNS address (IPv4):"
+            read -r user_dns
+            if ! echo "$user_dns" | grep -qE '^([0-9]{1,3}\.){3}[0-9]{1,3}$'; then
+                echo "! Invalid DNS address"
+                return 1
+            fi
+            echo "$user_dns" > "$MODPATH/config/current-plain-dns"
+            echo "1" > "$MODPATH/config/current-dns-mode"
             ;;
         2)
-            echo "2" > "$MODPATH/current-dns-mode"
-            echo "- Done"
+            echo "2" > "$MODPATH/config/current-dns-mode"
             ;;
         *)
-            echo "! Invalid DNS Mode choice"
+            echo "! Invalid choice"
             ;;
     esac
+
+    echo ""
+
+    echo "- Select DNSCrypt auto-update files mode:"
+    echo "0 - None"
+    echo "1 - cloaking-rules.txt"
+    echo "2 - cloaking-rules.txt + blocking-names.txt"
+    echo "- <3 :"
+    read -r dnscrypt_files_mode
+    case "$dnscrypt_files_mode" in
+        0)
+            echo "0" > "$MODPATH/config/dnscrypt-files-mode"
+            ;;
+        1)
+            echo "1" > "$MODPATH/config/dnscrypt-files-mode"
+            ;;
+        2)
+            echo "2" > "$MODPATH/config/dnscrypt-files-mode"
+            ;;
+        *)
+            echo "! Invalid choice"
+            ;;
+    esac
+
+    echo ""
+
+    echo "- Available tactics:"
+    for tactic in "$MODPATH/strategy"/*.sh; do
+        echo "$(basename "$tactic" .sh)"
+    done
+    echo "- <3 :"
+    read -r user_tactic
+    if [ -f "$MODPATH/strategy/$user_tactic.sh" ]; then
+        echo "$user_tactic" > "$MODPATH/config/current-strategy"
+        echo "- Done!"
+    else
+        echo "! Invalid name"
+    fi
+
+    echo ""
     echo "- Run 'zapret restart' to apply changes"
-}
-
-select_plain_dns() {
-    if [ "$CURRENTDNSMODE" -eq 2 ]; then
-        echo "! Please change the DNS mode"
-        return
-    fi
-
-    echo "! Be sure if DNS address in port 53"
-    echo "- Enter the DNS address (IPv4):"
-    read -r user_dns
-
-    if ! echo "$user_dns" | grep -qE '^([0-9]{1,3}\.){3}[0-9]{1,3}$'; then
-        echo "! Invalid DNS address"
-        return 1
-    fi
-
-    echo "$user_dns" > "$MODPATH/current-dns"
-    echo "- Plain DNS set!"
-    echo "- Run 'zapret restart' to use this config now"
 }
 
 command_info() {
@@ -126,9 +146,7 @@ command_info() {
     echo "zapret stop     - Stop the zapret service"
     echo "zapret restart  - Restart the zapret service"
     echo "zapret toggle   - Toggle the zapret service"
-    echo "zapret strategy - Pick a strategy for DPI modification"
-    echo "zapret dnsmode  - Choose DNS mode"
-    echo "zapret plaindns - Pick a plain DNS address (need to change DNS mode)"
+    echo "zapret setup    - Configure the zapret service"
 }
 
 unknown_command() {
@@ -152,14 +170,8 @@ else
         restart)
             restart_service
             ;;
-        strategy)
-            select_tactic
-            ;;
-        dnsmode)
-            select_dns_mode
-            ;;
-        plaindns)
-            select_plain_dns
+        setup)
+            setup
             ;;
         *)
             unknown_command "$1"
