@@ -160,11 +160,6 @@ jobs:
           name: dnscrypt-proxy
           path: module/dnscrypt
 
-      - name: Download blocked-names.txt and cloaking-rules.txt for dnscrypt-proxy
-        run: |
-          wget -N --no-if-modified-since -O module/dnscrypt/blocked-names.txt https://raw.githubusercontent.com/sevcator/dnscrypt-proxy-stuff/refs/heads/main/blocked-names.txt
-          wget -N --no-if-modified-since -O module/dnscrypt/cloaking-rules.txt https://raw.githubusercontent.com/sevcator/dnscrypt-proxy-stuff/refs/heads/main/cloaking-rules.txt
-          
       - name: Build Magisk Module
         run: |
           version=${{ github.ref_name }}
