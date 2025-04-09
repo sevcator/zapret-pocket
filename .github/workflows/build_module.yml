@@ -122,7 +122,7 @@ jobs:
 
       - name: Rename nfqws to nfqws-arm
         run: |
-          mv module/nfqws module/nfqws-arm
+          mv module/nfqws module/zapret/nfqws-arm
 
       - name: Download nfqws arm64-v8a
         uses: actions/download-artifact@v4
@@ -132,7 +132,7 @@ jobs:
 
       - name: Rename nfqws to nfqws-aarch64
         run: |
-          mv module/nfqws module/nfqws-aarch64
+          mv module/nfqws module/zapret/nfqws-aarch64
 
       - name: Download nfqws x86
         uses: actions/download-artifact@v4
@@ -142,7 +142,7 @@ jobs:
 
       - name: Rename nfqws to nfqws-x86
         run: |
-          mv module/nfqws module/nfqws-x86
+          mv module/nfqws module/zapret/nfqws-x86
 
       - name: Download nfqws x86_64
         uses: actions/download-artifact@v4
@@ -152,7 +152,7 @@ jobs:
 
       - name: Rename nfqws to nfqws-x86_x64
         run: |
-          mv module/nfqws module/nfqws-x86_x64
+          mv module/nfqws module/zapret/nfqws-x86_x64
 
       - name: Download dnscrypt-proxy
         uses: actions/download-artifact@v4
