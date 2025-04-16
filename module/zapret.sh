@@ -6,31 +6,31 @@ boot_wait() {
 
 boot_wait
 
-call_error() {
-    "$MODPATH/log-error.sh" "Curl/wget not found on system"
-}
-
 for FILE in "$MODPATH"/*.sh "$MODPATH/strategies/"*.sh; do
     [ -f "$FILE" ] && sed -i 's/\r$//' "$FILE"
 done
 
-if [ ! -f "$MODPATH/current-strategy" ]; then
-    "$MODPATH/log-error.sh" "$MODPATH/current-strategy not found!"
+if [ ! -f "$MODPATH/config/current-strategy" ]; then
+    echo "$MODPATH/current-strategy not found!" >> "$MODPATH/error.log"
     exit
 fi
 
-if [ ! -f "$MODPATH/current-dns" ]; then
-    "$MODPATH/log-error.sh" "$MODPATH/current-dns not found!"
+if [ ! -f "$MODPATH/config/current-plain-dns" ]; then
+    echo "$MODPATH/current-dns not found!" >> "$MODPATH/error.log"
     exit
 fi
 
-if [ ! -f "$MODPATH/current-dns-mode" ]; then
-    "$MODPATH/log-error.sh" "$MODPATH/current-dns-mode not found!"
+if [ ! -f "$MODPATH/config/current-dns-mode" ]; then
+    echo "$MODPATH/current-dns-mode not found!" >> "$MODPATH/error.log"
     exit
 fi
 
-CURRENTSTRATEGY=$(cat $MODPATH/current-strategy)
-CURRENTDNS=$(cat $MODPATH/current-dns)
+if [ ! -f "$MODPATH/config/current-advanced-rules" ]; then
+    echo "$MODPATH/current-dns-mode not found!" >> "$MODPATH/error.log"
+    exit
+fi
+
+CURRENTSTRATEGY=$(cat $MODPATH/config/current-strategy)
 . "$MODPATH/strategies/$CURRENTSTRATEGY.sh"
 
 iptables -t mangle -F POSTROUTING
@@ -52,7 +52,7 @@ while true; do
     fi
 done
 
-if [ -f "$MODPATH/current-dns-mode" ] && [ "$(cat "$MODPATH/current-dns-mode")" = "2" ]; then
+if [ -f "$MODPATH/config/current-dns-mode" ] && [ "$(cat "$MODPATH/config/current-dns-mode")" = "2" ]; then
     . "$MODPATH/dnscrypt/dnscrypt.sh" &
     CURRENTDNS=127.0.0.2
 else
@@ -62,14 +62,10 @@ else
     pkill dnscrypt-proxy
 fi
 
-if [ "$(cat $MODPATH/current-dns-mode)" != "0" ]; then
+if [ "$(cat $MODPATH/config/current-dns-mode)" != "0" ]; then
     sysctl net.ipv6.conf.all.disable_ipv6=1 > /dev/null;
     sysctl net.ipv6.conf.default.disable_ipv6=1 > /dev/null;
     sysctl net.ipv6.conf.lo.disable_ipv6=1 > /dev/null;
-    iptables -I OUTPUT -p udp --dport 853 -j DROP
-    iptables -I OUTPUT -p tcp --dport 853 -j DROP
-    iptables -I FORWARD -p udp --dport 853 -j DROP
-    iptables -I FORWARD -p tcp --dport 853 -j DROP
     ip6tables -I OUTPUT -p udp --dport 53 -j DROP
     ip6tables -I OUTPUT -p tcp --dport 53 -j DROP
     ip6tables -I FORWARD -p udp --dport 53 -j DROP
@@ -78,6 +74,13 @@ if [ "$(cat $MODPATH/current-dns-mode)" != "0" ]; then
     iptables -t nat -I OUTPUT -p tcp --dport 53 -j DNAT --to $CURRENTDNS:53
     iptables -t nat -I PREROUTING -p udp --dport 53 -j DNAT --to $CURRENTDNS:53
     iptables -t nat -I PREROUTING -p tcp --dport 53 -j DNAT --to $CURRENTDNS:53
+fi
+
+if [ "$(cat $MODPATH/config/current-advanced-rules)" = "1" ]; then
+    iptables -I OUTPUT -p udp --dport 853 -j DROP
+    iptables -I OUTPUT -p tcp --dport 853 -j DROP
+    iptables -I FORWARD -p udp --dport 853 -j DROP
+    iptables -I FORWARD -p tcp --dport 853 -j DROP
     ip6tables -I OUTPUT -p udp --dport 853 -j DROP
     ip6tables -I OUTPUT -p tcp --dport 853 -j DROP
     ip6tables -I FORWARD -p udp --dport 853 -j DROP
@@ -114,11 +117,11 @@ addMultiPort() {
 }
 
 if [ "$(cat /proc/net/ip_tables_targets | grep -c 'NFQUEUE')" == "0" ]; then
-    "$MODPATH/log-error.sh" "iptables is bad!"
+    echo "iptables is bad!"
     exit
 fi
 if [ "$(cat /proc/net/ip6_tables_targets | grep -c 'NFQUEUE')" == "0" ]; then
-    "$MODPATH/log-error.sh" "ip6tables is bad!"
+    echo "ip6tables is bad!"
     exit
 fi
 
