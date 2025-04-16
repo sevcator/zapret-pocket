@@ -66,25 +66,25 @@ if [ "$(cat $MODPATH/config/current-dns-mode)" != "0" ]; then
     sysctl net.ipv6.conf.all.disable_ipv6=1 > /dev/null;
     sysctl net.ipv6.conf.default.disable_ipv6=1 > /dev/null;
     sysctl net.ipv6.conf.lo.disable_ipv6=1 > /dev/null;
-    ip6tables -I OUTPUT -p udp --dport 53 -j DROP
-    ip6tables -I OUTPUT -p tcp --dport 53 -j DROP
-    ip6tables -I FORWARD -p udp --dport 53 -j DROP
-    ip6tables -I FORWARD -p tcp --dport 53 -j DROP
-    iptables -t nat -I OUTPUT -p udp --dport 53 -j DNAT --to $CURRENTDNS:53
-    iptables -t nat -I OUTPUT -p tcp --dport 53 -j DNAT --to $CURRENTDNS:53
-    iptables -t nat -I PREROUTING -p udp --dport 53 -j DNAT --to $CURRENTDNS:53
-    iptables -t nat -I PREROUTING -p tcp --dport 53 -j DNAT --to $CURRENTDNS:53
+    iptables -t nat -I OUTPUT -p udp --dport 53 -m comment --comment "zapret" -j DNAT --to $CURRENTDNS:53
+    iptables -t nat -I OUTPUT -p tcp --dport 53 -m comment --comment "zapret" -j DNAT --to $CURRENTDNS:53
+    iptables -t nat -I PREROUTING -p udp --dport 53 -m comment --comment "zapret" -j DNAT --to $CURRENTDNS:53
+    iptables -t nat -I PREROUTING -p tcp --dport 53 -m comment --comment "zapret" -j DNAT --to $CURRENTDNS:53
 fi
 
 if [ "$(cat $MODPATH/config/current-advanced-rules)" = "1" ]; then
-    iptables -I OUTPUT -p udp --dport 853 -j DROP
-    iptables -I OUTPUT -p tcp --dport 853 -j DROP
-    iptables -I FORWARD -p udp --dport 853 -j DROP
-    iptables -I FORWARD -p tcp --dport 853 -j DROP
-    ip6tables -I OUTPUT -p udp --dport 853 -j DROP
-    ip6tables -I OUTPUT -p tcp --dport 853 -j DROP
-    ip6tables -I FORWARD -p udp --dport 853 -j DROP
-    ip6tables -I FORWARD -p tcp --dport 853 -j DROP
+    ip6tables -I OUTPUT -p udp --dport 53 -m comment --comment "zapret" -j DROP
+    ip6tables -I OUTPUT -p tcp --dport 53 -m comment --comment "zapret" -j DROP
+    ip6tables -I FORWARD -p udp --dport 53 -m comment --comment "zapret" -j DROP
+    ip6tables -I FORWARD -p tcp --dport 53 -m comment --comment "zapret" -j DROP
+    iptables -I OUTPUT -p udp --dport 853 -m comment --comment "zapret" -j DROP
+    iptables -I OUTPUT -p tcp --dport 853 -m comment --comment "zapret" -j DROP
+    iptables -I FORWARD -p udp --dport 853 -m comment --comment "zapret" -j DROP
+    iptables -I FORWARD -p tcp --dport 853 -m comment --comment "zapret" -j DROP
+    ip6tables -I OUTPUT -p udp --dport 853 -m comment --comment "zapret" -j DROP
+    ip6tables -I OUTPUT -p tcp --dport 853 -m comment --comment "zapret" -j DROP
+    ip6tables -I FORWARD -p udp --dport 853 -m comment --comment "zapret" -j DROP
+    ip6tables -I FORWARD -p tcp --dport 853 -m comment --comment "zapret" -j DROP
 fi
 
 tcp_ports="$(echo $config | grep -oE 'filter-tcp=[0-9,-]+' | sed -e 's/.*=//g' -e 's/,/\n/g' -e 's/ /,/g' | sort -un)";
@@ -92,14 +92,14 @@ udp_ports="$(echo $config | grep -oE 'filter-udp=[0-9,-]+' | sed -e 's/.*=//g' -
 
 iptAdd() {
     iptDPort="$iMportD $2"; iptSPort="$iMportS $2";
-    iptables -t mangle -I POSTROUTING -p $1 $iptDPort $iCBo $iMark -j NFQUEUE --queue-num 200 --queue-bypass;
-    iptables -t mangle -I PREROUTING -p $1 $iptSPort $iCBr $iMark -j NFQUEUE --queue-num 200 --queue-bypass;
+    iptables -t mangle -I POSTROUTING -p $1 $iptDPort $iCBo $iMark -m comment --comment "zapret" -j NFQUEUE --queue-num 200 --queue-bypass
+    iptables -t mangle -I PREROUTING -p $1 $iptSPort $iCBr $iMark -m comment --comment "zapret" -j NFQUEUE --queue-num 200 --queue-bypass
 }
 
 ip6tAdd() {
     ip6tDPort="$i6MportD $2"; ip6tSPort="$i6MportS $2";
-    ip6tables -t mangle -I POSTROUTING -p $1 $ip6tDPort $i6CBo $i6Mark -j NFQUEUE --queue-num 200 --queue-bypass;
-    ip6tables -t mangle -I PREROUTING -p $1 $ip6tSPort $i6CBr $i6Mark -j NFQUEUE --queue-num 200 --queue-bypass;
+    ip6tables -t mangle -I POSTROUTING -p $1 $ip6tDPort $i6CBo $i6Mark -m comment --comment "zapret" -j NFQUEUE --queue-num 200 --queue-bypass
+    ip6tables -t mangle -I PREROUTING -p $1 $ip6tSPort $i6CBr $i6Mark -m comment --comment "zapret" -j NFQUEUE --queue-num 200 --queue-bypass
 }
 
 addMultiPort() {
@@ -140,8 +140,9 @@ else
     i6MportD="--dport"
 fi
 
-if iptables -t mangle -A POSTROUTING -p tcp -m connbytes --connbytes-dir=original --connbytes-mode=packets --connbytes 1:12 -j ACCEPT 2>/dev/null; then
-    iptables -t mangle -D POSTROUTING -p tcp -m connbytes --connbytes-dir=original --connbytes-mode=packets --connbytes 1:12 -j ACCEPT 2>/dev/null
+if iptables -t mangle -A POSTROUTING -p tcp -m connbytes --connbytes-dir=original --connbytes-mode=packets --connbytes 1:12 -m comment --comment "zapret" -j ACCEPT 2>/dev/null; then
+    iptables -t mangle -D POSTROUTING -p tcp -m connbytes --connbytes-dir=original --connbytes-mode=packets --connbytes 1:12 -m comment --comment "zapret" -j ACCEPT 2>/dev/null
+
     cbOrig="-m connbytes --connbytes-dir=original --connbytes-mode=packets --connbytes 1:12"
     cbReply="-m connbytes --connbytes-dir=reply --connbytes-mode=packets --connbytes 1:6"
 else
