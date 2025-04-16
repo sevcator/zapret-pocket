@@ -18,7 +18,7 @@ for config_file in current-strategy current-plain-dns current-dns-mode current-a
 done
 
 CURRENTSTRATEGY=$(cat $MODPATH/config/current-strategy)
-source "$MODPATH/strategies/$CURRENTSTRATEGY.sh"
+source "$MODPATH/strategy/$CURRENTSTRATEGY.sh"
 
 while true; do
     if ping -c 1 google.com &> /dev/null; then
