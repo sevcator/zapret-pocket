@@ -6,7 +6,7 @@ boot_wait() {
 
 boot_wait
 
-for FILE in "$MODPATH"/*.sh "$MODPATH/strategies/"*.sh; do
+for FILE in "$MODPATH"/*.sh "$MODPATH/strategy/"*.sh; do
     [ -f "$FILE" ] && sed -i 's/\r$//' "$FILE"
 done
 
@@ -46,10 +46,6 @@ if [ "$(cat $MODPATH/config/current-dns-mode)" != "0" ]; then
     iptables -t nat -I OUTPUT -p tcp --dport 53 -j DNAT --to $CURRENTDNS
     iptables -t nat -I PREROUTING -p udp --dport 53 -j DNAT --to $CURRENTDNS
     iptables -t nat -I PREROUTING -p tcp --dport 53 -j DNAT --to $CURRENTDNS
-    echo "iptables -t nat -D OUTPUT -p udp --dport 53 -j DNAT --to $CURRENTDNS" >> "$REMOVE_SCRIPT"
-    echo "iptables -t nat -D OUTPUT -p tcp --dport 53 -j DNAT --to $CURRENTDNS" >> "$REMOVE_SCRIPT"
-    echo "iptables -t nat -D PREROUTING -p udp --dport 53 -j DNAT --to $CURRENTDNS" >> "$REMOVE_SCRIPT"
-    echo "iptables -t nat -D PREROUTING -p tcp --dport 53 -j DNAT --to $CURRENTDNS" >> "$REMOVE_SCRIPT"
 fi
 
 if [ "$(cat $MODPATH/config/current-advanced-rules)" = "1" ]; then
@@ -65,18 +61,6 @@ if [ "$(cat $MODPATH/config/current-advanced-rules)" = "1" ]; then
     ip6tables -I OUTPUT -p tcp --dport 853 -j DROP
     ip6tables -I FORWARD -p udp --dport 853 -j DROP
     ip6tables -I FORWARD -p tcp --dport 853 -j DROP
-    echo "ip6tables -D OUTPUT -p udp --dport 53 -j DROP" >> "$REMOVE_SCRIPT"
-    echo "ip6tables -D OUTPUT -p tcp --dport 53 -j DROP" >> "$REMOVE_SCRIPT"
-    echo "ip6tables -D FORWARD -p udp --dport 53 -j DROP" >> "$REMOVE_SCRIPT"
-    echo "ip6tables -D FORWARD -p tcp --dport 53 -j DROP" >> "$REMOVE_SCRIPT"
-    echo "iptables -D OUTPUT -p udp --dport 853 -j DROP" >> "$REMOVE_SCRIPT"
-    echo "iptables -D OUTPUT -p tcp --dport 853 -j DROP" >> "$REMOVE_SCRIPT"
-    echo "iptables -D FORWARD -p udp --dport 853 -j DROP" >> "$REMOVE_SCRIPT"
-    echo "iptables -D FORWARD -p tcp --dport 853 -j DROP" >> "$REMOVE_SCRIPT"
-    echo "ip6tables -D OUTPUT -p udp --dport 853 -j DROP" >> "$REMOVE_SCRIPT"
-    echo "ip6tables -D OUTPUT -p tcp --dport 853 -j DROP" >> "$REMOVE_SCRIPT"
-    echo "ip6tables -D FORWARD -p udp --dport 853 -j DROP" >> "$REMOVE_SCRIPT"
-    echo "ip6tables -D FORWARD -p tcp --dport 853 -j DROP" >> "$REMOVE_SCRIPT"
 fi
 
 tcp_ports="$(echo $config | grep -oE 'filter-tcp=[0-9,-]+' | sed -e 's/.*=//g' -e 's/,/\n/g' -e 's/ /,/g' | sort -un)";
@@ -86,16 +70,12 @@ iptAdd() {
     iptDPort="$iMportD $2"; iptSPort="$iMportS $2";
     iptables -t mangle -I POSTROUTING -p $1 $iptDPort $iCBo $iMark -j NFQUEUE --queue-num 200 --queue-bypass
     iptables -t mangle -I PREROUTING -p $1 $iptSPort $iCBr $iMark -j NFQUEUE --queue-num 200 --queue-bypass
-    echo "iptables -t mangle -D POSTROUTING -p $1 $iptDPort $iCBo $iMark -j NFQUEUE --queue-num 200 --queue-bypass" >> "$REMOVE_SCRIPT"
-    echo "iptables -t mangle -D PREROUTING -p $1 $iptSPort $iCBr $iMark -j NFQUEUE --queue-num 200 --queue-bypass" >> "$REMOVE_SCRIPT"
 }
 
 ip6tAdd() {
     ip6tDPort="$i6MportD $2"; ip6tSPort="$i6MportS $2";
     ip6tables -t mangle -I POSTROUTING -p $1 $ip6tDPort $i6CBo $i6Mark -j NFQUEUE --queue-num 200 --queue-bypass
     ip6tables -t mangle -I PREROUTING -p $1 $ip6tSPort $i6CBr $i6Mark -j NFQUEUE --queue-num 200 --queue-bypass
-    echo "ip6tables -t mangle -D POSTROUTING -p $1 $ip6tDPort $i6CBo $i6Mark -j NFQUEUE --queue-num 200 --queue-bypass" >> "$REMOVE_SCRIPT"
-    echo "ip6tables -t mangle -D PREROUTING -p $1 $ip6tSPort $i6CBr $i6Mark -j NFQUEUE --queue-num 200 --queue-bypass" >> "$REMOVE_SCRIPT"
 }
 
 addMultiPort() {
@@ -138,7 +118,6 @@ fi
 
 if iptables -t mangle -A POSTROUTING -p tcp -m connbytes --connbytes-dir=original --connbytes-mode=packets --connbytes 1:12 -j ACCEPT 2>/dev/null; then
     iptables -t mangle -D POSTROUTING -p tcp -m connbytes --connbytes-dir=original --connbytes-mode=packets --connbytes 1:12 -j ACCEPT 2>/dev/null
-    echo "iptables -t mangle -D POSTROUTING -p tcp -m connbytes --connbytes-dir=original --connbytes-mode=packets --connbytes 1:12 -j ACCEPT" >> "$REMOVE_SCRIPT"
     
     cbOrig="-m connbytes --connbytes-dir=original --connbytes-mode=packets --connbytes 1:12"
     cbReply="-m connbytes --connbytes-dir=reply --connbytes-mode=packets --connbytes 1:6"
@@ -188,8 +167,8 @@ addMultiPort "udp" "$udp_ports";
 
 while true; do
     if ! pgrep -x "nfqws" > /dev/null; then
-            . "$MODPATH/make-unkillable.sh" &
-	    "$MODPATH/nfqws" --uid=0:0 --bind-fix4 --bind-fix6 --qnum=200 $config > /dev/null
+            . "$MODPATH/zapret/make-unkillable.sh" &
+	    "$MODPATH/zapret/nfqws" --uid=0:0 --bind-fix4 --bind-fix6 --qnum=200 $config
     fi
     sleep 5
 done
