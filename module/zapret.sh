@@ -10,39 +10,15 @@ for FILE in "$MODPATH"/*.sh "$MODPATH/strategies/"*.sh; do
     [ -f "$FILE" ] && sed -i 's/\r$//' "$FILE"
 done
 
-if [ ! -f "$MODPATH/config/current-strategy" ]; then
-    echo "$MODPATH/current-strategy not found!" >> "$MODPATH/error.log"
-    exit
-fi
-
-if [ ! -f "$MODPATH/config/current-plain-dns" ]; then
-    echo "$MODPATH/current-dns not found!" >> "$MODPATH/error.log"
-    exit
-fi
-
-if [ ! -f "$MODPATH/config/current-dns-mode" ]; then
-    echo "$MODPATH/current-dns-mode not found!" >> "$MODPATH/error.log"
-    exit
-fi
-
-if [ ! -f "$MODPATH/config/current-advanced-rules" ]; then
-    echo "$MODPATH/current-dns-mode not found!" >> "$MODPATH/error.log"
-    exit
-fi
+for config_file in current-strategy current-plain-dns current-dns-mode current-advanced-rules; do
+    if [ ! -f "$MODPATH/config/$config_file" ]; then
+        echo "$MODPATH/$config_file not found!" >> "$MODPATH/error.log"
+        exit
+    fi
+done
 
 CURRENTSTRATEGY=$(cat $MODPATH/config/current-strategy)
-. "$MODPATH/strategies/$CURRENTSTRATEGY.sh"
-
-iptables -t mangle -F POSTROUTING
-iptables -t mangle -F PREROUTING
-iptables -F OUTPUT
-iptables -F FORWARD
-iptables -t nat -F OUTPUT
-iptables -t nat -F PREROUTING
-ip6tables -t mangle -F POSTROUTING
-ip6tables -t mangle -F PREROUTING
-ip6tables -F OUTPUT
-ip6tables -F FORWARD
+source "$MODPATH/strategies/$CURRENTSTRATEGY.sh"
 
 while true; do
     if ping -c 1 google.com &> /dev/null; then
@@ -54,7 +30,7 @@ done
 
 if [ -f "$MODPATH/config/current-dns-mode" ] && [ "$(cat "$MODPATH/config/current-dns-mode")" = "2" ]; then
     . "$MODPATH/dnscrypt/dnscrypt.sh" &
-    CURRENTDNS=127.0.0.2
+    CURRENTDNS=127.0.0.2:53
 else
     for pid in $(pgrep -f dnscrypt.sh); do
         kill -9 "$pid"
@@ -63,28 +39,44 @@ else
 fi
 
 if [ "$(cat $MODPATH/config/current-dns-mode)" != "0" ]; then
-    sysctl net.ipv6.conf.all.disable_ipv6=1 > /dev/null;
-    sysctl net.ipv6.conf.default.disable_ipv6=1 > /dev/null;
-    sysctl net.ipv6.conf.lo.disable_ipv6=1 > /dev/null;
-    iptables -t nat -I OUTPUT -p udp --dport 53 -m comment --comment "zapret" -j DNAT --to $CURRENTDNS:53
-    iptables -t nat -I OUTPUT -p tcp --dport 53 -m comment --comment "zapret" -j DNAT --to $CURRENTDNS:53
-    iptables -t nat -I PREROUTING -p udp --dport 53 -m comment --comment "zapret" -j DNAT --to $CURRENTDNS:53
-    iptables -t nat -I PREROUTING -p tcp --dport 53 -m comment --comment "zapret" -j DNAT --to $CURRENTDNS:53
+    sysctl net.ipv6.conf.all.disable_ipv6=1 > /dev/null
+    sysctl net.ipv6.conf.default.disable_ipv6=1 > /dev/null
+    sysctl net.ipv6.conf.lo.disable_ipv6=1 > /dev/null
+    iptables -t nat -I OUTPUT -p udp --dport 53 -j DNAT --to $CURRENTDNS
+    iptables -t nat -I OUTPUT -p tcp --dport 53 -j DNAT --to $CURRENTDNS
+    iptables -t nat -I PREROUTING -p udp --dport 53 -j DNAT --to $CURRENTDNS
+    iptables -t nat -I PREROUTING -p tcp --dport 53 -j DNAT --to $CURRENTDNS
+    echo "iptables -t nat -D OUTPUT -p udp --dport 53 -j DNAT --to $CURRENTDNS" >> "$REMOVE_SCRIPT"
+    echo "iptables -t nat -D OUTPUT -p tcp --dport 53 -j DNAT --to $CURRENTDNS" >> "$REMOVE_SCRIPT"
+    echo "iptables -t nat -D PREROUTING -p udp --dport 53 -j DNAT --to $CURRENTDNS" >> "$REMOVE_SCRIPT"
+    echo "iptables -t nat -D PREROUTING -p tcp --dport 53 -j DNAT --to $CURRENTDNS" >> "$REMOVE_SCRIPT"
 fi
 
 if [ "$(cat $MODPATH/config/current-advanced-rules)" = "1" ]; then
-    ip6tables -I OUTPUT -p udp --dport 53 -m comment --comment "zapret" -j DROP
-    ip6tables -I OUTPUT -p tcp --dport 53 -m comment --comment "zapret" -j DROP
-    ip6tables -I FORWARD -p udp --dport 53 -m comment --comment "zapret" -j DROP
-    ip6tables -I FORWARD -p tcp --dport 53 -m comment --comment "zapret" -j DROP
-    iptables -I OUTPUT -p udp --dport 853 -m comment --comment "zapret" -j DROP
-    iptables -I OUTPUT -p tcp --dport 853 -m comment --comment "zapret" -j DROP
-    iptables -I FORWARD -p udp --dport 853 -m comment --comment "zapret" -j DROP
-    iptables -I FORWARD -p tcp --dport 853 -m comment --comment "zapret" -j DROP
-    ip6tables -I OUTPUT -p udp --dport 853 -m comment --comment "zapret" -j DROP
-    ip6tables -I OUTPUT -p tcp --dport 853 -m comment --comment "zapret" -j DROP
-    ip6tables -I FORWARD -p udp --dport 853 -m comment --comment "zapret" -j DROP
-    ip6tables -I FORWARD -p tcp --dport 853 -m comment --comment "zapret" -j DROP
+    ip6tables -I OUTPUT -p udp --dport 53 -j DROP
+    ip6tables -I OUTPUT -p tcp --dport 53 -j DROP
+    ip6tables -I FORWARD -p udp --dport 53 -j DROP
+    ip6tables -I FORWARD -p tcp --dport 53 -j DROP
+    iptables -I OUTPUT -p udp --dport 853 -j DROP
+    iptables -I OUTPUT -p tcp --dport 853 -j DROP
+    iptables -I FORWARD -p udp --dport 853 -j DROP
+    iptables -I FORWARD -p tcp --dport 853 -j DROP
+    ip6tables -I OUTPUT -p udp --dport 853 -j DROP
+    ip6tables -I OUTPUT -p tcp --dport 853 -j DROP
+    ip6tables -I FORWARD -p udp --dport 853 -j DROP
+    ip6tables -I FORWARD -p tcp --dport 853 -j DROP
+    echo "ip6tables -D OUTPUT -p udp --dport 53 -j DROP" >> "$REMOVE_SCRIPT"
+    echo "ip6tables -D OUTPUT -p tcp --dport 53 -j DROP" >> "$REMOVE_SCRIPT"
+    echo "ip6tables -D FORWARD -p udp --dport 53 -j DROP" >> "$REMOVE_SCRIPT"
+    echo "ip6tables -D FORWARD -p tcp --dport 53 -j DROP" >> "$REMOVE_SCRIPT"
+    echo "iptables -D OUTPUT -p udp --dport 853 -j DROP" >> "$REMOVE_SCRIPT"
+    echo "iptables -D OUTPUT -p tcp --dport 853 -j DROP" >> "$REMOVE_SCRIPT"
+    echo "iptables -D FORWARD -p udp --dport 853 -j DROP" >> "$REMOVE_SCRIPT"
+    echo "iptables -D FORWARD -p tcp --dport 853 -j DROP" >> "$REMOVE_SCRIPT"
+    echo "ip6tables -D OUTPUT -p udp --dport 853 -j DROP" >> "$REMOVE_SCRIPT"
+    echo "ip6tables -D OUTPUT -p tcp --dport 853 -j DROP" >> "$REMOVE_SCRIPT"
+    echo "ip6tables -D FORWARD -p udp --dport 853 -j DROP" >> "$REMOVE_SCRIPT"
+    echo "ip6tables -D FORWARD -p tcp --dport 853 -j DROP" >> "$REMOVE_SCRIPT"
 fi
 
 tcp_ports="$(echo $config | grep -oE 'filter-tcp=[0-9,-]+' | sed -e 's/.*=//g' -e 's/,/\n/g' -e 's/ /,/g' | sort -un)";
@@ -92,14 +84,18 @@ udp_ports="$(echo $config | grep -oE 'filter-udp=[0-9,-]+' | sed -e 's/.*=//g' -
 
 iptAdd() {
     iptDPort="$iMportD $2"; iptSPort="$iMportS $2";
-    iptables -t mangle -I POSTROUTING -p $1 $iptDPort $iCBo $iMark -m comment --comment "zapret" -j NFQUEUE --queue-num 200 --queue-bypass
-    iptables -t mangle -I PREROUTING -p $1 $iptSPort $iCBr $iMark -m comment --comment "zapret" -j NFQUEUE --queue-num 200 --queue-bypass
+    iptables -t mangle -I POSTROUTING -p $1 $iptDPort $iCBo $iMark -j NFQUEUE --queue-num 200 --queue-bypass
+    iptables -t mangle -I PREROUTING -p $1 $iptSPort $iCBr $iMark -j NFQUEUE --queue-num 200 --queue-bypass
+    echo "iptables -t mangle -D POSTROUTING -p $1 $iptDPort $iCBo $iMark -j NFQUEUE --queue-num 200 --queue-bypass" >> "$REMOVE_SCRIPT"
+    echo "iptables -t mangle -D PREROUTING -p $1 $iptSPort $iCBr $iMark -j NFQUEUE --queue-num 200 --queue-bypass" >> "$REMOVE_SCRIPT"
 }
 
 ip6tAdd() {
     ip6tDPort="$i6MportD $2"; ip6tSPort="$i6MportS $2";
-    ip6tables -t mangle -I POSTROUTING -p $1 $ip6tDPort $i6CBo $i6Mark -m comment --comment "zapret" -j NFQUEUE --queue-num 200 --queue-bypass
-    ip6tables -t mangle -I PREROUTING -p $1 $ip6tSPort $i6CBr $i6Mark -m comment --comment "zapret" -j NFQUEUE --queue-num 200 --queue-bypass
+    ip6tables -t mangle -I POSTROUTING -p $1 $ip6tDPort $i6CBo $i6Mark -j NFQUEUE --queue-num 200 --queue-bypass
+    ip6tables -t mangle -I PREROUTING -p $1 $ip6tSPort $i6CBr $i6Mark -j NFQUEUE --queue-num 200 --queue-bypass
+    echo "ip6tables -t mangle -D POSTROUTING -p $1 $ip6tDPort $i6CBo $i6Mark -j NFQUEUE --queue-num 200 --queue-bypass" >> "$REMOVE_SCRIPT"
+    echo "ip6tables -t mangle -D PREROUTING -p $1 $ip6tSPort $i6CBr $i6Mark -j NFQUEUE --queue-num 200 --queue-bypass" >> "$REMOVE_SCRIPT"
 }
 
 addMultiPort() {
@@ -140,9 +136,10 @@ else
     i6MportD="--dport"
 fi
 
-if iptables -t mangle -A POSTROUTING -p tcp -m connbytes --connbytes-dir=original --connbytes-mode=packets --connbytes 1:12 -m comment --comment "zapret" -j ACCEPT 2>/dev/null; then
-    iptables -t mangle -D POSTROUTING -p tcp -m connbytes --connbytes-dir=original --connbytes-mode=packets --connbytes 1:12 -m comment --comment "zapret" -j ACCEPT 2>/dev/null
-
+if iptables -t mangle -A POSTROUTING -p tcp -m connbytes --connbytes-dir=original --connbytes-mode=packets --connbytes 1:12 -j ACCEPT 2>/dev/null; then
+    iptables -t mangle -D POSTROUTING -p tcp -m connbytes --connbytes-dir=original --connbytes-mode=packets --connbytes 1:12 -j ACCEPT 2>/dev/null
+    echo "iptables -t mangle -D POSTROUTING -p tcp -m connbytes --connbytes-dir=original --connbytes-mode=packets --connbytes 1:12 -j ACCEPT" >> "$REMOVE_SCRIPT"
+    
     cbOrig="-m connbytes --connbytes-dir=original --connbytes-mode=packets --connbytes 1:12"
     cbReply="-m connbytes --connbytes-dir=reply --connbytes-mode=packets --connbytes 1:6"
 else
