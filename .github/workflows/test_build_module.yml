@@ -1,5 +1,5 @@
-name: Build Zapret Module
-run-name: ${{ startsWith(github.ref, 'refs/tags/') && format('Release {0}', github.ref_name) || null }}
+name: Test Build Zapret Module
+run-name: ${{format('1.0')}}
 
 on:
   workflow_dispatch:
@@ -174,7 +174,7 @@ jobs:
           cd module
 
           echo "id=zapret" > module.prop
-          echo "name=zapret" >> module.prop
+          echo "name=zapret (test)" >> module.prop
           echo "version=${version}" >> module.prop
           echo "versionCode=${version_code}" >> module.prop
           echo "author=sevcator, bol-van, DNSCrypt, ImMALWARE, Fenrir-0xFF, Flowseal, elovin, KDS" >> module.prop
