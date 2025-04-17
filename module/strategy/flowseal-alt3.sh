@@ -18,5 +18,5 @@ config="$config --filter-tcp=80 --ipset=$MODPATH/ipset/ipset-host.txt --dpi-desy
 config="$config --filter-tcp=443 --ipset=$MODPATH/ipset/ipset-host.txt --dpi-desync=split --dpi-desync-split-pos=1 --dpi-desync-autottl --dpi-desync-fooling=badseq --dpi-desync-repeats=8 --new"
 config="$config --filter-udp=80,443 --ipset=$MODPATH/ipset/ipset-host.txt --dpi-desync=fake --dpi-desync-repeats=6 --dpi-desync-fake-quic=$MODPATH/fake/quic_initial_www_google_com.bin --new"
 
-# ipset-discord.txt
+# Discord RTC - ipset-discord.txt
 config="$config --filter-udp=50000-50100 --ipset=$MODPATH/ipset/ipset-discord.txt --dpi-desync=fake --dpi-desync-any-protocol --dpi-desync-cutoff=d3 --dpi-desync-repeats=6"
