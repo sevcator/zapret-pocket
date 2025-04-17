@@ -193,65 +193,9 @@ jobs:
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
           
-      - name: Push updated files to Main branch
-        run: |
-          echo '{
-            "version": "${{ env.version }}",
-            "versionCode": "${{ env.versionCode }}",
-            "zipUrl": "https://github.com/${{ github.repository }}/releases/download/${{ env.version }}/zapret-Magisk.zip",
-            "changelog": "https://raw.githubusercontent.com/${{ github.repository }}/main/CHANGELOG.md"
-          }' > update.json
-          git add update.json
-          git add module/dnscrypt/blocked-names.txt module/dnscrypt/cloaking-rules.txt
-          git commit -m "Release ${{ env.version }}"
-          git push origin HEAD:main --force || echo "No changes to commit"
-
-      - name: Calculate SHA-256 checksum
-        id: sha256
-        run: echo "SHA256=$(sha256sum zapret-Magisk.zip | awk '{ print $1 }')" >> $GITHUB_ENV
-          
       - name: Upload Module Zip
         uses: actions/upload-artifact@v4
         with:
           name: zapret-Magisk
           path: zapret-Magisk.zip
           if-no-files-found: error
-
-      - name: Upload to Release
-        uses: softprops/action-gh-release@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          fail_on_unmatched_files: true
-          prerelease: false
-          draft: false
-          body: |
-            🔑 SHA256: ${{ env.SHA256 }}
-          files: |
-            zapret-Magisk.zip
-
-      - name: Send to Telegram
-        run: |
-          curl -X POST \
-            -F document=@"zapret-Magisk.zip" \
-            -F chat_id="${TELEGRAM_CHAT_ID}" \
-            -F caption="$(echo -e "🔔 <b>New release:</b> <a href=\"https://github.com/$GITHUB_REPOSITORY/releases/tag/$VERSION\">$VERSION</a>\n🔑 <b>SHA256:</b> $SHA256")" \
-            -F parse_mode=HTML \
-            -F disable_web_page_preview=true \
-            "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument?chat_id=${TELEGRAM_CHAT_ID}"
-          curl -X POST \
-            -H "Content-Type: application/json" \
-            -d '{
-              "chat_id": "'"${TELEGRAM_CHAT_ID_MAIN}"'",
-              "text": "🔔 Новый релиз <b>'"${VERSION}"'</b> модуля zapret-magisk вышел! <a href=\"'"${RELEASES_TELEGRAM_CHANNEL}"'\">Подробнее...</a>",
-              "parse_mode": "HTML",
-              "disable_web_page_preview": true
-            }' \
-            "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage?chat_id=${TELEGRAM_CHAT_ID_MAIN}"
-        env:
-          VERSION: ${{ github.ref_name }}
-          SHA256: ${{ env.SHA256 }}
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-          TELEGRAM_CHAT_ID_MAIN: ${{ secrets.TELEGRAM_CHAT_ID_MAIN }}
-          RELEASES_TELEGRAM_CHANNEL: ${{ secrets.RELEASES_TELEGRAM_CHANNEL }}
