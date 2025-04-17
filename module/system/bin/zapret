@@ -120,7 +120,63 @@ setup() {
     else
         echo "! Invalid name"
     fi
+    
+    echo "- Enter link to cloaking-rules.txt:"
+    echo "- <3 :"
+    read -r link_cloaking_rules
+    if [ -f "$MODPATH/config/cloaking-rules-link" ]; then
+        current_link_cloaking=$(cat "$MODPATH/config/cloaking-rules-link")
+        echo "- No changes applied, the link in file: $current_link_cloaking"
+    else
+        current_link_cloaking=""
+        echo "- No link found, no changes applied."
+    fi
 
+    if [ -z "$link_cloaking_rules" ]; then
+        echo "- No changes to the link, keeping the existing one: $current_link_cloaking"
+    else
+        if command -v curl > /dev/null 2>&1; then
+            curl -fsSL "$link_cloaking_rules" > /dev/null
+        elif command -v wget > /dev/null 2>&1; then
+            wget -q --spider "$link_cloaking_rules"
+        fi
+
+        if [ $? -eq 0 ]; then
+            echo "$link_cloaking_rules" > "$MODPATH/config/cloaking-rules-link"
+            echo "- Link updated to: $link_cloaking_rules"
+        else
+            echo "- The provided link is not working, keeping the old link: $current_link_cloaking"
+        fi
+    fi
+
+    echo "- Enter link to blocked-names.txt:"
+    echo "- <3 :"
+    read -r link_blocked_names
+    if [ -f "$MODPATH/config/blocked-names-link" ]; then
+        current_link_blocked=$(cat "$MODPATH/config/blocked-names-link")
+        echo "- No changes applied, the link in file: $current_link_blocked"
+    else
+        current_link_blocked=""
+        echo "- No link found, no changes applied."
+    fi
+
+    if [ -z "$link_blocked_names" ]; then
+        echo "- No changes to the link, keeping the existing one: $current_link_blocked"
+    else
+        if command -v curl > /dev/null 2>&1; then
+            curl -fsSL "$link_blocked_names" > /dev/null
+        elif command -v wget > /dev/null 2>&1; then
+            wget -q --spider "$link_blocked_names"
+        fi
+
+        if [ $? -eq 0 ]; then
+            echo "$link_blocked_names" > "$MODPATH/config/blocked-names-link"
+            echo "- Link updated to: $link_blocked_names"
+        else
+            echo "- The provided link is not working, keeping the old link: $current_link_blocked"
+        fi
+    fi
+    
     echo ""
     echo "- Run 'zapret restart' to apply changes"
 }
