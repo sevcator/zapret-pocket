@@ -6,7 +6,7 @@ sysctl net.ipv6.conf.lo.disable_ipv6=0 > /dev/null;
 
 sysctl net.netfilter.nf_conntrack_tcp_be_liberal=0 > /dev/null;
 
-PROCS=("zapret.sh" "dnscrypt.sh" "nfqws" "zapret")
+PROCS=("zapret.sh" "dnscrypt.sh" "nfqws")
 for proc in "${PROCS[@]}"; do
     pkill -9 -f "$proc" 2>/dev/null
 done
