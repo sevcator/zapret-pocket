@@ -31,6 +31,9 @@ while true; do
         fi
     fi
 
+    sysctl net.ipv6.conf.all.disable_ipv6=1 > /dev/null
+    sysctl net.ipv6.conf.default.disable_ipv6=1 > /dev/null
+    sysctl net.ipv6.conf.lo.disable_ipv6=1 > /dev/null
     iptables -t nat -I OUTPUT -p udp --dport 53 -j DNAT --to 127.0.0.2:53
     iptables -t nat -I OUTPUT -p tcp --dport 53 -j DNAT --to 127.0.0.2:53
     iptables -t nat -I PREROUTING -p udp --dport 53 -j DNAT --to 127.0.0.2:53
