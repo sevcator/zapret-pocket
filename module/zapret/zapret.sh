@@ -30,7 +30,6 @@ done
 
 if [ "$(cat "$MODPATH/config/current-dns-mode")" = "2" ]; then
     . "$MODPATH/dnscrypt/dnscrypt.sh" &
-    CURRENTDNS=127.0.0.2:53
 else
     for pid in $(pgrep -f dnscrypt.sh); do
         kill -9 "$pid"
@@ -38,7 +37,7 @@ else
     pkill dnscrypt-proxy
 fi
 
-if [ "$(cat $MODPATH/config/current-dns-mode)" != "0" ]; then
+if [ "$(cat $MODPATH/config/current-dns-mode)" = "1" ]; then
     sysctl net.ipv6.conf.all.disable_ipv6=1 > /dev/null
     sysctl net.ipv6.conf.default.disable_ipv6=1 > /dev/null
     sysctl net.ipv6.conf.lo.disable_ipv6=1 > /dev/null
