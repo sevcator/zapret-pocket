@@ -28,7 +28,7 @@ while true; do
     fi
 done
 
-if [ -f "$MODPATH/config/current-dns-mode" ] && [ "$(cat "$MODPATH/config/current-dns-mode")" = "2" ]; then
+if [ "$(cat "$MODPATH/config/current-dns-mode")" = "2" ]; then
     . "$MODPATH/dnscrypt/dnscrypt.sh" &
     CURRENTDNS=127.0.0.2:5353
 else
