@@ -2,7 +2,7 @@
 #         For github.com/sevcator/zapret-magisk        #
 ########################################################
 
-listen_addresses = ['127.0.0.2:5353']
+listen_addresses = ['127.0.0.2:53']
 
 server_names = ['controld-unfiltered', 'nextdns', 'nextdns-ultralow']
 
