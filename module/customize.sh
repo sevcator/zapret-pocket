@@ -96,11 +96,17 @@ if [ -d "$MODUPDATEPATH" ]; then
         cp -f "$MODPATH/list/list-auto.txt" "$MODUPDATEPATH/list/list-auto.txt"
     fi
 
+    if [ -f "$MODPATH/list/list-exclude.txt" ]; then
+        cp -f "$MODPATH/list/list-exclude.txt" "$MODUPDATEPATH/list/list-exclude.txt"
+    fi
+
     if [ -f "$MODPATH/config/current-strategy" ]; then
         STRATEGY=$(cat "$MODPATH/config/current-strategy")
         STRATEGY_FILE="$MODUPDATEPATH/strategy/${TACTIC}.sh"
         if [ -f "$STRATEGY_FILE" ]; then
             cp -f "$MODPATH/config/current-strategy" "$MODUPDATEPATH/config/current-strategy"
+        else
+            rm -rf "$MODPATH/config/current-strategy"
         fi
     fi
 
@@ -110,6 +116,12 @@ if [ -d "$MODUPDATEPATH" ]; then
 
     if [ -f "$MODPATH/config/current-dns-mode" ]; then
         cp -f "$MODPATH/config/current-dns-mode" "$MODUPDATEPATH/config/current-dns-mode"
+    fi
+
+    if [ -d "$MODPATH/config" ]; then
+        mkdir -p "$MODUPDATEPATH/config"
+        cp -f "$MODPATH/config/"* "$MODUPDATEPATH/config/"
+        ui_print "- Copied all files from config/"
     fi
 fi
 
