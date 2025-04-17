@@ -30,7 +30,7 @@ done
 
 if [ "$(cat "$MODPATH/config/current-dns-mode")" = "2" ]; then
     . "$MODPATH/dnscrypt/dnscrypt.sh" &
-    CURRENTDNS=127.0.0.2:5353
+    CURRENTDNS=127.0.0.2:53
 else
     for pid in $(pgrep -f dnscrypt.sh); do
         kill -9 "$pid"
