@@ -18,5 +18,5 @@ config="$config --filter-tcp=80 --ipset=$MODPATH/ipset/ipset-host.txt --dpi-desy
 config="$config --filter-tcp=443 --ipset=$MODPATH/ipset/ipset-host.txt --dpi-desync=fake,multidisorder --dpi-desync-split-pos=midsld --dpi-desync-repeats=6 --dpi-desync-fooling=badseq,md5sig --new"
 config="$config --filter-udp=80,443 --ipset=$MODPATH/ipset/ipset-host.txt --dpi-desync=fake --dpi-desync-repeats=11 --new"
 
-# ipset-discord.txt
+# Discord RTC
 config="$config --filter-udp=50000-50100 --filter-l7=discord,stun --dpi-desync=fake"
