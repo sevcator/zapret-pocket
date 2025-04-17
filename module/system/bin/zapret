@@ -15,7 +15,7 @@ start_service() {
 }
 
 stop_service() {
-    "$MODPATH/uninstall.sh" > /dev/null 2>&1 &
+    su -c "$MODPATH/uninstall.sh" > /dev/null 2>&1 &
     echo "- Service stopped"
 }
 
