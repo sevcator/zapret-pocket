@@ -121,7 +121,6 @@ if [ -d "$MODUPDATEPATH" ]; then
     if [ -d "$MODPATH/config" ]; then
         mkdir -p "$MODUPDATEPATH/config"
         cp -f "$MODPATH/config/"* "$MODUPDATEPATH/config/"
-        ui_print "- Copied all files from config/"
     fi
 fi
 
