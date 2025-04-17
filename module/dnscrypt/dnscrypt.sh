@@ -4,18 +4,30 @@ while true; do
     mode=$(cat "$MODPATH/config/dnscrypt-files-mode")
 
     if [ "$mode" = "1" ] || [ "$mode" = "2" ]; then
-        if command -v curl > /dev/null 2>&1; then
-            curl -fsSL -o "$MODPATH/dnscrypt/cloaking-rules.txt" "https://raw.githubusercontent.com/sevcator/dnscrypt-proxy-stuff/main/cloaking-rules.txt"
-        elif command -v wget > /dev/null 2>&1; then
-            wget -q -O "$MODPATH/dnscrypt/cloaking-rules.txt" "https://raw.githubusercontent.com/sevcator/dnscrypt-proxy-stuff/main/cloaking-rules.txt"
+        CLOAKING_RULES_LINK=$(cat "$MODPATH/config/cloaking-rules-link")
+        
+        if [ -n "$CLOAKING_RULES_LINK" ]; then
+            if command -v curl > /dev/null 2>&1; then
+                curl -fsSL -o "$MODPATH/dnscrypt/cloaking-rules.txt" "$CLOAKING_RULES_LINK"
+            elif command -v wget > /dev/null 2>&1; then
+                wget -q -O "$MODPATH/dnscrypt/cloaking-rules.txt" "$CLOAKING_RULES_LINK"
+            fi
+        else
+            echo "- Cloaking rules link is empty." > "$MODPATH/warns.log"
         fi
     fi
 
     if [ "$mode" = "2" ]; then
-        if command -v curl > /dev/null 2>&1; then
-            curl -fsSL -o "$MODPATH/dnscrypt/blocked-names.txt" "https://raw.githubusercontent.com/sevcator/dnscrypt-proxy-stuff/main/blocked-names.txt"
-        elif command -v wget > /dev/null 2>&1; then
-            wget -q -O "$MODPATH/dnscrypt/blocked-names.txt" "https://raw.githubusercontent.com/sevcator/dnscrypt-proxy-stuff/main/blocked-names.txt"
+        BLOCKED_NAMES_LINK=$(cat "$MODPATH/config/blocked-names-link")
+        
+        if [ -n "$BLOCKED_NAMES_LINK" ]; then
+            if command -v curl > /dev/null 2>&1; then
+                curl -fsSL -o "$MODPATH/dnscrypt/blocked-names.txt" "$BLOCKED_NAMES_LINK"
+            elif command -v wget > /dev/null 2>&1; then
+                wget -q -O "$MODPATH/dnscrypt/blocked-names.txt" "$BLOCKED_NAMES_LINK"
+            fi
+        else
+            echo "- Blocked names link is empty." > "$MODPATH/warns.log"
         fi
     fi
 
