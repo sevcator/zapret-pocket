@@ -3,4 +3,4 @@
 MODPATH=/data/adb/modules/zapret
 su -c "$MODPATH/uninstall.sh"
 sleep 2
-$MODPATH/main.sh &
+su -c "$MODPATH/main.sh"
