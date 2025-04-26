@@ -66,3 +66,33 @@ if [ "$(cat $MODPATH/config/current-advanced-rules)" = "1" ]; then
     ip6tables -I FORWARD -p udp --dport 853 -j DROP
     ip6tables -I FORWARD -p tcp --dport 853 -j DROP
 fi
+
+mode=$(cat "$MODPATH/config/dnscrypt-files-mode")
+if [ "$mode" = "1" ] || [ "$mode" = "2" ]; then
+    CLOAKING_RULES_LINK=$(cat "$MODPATH/config/cloaking-rules-link")
+    
+    if [ -n "$CLOAKING_RULES_LINK" ]; then
+        if command -v curl > /dev/null 2>&1; then
+            curl -fsSL -o "$MODPATH/dnscrypt/cloaking-rules.txt" "$CLOAKING_RULES_LINK"
+        else
+            echo "- curl not found, cannot download cloaking rules" >> "$MODPATH/warns.log"
+        fi
+    else
+        echo "- Cloaking rules link is empty" >> "$MODPATH/warns.log"
+    fi
+fi
+if [ "$mode" = "2" ]; then
+    BLOCKED_NAMES_LINK=$(cat "$MODPATH/config/blocked-names-link")
+
+    if [ -n "$BLOCKED_NAMES_LINK" ]; then
+        if command -v curl > /dev/null 2>&1; then
+            curl -fsSL -o "$MODPATH/dnscrypt/blocked-names.txt" "$BLOCKED_NAMES_LINK"
+        else
+            echo "- curl not found, cannot download blocked names" >> "$MODPATH/warns.log"
+        fi
+    else
+        echo "- Blocked names link is empty" >> "$MODPATH/warns.log"
+    fi
+fi
+
+$MODPATH/zapret/zapret.sh &
