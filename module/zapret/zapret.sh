@@ -1,22 +1,5 @@
 MODPATH=/data/adb/modules/zapret
 
-boot_wait() {
-    while [[ -z $(getprop sys.boot_completed) ]]; do sleep 2; done
-}
-
-boot_wait
-
-for FILE in "$MODPATH"/*.sh "$MODPATH/strategy/"*.sh; do
-    [ -f "$FILE" ] && sed -i 's/\r$//' "$FILE"
-done
-
-for config_file in current-strategy current-plain-dns current-dns-mode current-advanced-rules; do
-    if [ ! -f "$MODPATH/config/$config_file" ]; then
-        echo "$MODPATH/$config_file not found!" >> "$MODPATH/error.log"
-        exit
-    fi
-done
-
 CURRENTSTRATEGY=$(cat $MODPATH/config/current-strategy)
 source "$MODPATH/strategy/$CURRENTSTRATEGY.sh"
 
