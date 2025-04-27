@@ -110,7 +110,7 @@ setup_dnscrypt() {
     echo "0 - None"
     echo "1 - cloaking-rules.txt"
     echo "2 - cloaking-rules.txt + blocked-names.txt"
-    read -rp "- <3 : " dnscrypt_mode
+    read -r "- <3 : " dnscrypt_mode
 
     echo ""
     echo "- Enter link to cloaking-rules.txt:"
