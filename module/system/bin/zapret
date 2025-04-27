@@ -1,13 +1,13 @@
-#!/system/bin/sh
-
 MODPATH="/data/adb/modules/zapret"
+
 CURRENTSTRATEGY=$(cat "$MODPATH/config/current-strategy" 2>/dev/null || echo "Unknown")
 CURRENTDNS=$(cat "$MODPATH/config/current-plain-dns" 2>/dev/null || echo "Unknown")
 CURRENTDNSMODE=$(cat "$MODPATH/config/current-dns-mode" 2>/dev/null || echo "Unknown")
+CURRENTADVANCEDRULES=$(cat "$MODPATH/config/current-advanced-rules" 2>/dev/null || echo "Unknown")
 
 start_service() {
     if pgrep -f "nfqws" > /dev/null; then
-        echo "! nfqws is already started"
+        echo "! nfqws is already running"
     else
         "$MODPATH/service.sh" > /dev/null 2>&1 &
         echo "- Service started"
@@ -36,87 +36,81 @@ restart_service() {
 setup() {
     clear
     echo "- Enable advanced rules? (No - 0 / Yes - 1)"
-    echo "If you enable this, will disable DNS-over-TLS, VPN and tethering"
-    echo "This may help to preventing DNS leaks via DNS-over-TLS"
+    echo "If you enable this, DNS-over-TLS, VPN, and tethering will be disabled"
+    echo "This may help prevent DNS leaks via DNS-over-TLS"
     echo "- <3 :"
     read -r rules
     case "$rules" in
         0)
-            echo "0" > "$MODPATH/config/current-advanced-rules"
             ;;
         1)
-            echo "1" > "$MODPATH/config/current-advanced-rules"
             ;;
         *)
             echo "! Invalid choice"
+            exit 1
             ;;
     esac
 
     echo ""
     echo "- Select DNS mode:"
-    echo "0 - Nothing"
+    echo "0 - None"
     echo "1 - Plain DNS"
-    echo "2 - With DNSCrypt"
+    echo "2 - DNSCrypt"
     echo "- <3 :"
     read -r dns_mode
     case "$dns_mode" in
         0)
-            echo "0" > "$MODPATH/config/current-dns-mode"
             ;;
         1)
-            echo "! Be sure if DNS address in port 53"
+            echo ""
             echo "- Enter the DNS address (IPv4):"
             read -r user_dns
             if ! echo "$user_dns" | grep -qE '^([0-9]{1,3}\.){3}[0-9]{1,3}$'; then
                 echo "! Invalid DNS address"
                 return 1
             fi
-            echo "$user_dns" > "$MODPATH/config/current-plain-dns"
-            echo "1" > "$MODPATH/config/current-dns-mode"
             ;;
         2)
-            echo "2" > "$MODPATH/config/current-dns-mode"
+            setup_dnscrypt
             ;;
         *)
             echo "! Invalid choice"
+            exit 1
             ;;
     esac
 
     echo ""
-    echo "- Select DNSCrypt auto-update files mode:"
-    echo "0 - None"
-    echo "1 - cloaking-rules.txt"
-    echo "2 - cloaking-rules.txt + blocking-names.txt"
-    echo "- <3 :"
-    read -r dnscrypt_files_mode
-    case "$dnscrypt_files_mode" in
-        0)
-            echo "0" > "$MODPATH/config/dnscrypt-files-mode"
-            ;;
-        1)
-            echo "1" > "$MODPATH/config/dnscrypt-files-mode"
-            ;;
-        2)
-            echo "2" > "$MODPATH/config/dnscrypt-files-mode"
-            ;;
-        *)
-            echo "! Invalid choice"
-            ;;
-    esac
-
-    echo ""
-    echo "- Available tactics:"
-    for tactic in "$MODPATH/strategy"/*.sh; do
-        echo "$(basename "$tactic" .sh)"
+    echo "- Available strategies:"
+    for strategy in "$MODPATH/strategy"/*.sh; do
+        echo "$(basename "$strategy" .sh)"
     done
     echo "- <3 :"
-    read -r user_tactic
-    if [ -f "$MODPATH/strategy/$user_tactic.sh" ]; then
-        echo "$user_tactic" > "$MODPATH/config/current-strategy"
+    read -r user_strategy
+    if [ -f "$MODPATH/strategy/$user_strategy.sh" ]; then
         echo "- Done!"
     else
-        echo "! Invalid name"
+        echo "! Invalid name of strategy"
     fi
+    
+    echo ""
+    echo "$user_dns" > "$MODPATH/config/current-plain-dns"
+    echo "$user_strategy" > "$MODPATH/config/current-strategy"
+    echo "$dns_mode" > "$MODPATH/config/current-dns-mode"
+    echo "$rules" > "$MODPATH/config/current-advanced-rules"
+    echo "$dnscrypt_mode" > "$MODPATH/config/dnscrypt-files-mode"
+    [[ -n "$cloaking_link" ]] && echo "$cloaking_link" > "$MODPATH/config/cloaking-rules-link"
+    [[ -n "$blocked_link" ]] && echo "$blocked_link" > "$MODPATH/config/blocked-names-link"
+    echo "- Done!"
+    echo "! Changes will be applied on next start"
+}
+
+setup_dnscrypt() {
+    echo
+    echo "- Select DNSCrypt auto-update file mode:"
+    echo "0 - None"
+    echo "1 - cloaking-rules.txt"
+    echo "2 - cloaking-rules.txt + blocked-names.txt"
+    read -rp "- <3 : " dnscrypt_mode
 
     echo ""
     echo "- Enter link to cloaking-rules.txt:"
@@ -163,9 +157,6 @@ setup() {
             echo "! The provided link is not reachable. Keeping: $current_link_blocked"
         fi
     fi
-    
-    echo ""
-    echo "- Run 'zapret restart' to apply changes"
 }
 
 command_info() {
@@ -183,6 +174,14 @@ command_info() {
         echo "- Current DNS Mode: $CURRENTDNS"
     fi
 
+    if [ "$CURRENTADVANCEDRULES" -eq 1 ]; then
+        echo "- Current advanced rules: Enabled"
+    elif [ "$CURRENTADVANCEDRULES" -eq 0 ]; then
+        echo "- Current advanced rules: Disabled"
+    else
+        echo "- Current advanced rules: Unknown"
+    fi
+
     echo ""
     echo "- Available commands:"
     echo "zapret start    - Start the zapret service"
@@ -194,7 +193,6 @@ command_info() {
 
 unknown_command() {
     echo "! Unknown command: $1"
-    echo "- Run 'zapret' for a list of available commands."
 }
 
 if [ -z "$1" ]; then
