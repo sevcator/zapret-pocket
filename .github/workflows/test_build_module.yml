@@ -3,9 +3,6 @@ run-name: ${{format('1.0')}}
 
 on:
   workflow_dispatch:
-  push:
-    tags:
-      - '[0-9]+*'
       
 jobs:          
   build-zapret:
