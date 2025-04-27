@@ -6,18 +6,16 @@ sysctl net.ipv6.conf.lo.disable_ipv6=0 > /dev/null;
 
 sysctl net.netfilter.nf_conntrack_tcp_be_liberal=0 > /dev/null;
 
-PROCS=("zapret.sh" "dnscrypt.sh" "nfqws")
+PROCS=("zapret.sh" "zapret-main.sh" "dnscrypt.sh" "nfqws")
 for proc in "${PROCS[@]}"; do
     pkill -9 -f "$proc" 2>/dev/null
 done
 
 iptables -t mangle -F POSTROUTING
 iptables -t mangle -F PREROUTING
-iptables -F OUTPUT
-iptables -F FORWARD
-iptables -t nat -F OUTPUT
-iptables -t nat -F PREROUTING
-ip6tables -t mangle -F POSTROUTING
-ip6tables -t mangle -F PREROUTING
-ip6tables -F OUTPUT
-ip6tables -F FORWARD
+iptables -t nat -S | grep -- '-p udp -m udp --dport 53 -j DNAT' | while read -r rule; do
+    iptables -t nat -D ${rule#-A }
+done
+iptables -t nat -S | grep -- '-p tcp -m tcp --dport 53 -j DNAT' | while read -r rule; do
+    iptables -t nat -D ${rule#-A }
+done
