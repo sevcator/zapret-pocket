@@ -1,4 +1,3 @@
-soundcloud.com
 googleusercontent.com
 googlesyndication.com
 googleadservices.com
@@ -10,7 +9,4 @@ doubleclick.net
 mvd.ru
 gov.ru
 gosuslugi.ru
-facebook.com
-instagram.com
-isntagramcdn.com
 ads-twitter.com
