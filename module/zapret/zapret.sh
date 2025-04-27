@@ -1,7 +1,7 @@
 MODPATH=/data/adb/modules/zapret
 
 CURRENTSTRATEGY=$(cat $MODPATH/config/current-strategy)
-"$MODPATH/strategy/$CURRENTSTRATEGY.sh"
+. "$MODPATH/strategy/$CURRENTSTRATEGY.sh"
 
 tcp_ports="$(echo $config | grep -oE 'filter-tcp=[0-9,-]+' | sed -e 's/.*=//g' -e 's/,/\n/g' -e 's/ /,/g' | sort -un)";
 udp_ports="$(echo $config | grep -oE 'filter-udp=[0-9,-]+' | sed -e 's/.*=//g' -e 's/,/\n/g' -e 's/ /,/g' | sort -un)";
