@@ -10,8 +10,6 @@
 
 <h1 align="center">zapret for Magisk</h1>
 
-<hr>
-
 <div align="center">
   <a href="https://t.me/sevcator/921">📢 Telegram Channel</a> | 
   <a href="https://t.me/sevcator/909">💸 Donate</a>
