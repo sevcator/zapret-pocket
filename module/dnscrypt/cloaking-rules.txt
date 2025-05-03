@@ -21,3 +21,10 @@ localhost                ::1
 
 # example.com           192.168.100.1
 # my.example.com        192.168.100.1
+
+# Block domains by syntax
+ad.* 0.0.0.0
+ads.* 0.0.0.0
+banner.* 0.0.0.0
+banners.* 0.0.0.0
+*.onion 0.0.0.0
