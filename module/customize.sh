@@ -5,64 +5,34 @@ ui_print "- Mounting /data"
 mount -o remount,rw /data || abort "! Failed to remount /data"
 
 check_requirements() {
-  if command -v iptables >/dev/null 2>&1; then
-    ui_print "- iptables: Found"
-  else
-    abort "! iptables: Not found"
-  fi
+  command -v iptables >/dev/null 2>&1 || abort "! iptables: Not found"
+  ui_print "- iptables: Found"
 
-  if command -v ip6tables >/dev/null 2>&1; then
-    ui_print "- ip6tables: Found"
-  else
-    abort "! ip6tables: Not found"
-  fi
-
-  if [ "$(cat /proc/net/ip_tables_targets | grep -c 'NFQUEUE')" == "0" ]; then
-    ui_print "! Bad iptables"
-    abort
-  fi
-
-  if [ "$(cat /proc/net/ip6_tables_targets | grep -c 'NFQUEUE')" == "0" ]; then
-    abort "! Bad ip6tables"
-  fi
+  command -v ip6tables >/dev/null 2>&1 || abort "! ip6tables: Not found"
+  ui_print "- ip6tables: Found"
+  
+  grep -q 'NFQUEUE' /proc/net/ip_tables_targets || abort "! Bad iptables"
+  grep -q 'NFQUEUE' /proc/net/ip6_tables_targets || abort "! Bad ip6tables"
 
   API=$(grep_get_prop ro.build.version.sdk)
-  if [ -n "$API" ]; then
-    ui_print "- Device Android API: $API"
-    if [ "$API" -lt 28 ]; then
-      abort "! Minimum required API 28 (Android 9)"
-    fi
-  else
-    abort "! Failed to detect Android API"
-  fi
+  [ -n "$API" ] || abort "! Failed to detect Android API"
+  ui_print "- Device Android API: $API"
+
+  [ "$API" -ge 28 ] || abort "! Minimum required API 28 (Android 9)"
 }
 
 binary_by_architecture() {
-    ABI=$(grep_get_prop ro.product.cpu.abi)
-    case "$ABI" in
-        arm64-v8a)
-            BINARY="nfqws-aarch64"
-            BINARY2="dnscrypt-proxy-arm64"
-            ;;
-        x86_64)
-            BINARY="nfqws-x86_x64"
-            BINARY2="dnscrypt-proxy-x86_64"
-            ;;
-        armeabi-v7a)
-            BINARY="nfqws-arm"
-            BINARY2="dnscrypt-proxy-arm"
-            ;;
-        x86)
-            BINARY="nfqws-x86"
-            BINARY2="dnscrypt-proxy-i386"
-            ;;
-        *)
-            abort "! Unsupported Architecture: $ABI"
-            ;;
-    esac
-    ui_print "- Device architecture: $ABI"
-    ui_print "- zapret binary: $BINARY"
-    ui_print "- dnscrypt-proxy binary: $BINARY2"
+  ABI=$(grep_get_prop ro.product.cpu.abi)
+  case "$ABI" in
+    arm64-v8a)    BINARY="nfqws-aarch64"; BINARY2="dnscrypt-proxy-arm64" ;;
+    x86_64)       BINARY="nfqws-x86_x64"; BINARY2="dnscrypt-proxy-x86_64" ;;
+    armeabi-v7a)  BINARY="nfqws-arm";     BINARY2="dnscrypt-proxy-arm" ;;
+    x86)          BINARY="nfqws-x86";     BINARY2="dnscrypt-proxy-i386" ;;
+    *)            abort "! Unsupported Architecture: $ABI" ;;
+  esac
+  ui_print "- Architecture: $ABI"
+  ui_print "- Binary: $BINARY"
+  ui_print "- DNSCrypt Binary: $BINARY2"
 }
 
 check_requirements
@@ -74,43 +44,60 @@ elif [ -f "$MODUPDATEPATH/uninstall.sh" ]; then
     "$MODUPDATEPATH/uninstall.sh"
 fi
 
-if [ -d "$MODUPDATEPATH" ]; then
-    ui_print "- Backing up old files"
-    
-    if [ -f "$MODPATH/list/list-auto.txt" ]; then
-        cp -f "$MODPATH/list/list-auto.txt" "$MODUPDATEPATH/list/list-auto.txt"
-    fi
+backup_file() {
+  src="$1"
+  dst="$2"
+  [ -f "$src" ] || return
+  if [ ! -f "$dst" ] || ! cmp -s "$src" "$dst"; then
+    cp -f "$src" "$dst"
+    ui_print "  > Backed up $(basename "$src")"
+  fi
+}
 
-    if [ -f "$MODPATH/list/list-exclude.txt" ]; then
-        cp -f "$MODPATH/list/list-exclude.txt" "$MODUPDATEPATH/list/list-exclude.txt"
-    fi
+backup_old_files() {
+  ui_print "- Backing up old files"
+  mkdir -p "$MODUPDATEPATH/list" "$MODUPDATEPATH/config"
 
-    if [ -f "$MODPATH/config/current-strategy" ]; then
-        STRATEGY=$(cat "$MODPATH/config/current-strategy")
-        STRATEGY_FILE="$MODUPDATEPATH/strategy/${TACTIC}.sh"
-        if [ -f "$STRATEGY_FILE" ]; then
-            cp -f "$MODPATH/config/current-strategy" "$MODUPDATEPATH/config/current-strategy"
-        else
-            rm -rf "$MODPATH/config/current-strategy"
-        fi
-    fi
+  backup_file "$MODPATH/list/list-auto.txt" "$MODUPDATEPATH/list/list-auto.txt"
+  backup_file "$MODPATH/list/list-exclude.txt" "$MODUPDATEPATH/list/list-exclude.txt"
+  backup_file "$MODPATH/config/current-plain-dns" "$MODUPDATEPATH/config/current-plain-dns"
+  backup_file "$MODPATH/config/current-dns-mode" "$MODUPDATEPATH/config/current-dns-mode"
 
-    if [ -f "$MODPATH/config/current-plain-dns" ]; then
-        cp -f "$MODPATH/config/current-plain-dns" "$MODUPDATEPATH/config/current-plain-dns"
+  if [ -f "$MODPATH/config/current-strategy" ]; then
+    STRATEGY=$(cat "$MODPATH/config/current-strategy")
+    STRATEGY_FILE="$MODUPDATEPATH/strategy/${STRATEGY}.sh"
+    if [ -f "$STRATEGY_FILE" ]; then
+      backup_file "$MODPATH/config/current-strategy" "$MODUPDATEPATH/config/current-strategy"
+    else
+      rm -f "$MODPATH/config/current-strategy"
+      ui_print "  > Removed invalid strategy reference"
     fi
+  fi
 
-    if [ -f "$MODPATH/config/current-dns-mode" ]; then
-        cp -f "$MODPATH/config/current-dns-mode" "$MODUPDATEPATH/config/current-dns-mode"
-    fi
+  if [ -d "$MODPATH/config" ]; then
+    for src_file in "$MODPATH/config/"*; do
+      [ -f "$src_file" ] || continue
+      dst_file="$MODUPDATEPATH/config/$(basename "$src_file")"
+      backup_file "$src_file" "$dst_file"
+    done
+  fi
+}
 
-    if [ -d "$MODPATH/config" ]; then
-        mkdir -p "$MODUPDATEPATH/config"
-        cp -f "$MODPATH/config/"* "$MODUPDATEPATH/config/"
-    fi
-fi
+SCRIPT_DIRS=(
+  "$MODPATH"
+  "$MODUPDATEPATH"
+  "$MODPATH/zapret"
+  "$MODUPDATEPATH/zapret"
+  "$MODPATH/strategy"
+  "$MODUPDATEPATH/strategy"
+  "$MODPATH/dnscrypt"
+  "$MODUPDATEPATH/dnscrypt"
+)
 
-for FILE in "$MODPATH/zapret/"*.sh "$MODUPDATEPATH/zapret/"*.sh; do
+for DIR in "${SCRIPT_DIRS[@]}"; do
+  for FILE in "$DIR"/*.sh; do
     [ -f "$FILE" ] && sed -i 's/\r$//' "$FILE"
+  done
 done
 
 mv "$MODPATH/zapret/$BINARY" "$MODPATH/zapret/nfqws"
@@ -133,4 +120,6 @@ settings put global tether_offload_disabled 1
 
 ui_print "* sevcator.t.me / sevcator.github.io *"
 
-ui_print "- Reboot to take changes"
+if [ -d "$MODUPDATEPATH" ]; then
+  ui_print "- Restart your device to continue using zapret"
+fi
