@@ -1,7 +1,0 @@
-id=zapret
-name=zapret
-version=16.3
-versionCode=163
-author=sevcator, bol-van, DNSCrypt, ImMALWARE, Fenrir-0xFF, Flowseal, elovin, KDS
-description=⚡ Bypass internet-censorship via DPI modification and get extra experience with additional features
-updateJson=https://raw.githubusercontent.com/sevcator/zapret-magisk/refs/heads/main/update.json
