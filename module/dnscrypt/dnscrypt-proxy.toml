@@ -22,7 +22,6 @@ http3 = true
 timeout = 2500
 keepalive = 30
 
-blocked_query_response = 'refused'
 use_syslog = false
 
 cert_refresh_delay = 240
@@ -31,12 +30,17 @@ ignore_system_dns = true
 netprobe_timeout = 10
 netprobe_address = '45.90.28.0:53'
 
-block_ipv6 = false
+block_ipv6 = true
 block_unqualified = true
 block_undelegated = true
 reject_ttl = 10
 
-cache = false
+cache = true
+cache_size = 1024
+cache_min_ttl = 60
+cache_max_ttl = 3600
+cache_neg_min_ttl = 10
+cache_neg_max_ttl = 60
 
 cloaking_rules = 'cloaking-rules.txt'
 
