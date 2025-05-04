@@ -1,113 +1,17 @@
 MODPATH="/data/adb/modules/zapret"
-
 CURRENTSTRATEGY=$(cat "$MODPATH/config/current-strategy" 2>/dev/null || echo "Unknown")
 DNSCRYPTENABLE=$(cat "$MODPATH/config/dnscrypt-enable" 2>/dev/null || echo "Unknown")
 CLOAKINGUPDATE=$(cat "$MODPATH/config/dnscrypt-cloaking-update" 2>/dev/null || echo "Unknown")
 CLOAKINGRULESLINK=$(cat "$MODPATH/config/cloaking-rules-link" 2>/dev/null || echo "Unknown")
 
-start_service() {
-    if pgrep -f "nfqws" > /dev/null; then
-        echo "! nfqws is already running"
-    else
-        "$MODPATH/service.sh" > /dev/null 2>&1 &
-        echo "- Service started"
-    fi
-}
-
-stop_service() {
-    su -c "$MODPATH/uninstall.sh" > /dev/null 2>&1 &
-    echo "- Service stopped"
-}
-
-toggle_service() {
-    if pgrep -f "nfqws" > /dev/null; then
-        stop_service
-    else
-        start_service
-    fi
-}
-
-restart_service() {
-    stop_service
-    sleep 1
-    start_service
-}
-
-setup() {
-    echo ""
-    read -p "- Enable DNSCrypt-Proxy? This will disable ports 53 and 853, which can break VPN, tethering, and other network functions. Are you sure? " dns_mode
-    answer_lower=$(echo "$dns_mode" | tr '[:upper:]' '[:lower:]')
-    if [[ "$answer_lower" == "y" || "$answer_lower" == "yes" ]]; then
-        echo "- OK"
-    else
-        echo "- Ignoring"
-    fi
-
-    echo ""
-    echo "- Available strategies"
-    for strategy in "$MODPATH/strategy"/*.sh; do
-        echo "$(basename "$strategy" .sh)"
-    done
-    read -p "- Enter the strategy name: " user_strategy
-    if [ -f "$MODPATH/strategy/$user_strategy.sh" ]; then
-        echo "- OK"
-    fi
-
-    if [[ "$dns_mode" == "1" ]]; then
-        read -p "- Do you want to automatically update hosts for DNSCrypt-Proxy? [y/N]: " dnscrypt_cloaking_update_select
-        dnscrypt_cloaking_update=$(echo "$dnscrypt_cloaking_update_select" | tr '[:upper:]' '[:lower:]')
-
-        if [[ "$dnscrypt_cloaking_update" == "y" || "$dnscrypt_cloaking_update" == "yes" ]]; then
-            cloaking_update=1
-
-            if [ -f "$MODPATH/config/cloaking-rules-link" ]; then
-                current_link_cloaking=$(cat "$MODPATH/config/cloaking-rules-link")
-                echo "- Current link: $current_link_cloaking"
-                echo "- If you do not want to set a new link, leave the blank"
-            else
-                echo "- No link to hosts file currently set"
-                current_link_cloaking=""
-            fi
-
-            read -p "- Enter the link to the hosts file: " link_cloaking_rules
-
-            if [ -z "$link_cloaking_rules" ]; then
-                echo "- No changes to the link, keeping existing: $current_link_cloaking"
-            else
-                if curl -fsSL --head "$link_cloaking_rules" >/dev/null 2>&1 || wget -q --spider "$link_cloaking_rules"; then
-                    cloaking_link="$link_cloaking_rules"
-                    echo "- Link updated to $link_cloaking_rules"
-                else
-                    echo "! The provided link is not reachable. Keeping link: $current_link_cloaking"
-                fi
-            fi
-        else
-            cloaking_update=0
-            echo "- Auto-update disabled"
-        fi
-    else
-        echo "0" > "$MODPATH/config/dnscrypt-cloaking-update"
-    fi
-    echo "$dns_mode" > "$MODPATH/config/dnscrypt-enable"
-    echo "$cloaking_update" > "$MODPATH/config/dnscrypt-cloaking-update"
-    echo "$user_strategy" > "$MODPATH/config/current-strategy"
-    echo "$cloaking_link" > "$MODPATH/config/cloaking-rules-link"
-    echo "- Done!"
-    echo "! Changes will be applied on next start"
-}
-
 command_info() {
     echo "! Zapret Module for Magisk; @sevcator/zapret-magisk"
-    echo ""
     echo "- Current strategy: $CURRENTSTRATEGY"
-
-    if [ "$DNSCRYPTENABLE" == "1" ]; then
-        echo "- DNSCrypt-Proxy enabled"
-    elif [ "$DNSCRYPTENABLE" == "0" ]; then
-        echo "- No DNS"
-    else
-        echo "- Unknown DNS state"
-    fi
+    case "$DNSCRYPTENABLE" in
+        1) echo "- DNSCrypt-Proxy enabled" ;;
+        0) echo "- No DNS" ;;
+        *) echo "- Unknown DNS state" ;;
+    esac
 
     echo ""
     echo "- Available commands:"
@@ -118,6 +22,62 @@ command_info() {
     echo "zapret setup    - Configure the zapret service"
 }
 
+start_service() {
+    pgrep -f "nfqws" > /dev/null && echo "! nfqws is already running" || ( "$MODPATH/service.sh" > /dev/null 2>&1 & echo "- Service started" )
+}
+
+stop_service() {
+    su -c "$MODPATH/uninstall.sh" > /dev/null 2>&1 & echo "- Service stopped"
+}
+
+toggle_service() {
+    pgrep -f "nfqws" > /dev/null && stop_service || start_service
+}
+
+restart_service() {
+    stop_service
+    sleep 1
+    start_service
+}
+
+setup() {
+    echo ""
+    read -p "- Enable DNSCrypt-Proxy? Are you sure? " dns_mode
+    [[ "${dns_mode,,}" =~ ^(y|yes)$ ]] && echo "- OK" || echo "- Ignoring"
+    
+    echo ""
+    echo "- Available strategies"
+    for strategy in "$MODPATH/strategy"/*.sh; do
+        echo "$(basename "$strategy" .sh)"
+    done
+
+    read -p "- Enter the strategy name: " user_strategy
+    [ -f "$MODPATH/strategy/$user_strategy.sh" ] && echo "- OK"
+    
+    if [[ "$dns_mode" == "1" ]]; then
+        read -p "- Auto-update hosts for DNSCrypt-Proxy? [y/N]: " dnscrypt_cloaking_update_select
+        if [[ "${dnscrypt_cloaking_update_select,,}" =~ ^(y|yes)$ ]]; then
+            cloaking_update=1
+            echo "- Current link: $CLOAKINGRULESLINK"
+            read -p "- Enter the link to the hosts file: " link_cloaking_rules
+            if [ -z "$link_cloaking_rules" ]; then
+                echo "- No changes to the link"
+            else
+                curl -fsSL --head "$link_cloaking_rules" >/dev/null 2>&1 || wget -q --spider "$link_cloaking_rules" && echo "- Link updated" || echo "! Link not reachable"
+            fi
+        else
+            cloaking_update=0
+            echo "- Auto-update disabled"
+        fi
+    fi
+
+    echo "$dns_mode" > "$MODPATH/config/dnscrypt-enable"
+    echo "$cloaking_update" > "$MODPATH/config/dnscrypt-cloaking-update"
+    echo "$user_strategy" > "$MODPATH/config/current-strategy"
+    echo "$link_cloaking_rules" > "$MODPATH/config/cloaking-rules-link"
+    echo "- Done! Changes will be applied on next start"
+}
+
 unknown_command() {
     echo "! Unknown command: $1"
 }
@@ -126,23 +86,11 @@ if [ -z "$1" ]; then
     command_info
 else
     case "$1" in
-        start)
-            start_service
-            ;;
-        stop)
-            stop_service
-            ;;
-        toggle)
-            toggle_service
-            ;;
-        restart)
-            restart_service
-            ;;
-        setup)
-            setup
-            ;;
-        *)
-            unknown_command "$1"
-            ;;
+        start) start_service ;;
+        stop) stop_service ;;
+        toggle) toggle_service ;;
+        restart) restart_service ;;
+        setup) setup ;;
+        *) unknown_command "$1" ;;
     esac
 fi
