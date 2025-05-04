@@ -223,7 +223,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           fail_on_unmatched_files: true
-          prerelease: false
           draft: false
           body: |
             🔑 SHA256: ${{ env.SHA256 }}
