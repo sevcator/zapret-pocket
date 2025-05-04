@@ -1,5 +1,3 @@
-MODPATH=/data/adb/modules/zapret
-
 CURRENTSTRATEGY=$(cat $MODPATH/config/current-strategy)
 . "$MODPATH/strategy/$CURRENTSTRATEGY.sh"
 
