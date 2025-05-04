@@ -1,5 +1,5 @@
-MODPATH=/data/adb/modules/zapret
-MODUPDATEPATH=/data/adb/modules_update/zapret
+MODPATH="/data/adb/modules/zapret"
+MODUPDATEPATH="/data/adb/modules_update/zapret"
 
 ui_print "- Mounting /data"
 mount -o remount,rw /data || abort "! Failed to remount /data"
