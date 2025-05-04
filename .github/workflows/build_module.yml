@@ -202,7 +202,6 @@ jobs:
             "changelog": "https://raw.githubusercontent.com/${{ github.repository }}/main/CHANGELOG.md"
           }' > update.json
           git add update.json
-          git add module/dnscrypt/blocked-names.txt module/dnscrypt/cloaking-rules.txt
           git commit -m "Release ${{ env.version }}"
           git push origin HEAD:main --force || echo "No changes to commit"
 
