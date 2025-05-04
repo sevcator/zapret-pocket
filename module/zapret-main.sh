@@ -23,16 +23,15 @@ set_perm_recursive() {
 
 set_perm_recursive "$MODPATH" 0 2000 0755 0755
 
-for config_file in current-strategy current-plain-dns current-dns-mode current-advanced-rules; do
-    if [ ! -f "$MODPATH/config/$config_file" ]; then
-        echo "$MODPATH/$config_file not found!" >> "$MODPATH/error.log"
-        exit
+while true; do
+    if ping -c 1 google.com &> /dev/null; then
+        break
+    else
+        sleep 1
     fi
 done
 
-mode=$(cat "$MODPATH/config/dnscrypt-cloaking-update")
-
-if [ "$mode" = "2" ]; then
+if [ "$(cat "$MODPATH/config/dnscrypt-cloaking-update")" = "1" ]; then
     LINK_TO_FILE=$(cat "$MODPATH/config/cloaking-rules-link")
     if [ -n "$LINK_TO_FILE" ]; then
         if command -v curl > /dev/null 2>&1; then
@@ -45,17 +44,15 @@ if [ "$mode" = "2" ]; then
     fi
 fi
 
-dnsmode=$(cat "$MODPATH/config/current-dns-mode")
-if [ "$dnsmode" = "1" ]; then
-    CURRENTDNS="127.0.0.2"
+if [ "$(cat "$MODPATH/config/dnscrypt-enable")" = "1" ]; then
     nohup "$MODPATH/dnscrypt/dnscrypt.sh" > /dev/null 2>&1 &
     sleep 5
     for iface in all default lo; do
         sysctl "net.ipv6.conf.$iface.disable_ipv6=1" > /dev/null
     done
     for proto in udp tcp; do
-        iptables -t nat -I OUTPUT -p "$proto" --dport 53 -j DNAT --to "$CURRENTDNS"
-        iptables -t nat -I PREROUTING -p "$proto" --dport 53 -j DNAT --to "$CURRENTDNS"
+        iptables -t nat -I OUTPUT -p "$proto" --dport 53 -j DNAT --to 127.0.0.2:53
+        iptables -t nat -I PREROUTING -p "$proto" --dport 53 -j DNAT --to 127.0.0.2:53
     done
     for chain in OUTPUT FORWARD; do
         for proto in udp tcp; do
