@@ -40,9 +40,6 @@ cache = false
 
 cloaking_rules = 'cloaking-rules.txt'
 
-[blocked_names]
-blocked_names_file = 'blocked-names.txt'
-
 [blocked_ips]
 blocked_ips_file = 'blocked-ips.txt'
 
