@@ -2,7 +2,9 @@ MODPATH="/data/adb/modules/zapret"
 CURRENTSTRATEGY=$(cat "$MODPATH/config/current-strategy" 2>/dev/null || echo "Unknown")
 DNSCRYPTENABLE=$(cat "$MODPATH/config/dnscrypt-enable" 2>/dev/null || echo "Unknown") 
 CLOAKINGUPDATE=$(cat "$MODPATH/config/dnscrypt-cloaking-update" 2>/dev/null || echo "0")
-CLOAKINGRULESLINK=$(cat "$MODPATH/config/cloaking-rules-link" 2>/dev/null || echo "")
+CLOAKINGRULESLINK=$(cat "$MODPATH/config/cloaking-rules-link" 2>/dev/null || echo "https://raw.githubusercontent.com/sevcator/dnscrypt-proxy-stuff/refs/heads/main/blocked-names.txt")
+BLOCKINGUPDATE=$(cat "$MODPATH/config/dnscrypt-blocking-update" 2>/dev/null || echo "0")
+BLOCKEDNAMESLINK=$(cat "$MODPATH/config/blocked-names-link" 2>/dev/null || echo "https://raw.githubusercontent.com/sevcator/dnscrypt-proxy-stuff/refs/heads/main/cloaking-rules.txt")
 
 command_info() {
     echo "! Zapret Module for Magisk; @sevcator/zapret-magisk"
@@ -64,13 +66,13 @@ setup() {
     fi
 
     if [ "$dns_mode" = "1" ]; then
-        printf "%s" "- Auto-update hosts for DNSCrypt-Proxy? "
+        echo "- Auto-update cloaking rules for DNSCrypt-Proxy? "
         read -r update_response
         case "${update_response:-n}" in
             [yY]|[yY][eE][sS])
                 CLOAKINGUPDATE="1"
-                printf "%s\n" "- Current link: $CLOAKINGRULESLINK"
-                printf "%s" "- Enter new link to hosts file (leave empty to keep): "
+                echo "- Current cloaking link: $CLOAKINGRULESLINK"
+                echo "- Enter new cloaking rules link (leave empty to keep): "
                 read -r new_link
                 if [ -n "$new_link" ]; then
                     if curl -fsSL --head "$new_link" >/dev/null 2>&1 || wget -q --spider "$new_link"; then
@@ -79,15 +81,38 @@ setup() {
                         echo "! Link not reachable, keeping old"
                     fi
                 else
-                    echo "- No changes to link, keep current: $CLOAKINGRULESLINK"
+                    echo "- No changes to cloaking link"
+                fi
+                ;;
+        esac
+
+        echo "- Auto-update blocked names for DNSCrypt-Proxy? "
+        read -r block_response
+        case "${block_response:-n}" in
+            [yY]|[yY][eE][sS])
+                BLOCKINGUPDATE="1"
+                echo "- Current blocked link: $BLOCKEDNAMESLINK"
+                echo "- Enter new blocked-names link (leave empty to keep): "
+                read -r block_link
+                if [ -n "$block_link" ]; then
+                    if curl -fsSL --head "$block_link" >/dev/null 2>&1 || wget -q --spider "$block_link"; then
+                        BLOCKEDNAMESLINK="$block_link"
+                    else
+                        echo "! Link not reachable, keeping old"
+                    fi
+                else
+                    echo "- No changes to blocked-names link"
                 fi
                 ;;
         esac
     fi
+    
     echo "$dns_mode" > "$MODPATH/config/dnscrypt-enable"
-    echo "$CLOAKINGUPDATE" > "$MODPATH/config/dnscrypt-cloaking-update"
     echo "$user_strategy" > "$MODPATH/config/current-strategy"
+    echo "$CLOAKINGUPDATE" > "$MODPATH/config/dnscrypt-cloaking-update"
     echo "$CLOAKINGRULESLINK" > "$MODPATH/config/cloaking-rules-link"
+    echo "$BLOCKINGUPDATE" > "$MODPATH/config/dnscrypt-blocking-update"
+    echo "$BLOCKEDNAMESLINK" > "$MODPATH/config/blocked-names-link"
     echo "- Done! Changes will apply on next start"
 }
 
