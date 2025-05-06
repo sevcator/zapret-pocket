@@ -1,8 +1,8 @@
 MODPATH="/data/adb/modules/zapret"
 CURRENTSTRATEGY=$(cat "$MODPATH/config/current-strategy" 2>/dev/null || echo "Unknown")
-DNSCRYPTENABLE=$(cat "$MODPATH/config/dnscrypt-enable" 2>/dev/null || echo "Unknown")
-CLOAKINGUPDATE=$(cat "$MODPATH/config/dnscrypt-cloaking-update" 2>/dev/null || echo "Unknown")
-CLOAKINGRULESLINK=$(cat "$MODPATH/config/cloaking-rules-link" 2>/dev/null || echo "Unknown")
+DNSCRYPTENABLE=$(cat "$MODPATH/config/dnscrypt-enable" 2>/dev/null || echo "Unknown") 
+CLOAKINGUPDATE=$(cat "$MODPATH/config/dnscrypt-cloaking-update" 2>/dev/null || echo "0")
+CLOAKINGRULESLINK=$(cat "$MODPATH/config/cloaking-rules-link" 2>/dev/null || echo "")
 
 command_info() {
     echo "! Zapret Module for Magisk; @sevcator/zapret-magisk"
@@ -12,7 +12,6 @@ command_info() {
         0) echo "- No DNS" ;;
         *) echo "- Unknown DNS state" ;;
     esac
-
     echo ""
     echo "- Available commands:"
     echo "zapret start    - Start the zapret service"
@@ -41,41 +40,55 @@ restart_service() {
 }
 
 setup() {
-    echo ""
-    read -p "- Enable DNSCrypt-Proxy? Are you sure? " dns_mode
-    [[ "${dns_mode,,}" =~ ^(y|yes)$ ]] && echo "- OK" || echo "- Ignoring"
-    
-    echo ""
-    echo "- Available strategies"
-    for strategy in "$MODPATH/strategy"/*.sh; do
-        echo "$(basename "$strategy" .sh)"
-    done
+    mkdir -p "$MODPATH/config"
+    printf "%s" "- Do you want to enable DNSCrypt-Proxy? "
+    read -r response
+    dns_mode="0"
+    case "${response:-n}" in
+        [yY]|[yY][eE][sS]) dns_mode="1" ;;
+    esac
+    echo "- Available strategies:"
+    strategy_list=()
+    while IFS= read -r file; do
+        strategy_name=$(basename "$file" .sh)
+        echo "  * $strategy_name"
+        strategy_list+=("$strategy_name")
+    done < <(find "$MODPATH/strategy" -type f -name "*.sh" 2>/dev/null)
 
-    read -p "- Enter the strategy name: " user_strategy
-    [ -f "$MODPATH/strategy/$user_strategy.sh" ] && echo "- OK"
-    
-    if [[ "$dns_mode" == "1" ]]; then
-        read -p "- Auto-update hosts for DNSCrypt-Proxy? [y/N]: " dnscrypt_cloaking_update_select
-        if [[ "${dnscrypt_cloaking_update_select,,}" =~ ^(y|yes)$ ]]; then
-            cloaking_update=1
-            echo "- Current link: $CLOAKINGRULESLINK"
-            read -p "- Enter the link to the hosts file: " link_cloaking_rules
-            if [ -z "$link_cloaking_rules" ]; then
-                echo "- No changes to the link"
-            else
-                curl -fsSL --head "$link_cloaking_rules" >/dev/null 2>&1 || wget -q --spider "$link_cloaking_rules" && echo "- Link updated" || echo "! Link not reachable"
-            fi
-        else
-            cloaking_update=0
-            echo "- Auto-update disabled"
-        fi
+    printf "%s" "- Enter the strategy name: "
+    read -r user_strategy
+
+    if [ ! -f "$MODPATH/strategy/${user_strategy}.sh" ]; then
+        echo "! Invalid or empty strategy, using current: $CURRENTSTRATEGY"
+        user_strategy="$CURRENTSTRATEGY"
     fi
 
+    if [ "$dns_mode" = "1" ]; then
+        printf "%s" "- Auto-update hosts for DNSCrypt-Proxy? "
+        read -r update_response
+        case "${update_response:-n}" in
+            [yY]|[yY][eE][sS])
+                CLOAKINGUPDATE="1"
+                printf "%s\n" "- Current link: $CLOAKINGRULESLINK"
+                printf "%s" "- Enter new link to hosts file (leave empty to keep): "
+                read -r new_link
+                if [ -n "$new_link" ]; then
+                    if curl -fsSL --head "$new_link" >/dev/null 2>&1 || wget -q --spider "$new_link"; then
+                        CLOAKINGRULESLINK="$new_link"
+                    else
+                        echo "! Link not reachable, keeping old"
+                    fi
+                else
+                    echo "- No changes to link, keep current: $CLOAKINGRULESLINK"
+                fi
+                ;;
+        esac
+    fi
     echo "$dns_mode" > "$MODPATH/config/dnscrypt-enable"
-    echo "$cloaking_update" > "$MODPATH/config/dnscrypt-cloaking-update"
+    echo "$CLOAKINGUPDATE" > "$MODPATH/config/dnscrypt-cloaking-update"
     echo "$user_strategy" > "$MODPATH/config/current-strategy"
-    echo "$link_cloaking_rules" > "$MODPATH/config/cloaking-rules-link"
-    echo "- Done! Changes will be applied on next start"
+    echo "$CLOAKINGRULESLINK" > "$MODPATH/config/cloaking-rules-link"
+    echo "- Done! Changes will apply on next start"
 }
 
 unknown_command() {
