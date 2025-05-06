@@ -30,7 +30,7 @@ ignore_system_dns = true
 netprobe_timeout = 10
 netprobe_address = '45.90.28.0:53'
 
-block_ipv6 = true
+block_ipv6 = false
 block_unqualified = true
 block_undelegated = true
 reject_ttl = 10
