@@ -1,3 +1,5 @@
+MODPATH="/data/adb/modules/zapret"
+
 while true; do
     if ! pgrep -x "dnscrypt-proxy" > /dev/null; then
         . "$MODPATH/dnscrypt/make-unkillable.sh" &
