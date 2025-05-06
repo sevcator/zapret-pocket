@@ -8,19 +8,6 @@ while true; do
     fi
 done
 
-if [ "$(cat "$MODPATH/config/dnscrypt-cloaking-update")" = "1" ]; then
-    LINK_TO_FILE=$(cat "$MODPATH/config/cloaking-rules-link")
-    if [ -n "$LINK_TO_FILE" ]; then
-        if command -v curl > /dev/null 2>&1; then
-            curl -fsSL -o "$MODPATH/dnscrypt/cloaking-rules.txt" "$LINK_TO_FILE"
-        else
-            echo "curl not found, cant download file" >> "$MODPATH/warns.log"
-        fi
-    else
-        echo "Cloaking rules link not find" >> "$MODPATH/warns.log"
-    fi
-fi
-
 if [ "$(cat "$MODPATH/config/dnscrypt-enable")" = "1" ]; then
     nohup "$MODPATH/dnscrypt/dnscrypt.sh"  > /dev/null 2>&1 &
     sleep 5
