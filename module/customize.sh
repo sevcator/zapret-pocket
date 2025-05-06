@@ -4,6 +4,8 @@ MODUPDATEPATH="/data/adb/modules_update/zapret"
 ui_print "- Mounting /data"
 mount -o remount,rw /data || abort "! Failed to remount /data"
 
+set_perm_recursive "$MODPATH" 0 2000 0755 0755
+
 check_requirements() {
   command -v iptables >/dev/null 2>&1 || abort "! iptables: Not found"
   ui_print "- iptables: Found"
@@ -83,18 +85,11 @@ backup_old_files() {
   fi
 }
 
-SCRIPT_DIRS=(
-  "$MODPATH"
-  "$MODUPDATEPATH"
-  "$MODPATH/zapret"
-  "$MODUPDATEPATH/zapret"
-  "$MODPATH/strategy"
-  "$MODUPDATEPATH/strategy"
-  "$MODPATH/dnscrypt"
-  "$MODUPDATEPATH/dnscrypt"
-)
+# Замена массива на строку с разделителем (пробел)
+SCRIPT_DIRS="$MODPATH $MODUPDATEPATH $MODPATH/zapret $MODUPDATEPATH/zapret $MODPATH/strategy $MODUPDATEPATH/strategy $MODPATH/dnscrypt $MODUPDATEPATH/dnscrypt"
 
-for DIR in "${SCRIPT_DIRS[@]}"; do
+# Обработка каждого каталога вручную
+for DIR in $SCRIPT_DIRS; do
   for FILE in "$DIR"/*.sh; do
     [ -f "$FILE" ] && sed -i 's/\r$//' "$FILE"
   done
