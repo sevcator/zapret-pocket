@@ -13,6 +13,6 @@ fi
 
 for pid in $ALL_PIDS; do
     if [ -d "/proc/$pid" ]; then
-        renice -n -20 -p "$pid" 2>/dev/null
+        echo -1000 > "/proc/$pid/oom_score_adj" 2>/dev/null
     fi
 done
