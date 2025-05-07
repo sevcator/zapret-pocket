@@ -1,4 +1,6 @@
 #!/bin/bash
+# Flowseal General ALT2 Configuration from https://github.com/Flowseal/zapret-discord-youtube
+# TLS and QUIC Fakes from vk.com 
 
 # Zapret Configuration
 # <-- -->
