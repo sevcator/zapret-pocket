@@ -9,7 +9,9 @@ while true; do
 done
 
 if [ "$(cat "$MODPATH/config/dnscrypt-enable")" = "1" ]; then
-    nohup "$MODPATH/dnscrypt/dnscrypt.sh"  > /dev/null 2>&1 &
+    . "$MODPATH/dnscrypt/update-files.sh"
+    sleep 3
+    nohup "$MODPATH/dnscrypt/dnscrypt.sh" > /dev/null 2>&1 &
     sleep 5
     for iface in all default lo; do
         sysctl "net.ipv6.conf.$iface.disable_ipv6=1" > /dev/null
