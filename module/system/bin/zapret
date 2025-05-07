@@ -143,13 +143,13 @@ update() {
         y|yes)
         if [ -n "$CLOAKINGRULESLINK" ]; then
             if command -v curl > /dev/null 2>&1; then
-                curl -fsSL -o "$MODPATH/dnscrypt/cloaking-rules.txt" "$CLOAKINGRULESLINK"
+                curl -fsSL -o "$MODPATH/dnscrypt/cloaking-rules.txt" "$CLOAKINGRULESLINK" >/dev/null 2>&1
                 echo "- Updated!"
             else
                 echo "! curl not found, can't download cloaking rules file"
             fi
         else
-            echo "! Source is not found to download"
+            echo "! Something went wrong"
         fi
         ;;
     esac
@@ -160,13 +160,13 @@ update() {
         y|yes)
         if [ -n "$BLOCKEDNAMESLINK" ]; then
             if command -v curl > /dev/null 2>&1; then
-                curl -fsSL -o "$MODPATH/dnscrypt/blocked-names.txt" "$BLOCKEDNAMESLINK"
+                curl -fsSL -o "$MODPATH/dnscrypt/blocked-names.txt" "$BLOCKEDNAMESLINK" >/dev/null 2>&1
                 echo "- Updated!"
             else
                 echo "! curl not found, can't download blocked names file"
             fi
         else
-            echo "! Source is not found to download"
+            echo "! Something went wrong"
         fi
         ;;
     esac
