@@ -1,4 +1,5 @@
 #!/bin/bash
+# Flowseal General ALT3 Configuration from https://github.com/Flowseal/zapret-discord-youtube
 
 # Zapret Configuration
 # <-- -->
