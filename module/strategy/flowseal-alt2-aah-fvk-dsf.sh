@@ -2,6 +2,7 @@
 # Flowseal General ALT2 Configuration from https://github.com/Flowseal/zapret-discord-youtube
 # list-auto.txt strategy from YTDisBystro, got from ntc.party
 # TLS and QUIC Fakes from vk.com
+# Discord Fake
 
 # Zapret Configuration
 # <-- -->
