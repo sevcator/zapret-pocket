@@ -12,6 +12,9 @@ check_requirements() {
 
   command -v ip6tables >/dev/null 2>&1 || abort "! ip6tables: Not found"
   ui_print "- ip6tables: Found"
+
+  command -v curl >/dev/null 2>&1 || abort "! curl: Not found"
+  ui_print "- curl: Found"
   
   grep -q 'NFQUEUE' /proc/net/ip_tables_targets || abort "! Bad iptables"
   grep -q 'NFQUEUE' /proc/net/ip6_tables_targets || abort "! Bad ip6tables"
@@ -46,49 +49,35 @@ elif [ -f "$MODUPDATEPATH/uninstall.sh" ]; then
     "$MODUPDATEPATH/uninstall.sh"
 fi
 
-backup_file() {
-  src="$1"
-  dst="$2"
-  [ -f "$src" ] || return
-  if [ ! -f "$dst" ] || ! cmp -s "$src" "$dst"; then
-    cp -f "$src" "$dst"
-    ui_print "  > Backed up $(basename "$src")"
-  fi
-}
-
-backup_old_files() {
+if [ -d "$MODUPDATEPATH" ]; then
   ui_print "- Backing up old files"
   mkdir -p "$MODUPDATEPATH/list" "$MODUPDATEPATH/config"
 
-  backup_file "$MODPATH/list/list-auto.txt" "$MODUPDATEPATH/list/list-auto.txt"
-  backup_file "$MODPATH/list/list-exclude.txt" "$MODUPDATEPATH/list/list-exclude.txt"
-  backup_file "$MODPATH/config/current-plain-dns" "$MODUPDATEPATH/config/current-plain-dns"
-  backup_file "$MODPATH/config/current-dns-mode" "$MODUPDATEPATH/config/current-dns-mode"
+  cp -f "$MODPATH/list/list-auto.txt" "$MODUPDATEPATH/list/list-auto.txt"
+  cp -f "$MODPATH/list/list-exclude.txt" "$MODUPDATEPATH/list/list-exclude.txt"
+  cp -f "$MODPATH/config/current-plain-dns" "$MODUPDATEPATH/config/current-plain-dns"
+  cp -f "$MODPATH/config/current-dns-mode" "$MODUPDATEPATH/config/current-dns-mode"
 
   if [ -f "$MODPATH/config/current-strategy" ]; then
     STRATEGY=$(cat "$MODPATH/config/current-strategy")
     STRATEGY_FILE="$MODUPDATEPATH/strategy/${STRATEGY}.sh"
     if [ -f "$STRATEGY_FILE" ]; then
-      backup_file "$MODPATH/config/current-strategy" "$MODUPDATEPATH/config/current-strategy"
+      cp -f "$MODPATH/config/current-strategy" "$MODUPDATEPATH/config/current-strategy"
     else
       rm -f "$MODPATH/config/current-strategy"
-      ui_print "  > Removed invalid strategy reference"
     fi
   fi
+  
+  for FILE in "$MODPATH/config/"*; do
+    BASENAME=$(basename "$FILE")
+    DEST="$MODUPDATEPATH/config/$BASENAME"
+    if [ -f "$DEST" ]; then
+      cp -f "$FILE" "$DEST"
+    fi
+  done
+fi
 
-  if [ -d "$MODPATH/config" ]; then
-    for src_file in "$MODPATH/config/"*; do
-      [ -f "$src_file" ] || continue
-      dst_file="$MODUPDATEPATH/config/$(basename "$src_file")"
-      backup_file "$src_file" "$dst_file"
-    done
-  fi
-}
-
-# Замена массива на строку с разделителем (пробел)
 SCRIPT_DIRS="$MODPATH $MODUPDATEPATH $MODPATH/zapret $MODUPDATEPATH/zapret $MODPATH/strategy $MODUPDATEPATH/strategy $MODPATH/dnscrypt $MODUPDATEPATH/dnscrypt"
-
-# Обработка каждого каталога вручную
 for DIR in $SCRIPT_DIRS; do
   for FILE in "$DIR"/*.sh; do
     [ -f "$FILE" ] && sed -i 's/\r$//' "$FILE"
