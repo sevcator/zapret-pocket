@@ -70,12 +70,12 @@ setup() {
 
     echo "- Available strategies:"
     strategy_list=()
-    while IFS= read file; do
+    find "$MODPATH/strategy" -type f -name "*.sh" 2>/dev/null | while IFS= read -r file; do
         strategy_name=$(basename "$file" .sh)
         echo "  * $strategy_name"
         strategy_list+=("$strategy_name")
-    done < <(find "$MODPATH/strategy" -type f -name "*.sh" 2>/dev/null)
-
+    done
+    
     echo -n "- Enter the strategy name: "
     IFS= read user_strategy
     if [ ! -f "$MODPATH/strategy/${user_strategy}.sh" ]; then
