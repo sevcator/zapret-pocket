@@ -1,7 +1,7 @@
 MODPATH="/data/adb/modules/zapret"
 
 CURRENTSTRATEGY=$(cat "$MODPATH/config/current-strategy" 2>/dev/null || echo "Unknown")
-DNSCRYPTENABLE=$(cat "$MODPATH/config/dnscrypt-enable" 2>/dev/null || echo "Unknown")
+DNSCRYPTENABLE=$(cat "$MODPATH/config/dnscrypt-enable" 2>/dev/null || echo "0")
 CLOAKINGRULESLINK=$(cat "$MODPATH/config/cloaking-rules-link" 2>/dev/null || echo "https://raw.githubusercontent.com/sevcator/dnscrypt-proxy-stuff/refs/heads/main/cloaking-rules.txt")
 BLOCKEDUPDATE=$(cat "$MODPATH/config/dnscrypt-blocked-update" 2>/dev/null || echo "0")
 BLOCKEDNAMESLINK=$(cat "$MODPATH/config/blocked-names-link" 2>/dev/null || echo "https://raw.githubusercontent.com/sevcator/dnscrypt-proxy-stuff/refs/heads/main/blocked-names.txt")
@@ -21,6 +21,7 @@ command_info() {
     echo "zapret restart  - Restart the zapret service"
     echo "zapret toggle   - Toggle the zapret service"
     echo "zapret setup    - Configure the zapret service"
+    echo "zapret update   - Update the DNSCrypt-Proxy files"
 }
 
 start_service() {
@@ -61,9 +62,8 @@ restart_service() {
 setup() {
     mkdir -p "$MODPATH/config"
 
-    echo -n "Enable DNSCrypt-Proxy? "
+    echo -n "- Enable DNSCrypt-Proxy? "
     IFS= read response
-    dns_mode="0"
     case "$(echo "$response" | tr A-Z a-z)" in
         y|yes) dns_mode="1" ;;
     esac
@@ -76,7 +76,7 @@ setup() {
         strategy_list+=("$strategy_name")
     done < <(find "$MODPATH/strategy" -type f -name "*.sh" 2>/dev/null)
 
-    echo -n "Enter the strategy name: "
+    echo -n "- Enter the strategy name: "
     IFS= read user_strategy
     if [ ! -f "$MODPATH/strategy/${user_strategy}.sh" ]; then
         echo "! Invalid or empty strategy, using current: $CURRENTSTRATEGY"
@@ -84,12 +84,12 @@ setup() {
     fi
 
     if [ "$dns_mode" = "1" ]; then
-        echo -n "Auto-update cloaking rules for DNSCrypt-Proxy? "
+        echo -n "- Auto-update cloaking rules for DNSCrypt-Proxy? "
         IFS= read resp
         case "$(echo "$resp" | tr A-Z a-z)" in
             y|yes)
                 echo "- Current cloaking link: $CLOAKINGRULESLINK"
-                echo -n "Enter new cloaking rules link (leave empty to keep): "
+                echo -n "- Enter new cloaking rules link (leave empty to keep): "
                 IFS= read new_link
                 if [ -n "$new_link" ]; then
                     if curl -fsSL --head "$new_link" >/dev/null 2>&1 || wget -q --spider "$new_link"; then
@@ -103,12 +103,12 @@ setup() {
                 ;;
         esac
 
-        echo -n "Auto-update blocked names for DNSCrypt-Proxy? "
+        echo -n "- Auto-update blocked names for DNSCrypt-Proxy? "
         IFS= read block_resp
         case "$(echo "$block_resp" | tr A-Z a-z)" in
             y|yes)
                 echo "- Current blocked link: $BLOCKEDNAMESLINK"
-                echo -n "Enter new blocked-names link (leave empty to keep): "
+                echo -n "- Enter new blocked-names link (leave empty to keep): "
                 IFS= read block_link
                 if [ -n "$block_link" ]; then
                     if curl -fsSL --head "$block_link" >/dev/null 2>&1 || wget -q --spider "$block_link"; then
@@ -133,6 +133,47 @@ setup() {
     echo "- Done! Changes will apply on next start"
 }
 
+update() {
+    echo "Cloaking rules link: $CLOAKINGRULESLINK"
+    echo "Blocked names link: $BLOCKEDNAMESLINK"
+    echo ""
+    echo -n "- Update cloaking rules? "
+    IFS= read resp
+    case "$(echo "$resp" | tr A-Z a-z)" in
+        y|yes)
+        if [ -n "$CLOAKINGRULESLINK" ]; then
+            if command -v curl > /dev/null 2>&1; then
+                curl -fsSL -o "$MODPATH/dnscrypt/cloaking-rules.txt" "$CLOAKINGRULESLINK"
+                echo "- Updated!"
+            else
+                echo "! curl not found, can't download cloaking rules file"
+            fi
+        else
+            echo "! Source is not found to download"
+        fi
+        ;;
+    esac
+
+    echo -n "- Update blocking names? "
+    IFS= read resp
+    case "$(echo "$resp" | tr A-Z a-z)" in
+        y|yes)
+        if [ -n "$BLOCKEDNAMESLINK" ]; then
+            if command -v curl > /dev/null 2>&1; then
+                curl -fsSL -o "$MODPATH/dnscrypt/blocked-names.txt" "$BLOCKEDNAMESLINK"
+                echo "- Updated!"
+            else
+                echo "! curl not found, can't download blocked names file"
+            fi
+        else
+            echo "! Source is not found to download"
+        fi
+        ;;
+    esac
+
+    echo "- Done! Changes will apply on next start"
+}
+
 unknown_command() {
     echo "! Unknown command: $1"
 }
@@ -144,5 +185,6 @@ case "$1" in
     toggle) toggle_service ;;
     restart) restart_service ;;
     setup) setup ;;
+    update) update ;;
     *) unknown_command "$1" ;;
 esac
