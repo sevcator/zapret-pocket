@@ -2,7 +2,7 @@ MODPATH="/data/adb/modules/zapret"
 MODUPDATEPATH="/data/adb/modules_update/zapret"
 
 ui_print "- Mounting /data"
-mount -o remount,rw /data || abort "! Failed to remount /data"
+mount -o remount,rw /data
 
 set_perm_recursive "$MODPATH" 0 2000 0755 0755
 
