@@ -2,6 +2,8 @@
 #        Blocklist        #
 ###########################
 
+# For https://github.com/sevcator/zapret-magisk <3
+
 ## Rules for name-based query blocking, one per line
 ##
 ## Example of valid patterns:
