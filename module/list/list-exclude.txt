@@ -10,3 +10,6 @@ mvd.ru
 gov.ru
 gosuslugi.ru
 ads-twitter.com
+facebook.com
+instagram.com
+instagramcdn.com
