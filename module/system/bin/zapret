@@ -98,17 +98,37 @@ setup() {
         echo -n "- Auto-update cloaking rules for DNSCrypt-Proxy? "
         IFS= read resp
         case "$(echo "$resp" | tr A-Z a-z)" in
-            y|yes)
-                echo "- Enabled"
-                CLOAKINGRUPDATE="1"
+            y|yes) CLOAKINGUPDATE="1"; echo "- Enabled" ;;
         esac
 
         echo -n "- Auto-update blocked names for DNSCrypt-Proxy? "
-        IFS= read block_resp
-        case "$(echo "$block_resp" | tr A-Z a-z)" in
+        IFS= read resp
+        case "$(echo "$resp" | tr A-Z a-z)" in
+            y|yes) BLOCKEDUPDATE="1"; echo "- Enabled" ;;
+        esac
+
+        echo -n "- Do you want to change source links? "
+        read resp
+        case "$(echo "$resp" | tr A-Z a-z)" in
             y|yes)
-                echo "- Enabled"
-                BLOCKEDUPDATE="1"
+                echo -n "- Enter link to cloaking-rules.txt (leave blank to keep current): "
+                read new_cloaking
+                if [ -n "$new_cloaking" ]; then
+                    CLOAKINGRULESLINK="$new_cloaking"
+                    echo "- Link updated"
+                else
+                    echo "- Keeping old link: $CLOAKINGRULESLINK"
+                fi
+
+                echo -n "- Enter link to blocking-names.txt (leave blank to keep current): "
+                read new_blocking
+                if [ -n "$new_blocking" ]; then
+                    BLOCKEDNAMESLINK="$new_blocking"
+                    echo "- Link updated"
+                else
+                    echo "- Keeping old link: $BLOCKEDNAMESLINK"
+                fi
+            ;;
         esac
     fi
 
@@ -123,9 +143,8 @@ setup() {
 }
 
 update() {
-    echo "Cloaking rules link: $CLOAKINGRULESLINK"
-    echo "Blocked names link: $BLOCKEDNAMESLINK"
-    echo ""
+    echo "- Cloaking rules link: $CLOAKINGRULESLINK"
+    echo "- Blocked names link: $BLOCKEDNAMESLINK"
 
     echo -n "- Update cloaking rules? "
     read resp
