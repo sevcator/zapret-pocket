@@ -2,6 +2,7 @@ MODPATH="/data/adb/modules/zapret"
 
 CURRENTSTRATEGY=$(cat "$MODPATH/config/current-strategy" 2>/dev/null || echo "Unknown")
 DNSCRYPTENABLE=$(cat "$MODPATH/config/dnscrypt-enable" 2>/dev/null || echo "0")
+CLOAKINGUPDATE=$(cat "$MODPATH/config/dnscrypt-cloaking-update" 2>/dev/null || echo "0")
 CLOAKINGRULESLINK=$(cat "$MODPATH/config/cloaking-rules-link" 2>/dev/null || echo "https://raw.githubusercontent.com/sevcator/dnscrypt-proxy-stuff/refs/heads/main/cloaking-rules.txt")
 BLOCKEDUPDATE=$(cat "$MODPATH/config/dnscrypt-blocked-update" 2>/dev/null || echo "0")
 BLOCKEDNAMESLINK=$(cat "$MODPATH/config/blocked-names-link" 2>/dev/null || echo "https://raw.githubusercontent.com/sevcator/dnscrypt-proxy-stuff/refs/heads/main/blocked-names.txt")
@@ -60,12 +61,20 @@ restart_service() {
 }
 
 setup() {
+    clear
+
     mkdir -p "$MODPATH/config"
+
+    DNSCRYPTENABLE="0"
+    CLOAKINGUPDATE="0"
+    BLOCKEDUPDATE="0"
+
+    echo "! If the selection is anything other than "Y" or "Yes", it is considered a negative choice"
 
     echo -n "- Enable DNSCrypt-Proxy? "
     IFS= read response
     case "$(echo "$response" | tr A-Z a-z)" in
-        y|yes) dns_mode="1" ;;
+        y|yes) DNSCRYPTENABLE="1" ;;
     esac
 
     echo "- Available strategies:"
@@ -88,15 +97,12 @@ setup() {
         IFS= read resp
         case "$(echo "$resp" | tr A-Z a-z)" in
             y|yes)
+                CLOAKINGRUPDATE="1"
                 echo "- Current cloaking link: $CLOAKINGRULESLINK"
                 echo -n "- Enter new cloaking rules link (leave empty to keep): "
                 IFS= read new_link
                 if [ -n "$new_link" ]; then
-                    if curl -fsSL --head "$new_link" >/dev/null 2>&1 || wget -q --spider "$new_link"; then
-                        CLOAKINGRULESLINK="$new_link"
-                    else
-                        echo "! Link not reachable, keeping old"
-                    fi
+                    CLOAKINGRULESLINK="$new_link"
                 else
                     echo "- No changes to cloaking link"
                 fi
@@ -107,16 +113,12 @@ setup() {
         IFS= read block_resp
         case "$(echo "$block_resp" | tr A-Z a-z)" in
             y|yes)
+                BLOCKEDUPDATE="1"
                 echo "- Current blocked link: $BLOCKEDNAMESLINK"
                 echo -n "- Enter new blocked-names link (leave empty to keep): "
                 IFS= read block_link
                 if [ -n "$block_link" ]; then
-                    if curl -fsSL --head "$block_link" >/dev/null 2>&1 || wget -q --spider "$block_link"; then
-                        BLOCKEDNAMESLINK="$block_link"
-                        BLOCKEDUPDATE="1"
-                    else
-                        echo "! Link not reachable, keeping old"
-                    fi
+                    BLOCKEDNAMESLINK="$block_link"
                 else
                     echo "- No changes to blocked-names link"
                 fi
@@ -124,8 +126,9 @@ setup() {
         esac
     fi
 
-    echo "$dns_mode" > "$MODPATH/config/dnscrypt-enable"
+    echo "$DNSCRYPTENABLE" > "$MODPATH/config/dnscrypt-enable"
     echo "$user_strategy" > "$MODPATH/config/current-strategy"
+    echo "$CLOAKINGUPDATE" > "$MODPATH/config/dnscrypt-blocked-update"
     echo "$CLOAKINGRULESLINK" > "$MODPATH/config/cloaking-rules-link"
     echo "$BLOCKEDUPDATE" > "$MODPATH/config/dnscrypt-blocked-update"
     echo "$BLOCKEDNAMESLINK" > "$MODPATH/config/blocked-names-link"
