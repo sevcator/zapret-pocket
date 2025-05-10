@@ -13,8 +13,26 @@ check_requirements() {
   command -v ip6tables >/dev/null 2>&1 || abort "! ip6tables: Not found"
   ui_print "- ip6tables: Found"
 
-  command -v curl >/dev/null 2>&1 || abort "! curl: Not found"
-  ui_print "- curl: Found"
+  if command -v wget >/dev/null 2>&1; then
+    WGET_CMD="$(command -v wget)"
+  elif [ -x "/data/user/0/bin.mt.plus/files/term/bin/wget" ]; then
+    WGET_CMD="/data/user/0/bin.mt.plus/files/term/bin/wget"
+  elif command -v busybox >/dev/null 2>&1 && busybox wget --help 2>&1 | grep -q "Usage: wget \[-cqS\]"; then
+    WGET_CMD="$(command -v busybox) wget"
+  elif [ -x "/data/adb/magisk/busybox" ] && /data/adb/magisk/busybox wget --help 2>&1 | grep -q "Usage: wget \[-cqS\]"; then
+    WGET_CMD="/data/adb/magisk/busybox wget"
+  else
+    echo "! wtf bro :skull" >&2
+    exit 1
+  fi
+
+  mkdir -p "$MODPATH"
+  echo "$WGET_CMD" > "$MODPATH/wgetpath"
+  if echo "$WGET_CMD" | grep -q busybox; then
+    ui_print "- wget as applet: Found"
+  else
+    ui_print "- wget: Found"
+  fi
   
   grep -q 'NFQUEUE' /proc/net/ip_tables_targets || abort "! Bad iptables"
   grep -q 'NFQUEUE' /proc/net/ip6_tables_targets || abort "! Bad ip6tables"
@@ -50,6 +68,8 @@ elif [ -f "$MODUPDATEPATH/uninstall.sh" ]; then
 fi
 
 if [ -d "$MODUPDATEPATH" ]; then
+  cp -f "$MODPATH/wgetpath" "$MODUPDATEPATH/wgetpath"
+  
   ui_print "- Backing up old files"
   mkdir -p "$MODUPDATEPATH/list" "$MODUPDATEPATH/config"
 
