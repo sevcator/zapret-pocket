@@ -9,13 +9,12 @@ BLOCKEDNAMESLINK=$(cat "$MODPATH/config/blocked-names-link" 2>/dev/null || echo 
 
 command_info() {
     echo "! Zapret Module for Magisk — @sevcator/zapret-magisk"
-    echo "- Current strategy: $CURRENTSTRATEGY"
+    echo "! Current strategy: $CURRENTSTRATEGY"
     case "$DNSCRYPTENABLE" in
-        1) echo "- DNSCrypt-Proxy enabled" ;;
-        0) echo "- No DNS" ;;
-        *) echo "- Unknown DNS state" ;;
+        1) echo "! DNSCrypt-Proxy enabled" ;;
+        0) echo "! No DNS" ;;
+        *) echo "! Unknown DNS state" ;;
     esac
-    echo ""
     echo "- Available commands:"
     echo "zapret start    - Start the zapret service"
     echo "zapret stop     - Stop the zapret service"
@@ -143,8 +142,8 @@ setup() {
 }
 
 update() {
-    echo "- Cloaking rules link: $CLOAKINGRULESLINK"
-    echo "- Blocked names link: $BLOCKEDNAMESLINK"
+    echo "! Cloaking rules link: $CLOAKINGRULESLINK"
+    echo "! Blocked names link: $BLOCKEDNAMESLINK"
 
     echo -n "- Update cloaking rules? "
     read resp
