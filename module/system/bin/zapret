@@ -74,7 +74,7 @@ setup() {
     echo -n "- Enable DNSCrypt-Proxy? "
     IFS= read response
     case "$(echo "$response" | tr A-Z a-z)" in
-        y|yes) DNSCRYPTENABLE="1" ;;
+        y|yes) echo "- Enabled"; DNSCRYPTENABLE="1" ;;
     esac
 
     echo "- Available strategies:"
@@ -90,6 +90,8 @@ setup() {
     if [ ! -f "$MODPATH/strategy/${user_strategy}.sh" ]; then
         echo "! Invalid or empty strategy, using current: $CURRENTSTRATEGY"
         user_strategy="$CURRENTSTRATEGY"
+    else
+        echo "- Strategy selected!"
     fi
 
     if [ "$dns_mode" = "1" ]; then
@@ -97,32 +99,16 @@ setup() {
         IFS= read resp
         case "$(echo "$resp" | tr A-Z a-z)" in
             y|yes)
+                echo "- Enabled"
                 CLOAKINGRUPDATE="1"
-                echo "- Current cloaking link: $CLOAKINGRULESLINK"
-                echo -n "- Enter new cloaking rules link (leave empty to keep): "
-                IFS= read new_link
-                if [ -n "$new_link" ]; then
-                    CLOAKINGRULESLINK="$new_link"
-                else
-                    echo "- No changes to cloaking link"
-                fi
-                ;;
         esac
 
         echo -n "- Auto-update blocked names for DNSCrypt-Proxy? "
         IFS= read block_resp
         case "$(echo "$block_resp" | tr A-Z a-z)" in
             y|yes)
+                echo "- Enabled"
                 BLOCKEDUPDATE="1"
-                echo "- Current blocked link: $BLOCKEDNAMESLINK"
-                echo -n "- Enter new blocked-names link (leave empty to keep): "
-                IFS= read block_link
-                if [ -n "$block_link" ]; then
-                    BLOCKEDNAMESLINK="$block_link"
-                else
-                    echo "- No changes to blocked-names link"
-                fi
-                ;;
         esac
     fi
 
@@ -140,39 +126,22 @@ update() {
     echo "Cloaking rules link: $CLOAKINGRULESLINK"
     echo "Blocked names link: $BLOCKEDNAMESLINK"
     echo ""
-    echo -n "- Update cloaking rules? "
-    IFS= read resp
-    case "$(echo "$resp" | tr A-Z a-z)" in
-        y|yes)
-        if [ -n "$CLOAKINGRULESLINK" ]; then
-            if command -v curl > /dev/null 2>&1; then
-                curl -fsSL -o "$MODPATH/dnscrypt/cloaking-rules.txt" "$CLOAKINGRULESLINK" >/dev/null 2>&1
-                echo "- Updated!"
-            else
-                echo "! curl not found, can't download cloaking rules file"
-            fi
-        else
-            echo "! Something went wrong"
-        fi
-        ;;
-    esac
 
-    echo -n "- Update blocking names? "
-    IFS= read resp
-    case "$(echo "$resp" | tr A-Z a-z)" in
-        y|yes)
-        if [ -n "$BLOCKEDNAMESLINK" ]; then
-            if command -v curl > /dev/null 2>&1; then
-                curl -fsSL -o "$MODPATH/dnscrypt/blocked-names.txt" "$BLOCKEDNAMESLINK" >/dev/null 2>&1
-                echo "- Updated!"
-            else
-                echo "! curl not found, can't download blocked names file"
-            fi
-        else
-            echo "! Something went wrong"
-        fi
-        ;;
-    esac
+    echo -n "- Update cloaking rules? "
+    read resp
+    resp=$(echo "$resp" | tr A-Z a-z)
+    if [ "$resp" = "y" ] || [ "$resp" = "yes" ]; then
+        wget -q -O "$MODPATH/dnscrypt/cloaking-rules.txt" "$CLOAKINGRULESLINK"
+        echo "- Cloaking rules updated!"
+    fi
+
+    echo -n "- Update blocked names? "
+    read resp
+    resp=$(echo "$resp" | tr A-Z a-z)
+    if [ "$resp" = "y" ] || [ "$resp" = "yes" ]; then
+        wget -q -O "$MODPATH/dnscrypt/blocked-names.txt" "$BLOCKEDNAMESLINK"
+        echo "- Blocked names updated!"
+    fi
 
     echo "- Done! Changes will apply on next start"
 }
