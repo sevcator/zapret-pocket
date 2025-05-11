@@ -93,7 +93,7 @@ setup() {
         echo "- Strategy selected!"
     fi
 
-    if [ "$dns_mode" = "1" ]; then
+    if [ "$DNSCRYPTENABLE" = "1" ]; then
         echo -n "- Auto-update cloaking rules for DNSCrypt-Proxy? "
         IFS= read resp
         case "$(echo "$resp" | tr A-Z a-z)" in
