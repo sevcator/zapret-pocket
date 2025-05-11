@@ -142,6 +142,8 @@ setup() {
 }
 
 update() {
+    echo "! If the selection is anything other than "Y" or "Yes", it is considered a negative choice"
+    echo ""
     echo "! Cloaking rules link: $CLOAKINGRULESLINK"
     echo "! Blocked names link: $BLOCKEDNAMESLINK"
     echo "! Wget path: $WGETPATH"
