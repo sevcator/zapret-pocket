@@ -6,8 +6,6 @@ googleapis.com
 google.com
 fastly-edge.com
 doubleclick.net
-mvd.ru
-gov.ru
 gosuslugi.ru
 ads-twitter.com
-facebook.com
+graph.facebook.com
