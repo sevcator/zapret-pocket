@@ -13,24 +13,22 @@ check_requirements() {
   command -v ip6tables >/dev/null 2>&1 || abort "! ip6tables: Not found"
   ui_print "- ip6tables: Found"
 
-  if command -v wget >/dev/null 2>&1; then
-    WGET_CMD="$(command -v wget)"
-  elif command -v busybox >/dev/null 2>&1 && busybox wget --help 2>&1 | grep -q "Usage: wget \[-cqS\]"; then
-    WGET_CMD="$(command -v busybox) wget"
-  elif [ -x "/data/adb/magisk/busybox" ] && /data/adb/magisk/busybox wget --help 2>&1 | grep -q "Usage: wget \[-cqS\]"; then
-    WGET_CMD="/data/adb/magisk/busybox wget"
+  for bb in /data/adb/magisk/busybox /system/bin/busybox /system/xbin/busybox; do
+    if [ -x "$bb" ] && "$bb" wget --help 2>&1 | grep -q "Usage: wget \[-cqS\]"; then
+      WGET_CMD="$bb wget"
+      break
+    fi
+  done
+
+  if [ -z "$WGET_CMD" ]; then
+    echo "! wtf bro :skull:"
+    abort "! download busybox pls"
   else
-    echo "! wtf bro :skull" >&2
-    exit 1
+    ui_print "- wget: Found"
   fi
 
   mkdir -p "$MODPATH"
   echo "$WGET_CMD" > "$MODPATH/wgetpath"
-  if echo "$WGET_CMD" | grep -q busybox; then
-    ui_print "- wget as applet: Found"
-  else
-    ui_print "- wget: Found"
-  fi
   
   grep -q 'NFQUEUE' /proc/net/ip_tables_targets || abort "! Bad iptables"
   grep -q 'NFQUEUE' /proc/net/ip6_tables_targets || abort "! Bad ip6tables"
