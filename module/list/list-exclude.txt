@@ -1,3 +1,4 @@
+browser-intake-datadoghq.com
 googleusercontent.com
 googlesyndication.com
 googleadservices.com
