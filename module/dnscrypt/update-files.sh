@@ -5,7 +5,7 @@ WGET_CMD=$(cat "$MODPATH/wgetpath" 2>/dev/null || echo "wget")
 CLOAKINGUPDATE=$(cat "$MODPATH/config/dnscrypt-cloaking-update" 2>/dev/null || echo "0")
 CLOAKINGRULESLINK=$(cat "$MODPATH/config/cloaking-rules-link" 2>/dev/null || echo "https://raw.githubusercontent.com/sevcator/dnscrypt-proxy-stuff/refs/heads/main/cloaking-rules.txt")
 BLOCKEDUPDATE=$(cat "$MODPATH/config/dnscrypt-blocked-update" 2>/dev/null || echo "0")
-BLOCKEDNAMESLINK=$(cat "$MODPATH/config/blocked-names-link" 2>/dev/null || echo "https://raw.githubusercontent.com/sevcator/dnscrypt-proxy-stuff/refs/heads/main/blocked-names.txt")
+BLOCKEDNAMESLINK=$(cat "$MODPATH/config/blocked-names-link" 2>/dev/null || echo "https://raw.githubusercontent.com/sevcator/dnscrypt-proxy-stuff/refs/heads/main/lite-blocked-names.txt")
 
 if [ "$CLOAKINGUPDATE" = "1" ]; then
     if [ -n "$CLOAKINGRULESLINK" ]; then
