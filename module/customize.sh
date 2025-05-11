@@ -15,8 +15,6 @@ check_requirements() {
 
   if command -v wget >/dev/null 2>&1; then
     WGET_CMD="$(command -v wget)"
-  elif [ -x "/data/user/0/bin.mt.plus/files/term/bin/wget" ]; then
-    WGET_CMD="/data/user/0/bin.mt.plus/files/term/bin/wget"
   elif command -v busybox >/dev/null 2>&1 && busybox wget --help 2>&1 | grep -q "Usage: wget \[-cqS\]"; then
     WGET_CMD="$(command -v busybox) wget"
   elif [ -x "/data/adb/magisk/busybox" ] && /data/adb/magisk/busybox wget --help 2>&1 | grep -q "Usage: wget \[-cqS\]"; then
