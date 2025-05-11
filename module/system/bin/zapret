@@ -1,5 +1,5 @@
 MODPATH="/data/adb/modules/zapret"
-
+WGETPATH=$(cat "$MODPATH/wgetpath" 2>/dev/null)
 CURRENTSTRATEGY=$(cat "$MODPATH/config/current-strategy" 2>/dev/null || echo "Unknown")
 DNSCRYPTENABLE=$(cat "$MODPATH/config/dnscrypt-enable" 2>/dev/null || echo "0")
 CLOAKINGUPDATE=$(cat "$MODPATH/config/dnscrypt-cloaking-update" 2>/dev/null || echo "0")
@@ -144,12 +144,18 @@ setup() {
 update() {
     echo "! Cloaking rules link: $CLOAKINGRULESLINK"
     echo "! Blocked names link: $BLOCKEDNAMESLINK"
+    echo "! Wget path: $WGETPATH"
+
+    if [ -z "$WGETPATH" ]; then
+        echo "! wget path not found in $MODPATH/wgetpath"
+        return
+    fi
 
     echo -n "- Update cloaking rules? "
     read resp
     resp=$(echo "$resp" | tr A-Z a-z)
     if [ "$resp" = "y" ] || [ "$resp" = "yes" ]; then
-        wget -q -O "$MODPATH/dnscrypt/cloaking-rules.txt" "$CLOAKINGRULESLINK"
+        $WGETPATH -q -O "$MODPATH/dnscrypt/cloaking-rules.txt" "$CLOAKINGRULESLINK" && \
         echo "- Cloaking rules updated!"
     fi
 
@@ -157,7 +163,7 @@ update() {
     read resp
     resp=$(echo "$resp" | tr A-Z a-z)
     if [ "$resp" = "y" ] || [ "$resp" = "yes" ]; then
-        wget -q -O "$MODPATH/dnscrypt/blocked-names.txt" "$BLOCKEDNAMESLINK"
+        $WGETPATH -q -O "$MODPATH/dnscrypt/blocked-names.txt" "$BLOCKEDNAMESLINK" && \
         echo "- Blocked names updated!"
     fi
 
