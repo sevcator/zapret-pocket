@@ -13,7 +13,7 @@ check_requirements() {
   command -v ip6tables >/dev/null 2>&1 || abort "! ip6tables: Not found"
   ui_print "- ip6tables: Found"
 
-  for bb in /data/adb/magisk/busybox /system/bin/busybox /system/xbin/busybox; do
+  for bb in /data/adb/magisk/busybox /system/bin/busybox /system/xbin/busybox /data/adb/ksu/bin/busybox; do
     if [ -x "$bb" ] && "$bb" wget --help 2>&1 | grep -q "Usage: wget \[-cqS\]"; then
       WGET_CMD="$bb wget"
       break
