@@ -4,14 +4,15 @@ MODUPDATEPATH="/data/adb/modules_update/zapret"
 ui_print "- Mounting /data"
 mount -o remount,rw /data
 
-set_perm_recursive "$MODPATH" 0 2000 0755 0755
-
 check_requirements() {
+  grep -q 'NFQUEUE' /proc/net/ip_tables_targets || abort "! Bad iptables"
+  grep -q 'NFQUEUE' /proc/net/ip6_tables_targets || abort "! Bad ip6tables"
+
   command -v iptables >/dev/null 2>&1 || abort "! iptables: Not found"
-  ui_print "- iptables: Found"
+  ui_print "* iptables: Found"
 
   command -v ip6tables >/dev/null 2>&1 || abort "! ip6tables: Not found"
-  ui_print "- ip6tables: Found"
+  ui_print "* ip6tables: Found"
 
   for bb in /data/adb/magisk/busybox /system/bin/busybox /system/xbin/busybox /data/adb/ksu/bin/busybox; do
     if [ -x "$bb" ] && "$bb" wget --help 2>&1 | grep -q "Usage: wget \[-cqS\]"; then
@@ -19,26 +20,21 @@ check_requirements() {
       break
     fi
   done
-
   if [ -z "$WGET_CMD" ]; then
-    echo "! wtf bro :skull:"
-    abort "! download busybox pls"
+    abort "! wtf bro ??? download busybox pls"
   else
-    ui_print "- wget: Found"
+    ui_print "* wget: Found"
   fi
-
-  mkdir -p "$MODPATH"
-  echo "$WGET_CMD" > "$MODPATH/wgetpath"
   
-  grep -q 'NFQUEUE' /proc/net/ip_tables_targets || abort "! Bad iptables"
-  grep -q 'NFQUEUE' /proc/net/ip6_tables_targets || abort "! Bad ip6tables"
-
   API=$(grep_get_prop ro.build.version.sdk)
   [ -n "$API" ] || abort "! Failed to detect Android API"
-  ui_print "- Device Android API: $API"
+  ui_print "* Device Android API: $API"
 
   [ "$API" -ge 28 ] || abort "! Minimum required API 28 (Android 9)"
 }
+
+mkdir -p "$MODPATH"
+echo "$WGET_CMD" > "$MODPATH/wgetpath"
 
 binary_by_architecture() {
   ABI=$(grep_get_prop ro.product.cpu.abi)
@@ -49,9 +45,9 @@ binary_by_architecture() {
     x86)          BINARY="nfqws-x86";     BINARY2="dnscrypt-proxy-i386" ;;
     *)            abort "! Unsupported Architecture: $ABI" ;;
   esac
-  ui_print "- Architecture: $ABI"
-  ui_print "- Binary: $BINARY"
-  ui_print "- DNSCrypt Binary: $BINARY2"
+  ui_print "* Device Architecture: $ABI"
+  ui_print "* Binary (Zapret): $BINARY"
+  ui_print "* Binary (DNSCrypt): $BINARY2"
 }
 
 check_requirements
@@ -64,16 +60,19 @@ elif [ -f "$MODUPDATEPATH/uninstall.sh" ]; then
 fi
 
 if [ -d "$MODUPDATEPATH" ]; then
-  cp -f "$MODPATH/wgetpath" "$MODUPDATEPATH/wgetpath"
+  ui_print "- Updating module"
   
-  ui_print "- Backing up old files"
+  cp -f "$MODPATH/wgetpath" "$MODUPDATEPATH/wgetpath"
   mkdir -p "$MODUPDATEPATH/list" "$MODUPDATEPATH/config"
 
   cp -f "$MODPATH/list/list-auto.txt" "$MODUPDATEPATH/list/list-auto.txt"
   cp -f "$MODPATH/list/list-exclude.txt" "$MODUPDATEPATH/list/list-exclude.txt"
-  cp -f "$MODPATH/config/current-plain-dns" "$MODUPDATEPATH/config/current-plain-dns"
-  cp -f "$MODPATH/config/current-dns-mode" "$MODUPDATEPATH/config/current-dns-mode"
-
+  cp -f "$MODPATH/config/dnscrypt-enable" "$MODUPDATEPATH/config/dnscrypt-enable"
+  cp -f "$MODPATH/config/dnscrypt-cloaking-update" "$MODUPDATEPATH/config/dnscrypt-cloaking-update"
+  cp -f "$MODPATH/config/cloaking-rules-link" "$MODUPDATEPATH/config/cloaking-rules-link"
+  cp -f "$MODPATH/config/dnscrypt-blocked-update" "$MODUPDATEPATH/config/dnscrypt-blocked-update"
+  cp -f "$MODPATH/config/blocked-names-link" "$MODUPDATEPATH/config/blocked-names-link"
+  
   if [ -f "$MODPATH/config/current-strategy" ]; then
     STRATEGY=$(cat "$MODPATH/config/current-strategy")
     STRATEGY_FILE="$MODUPDATEPATH/strategy/${STRATEGY}.sh"
@@ -83,14 +82,6 @@ if [ -d "$MODUPDATEPATH" ]; then
       rm -f "$MODPATH/config/current-strategy"
     fi
   fi
-  
-  for FILE in "$MODPATH/config/"*; do
-    BASENAME=$(basename "$FILE")
-    DEST="$MODUPDATEPATH/config/$BASENAME"
-    if [ -f "$DEST" ]; then
-      cp -f "$FILE" "$DEST"
-    fi
-  done
 fi
 
 SCRIPT_DIRS="$MODPATH $MODUPDATEPATH $MODPATH/zapret $MODUPDATEPATH/zapret $MODPATH/strategy $MODUPDATEPATH/strategy $MODPATH/dnscrypt $MODUPDATEPATH/dnscrypt"
@@ -118,8 +109,8 @@ settings put global private_dns_mode off
 ui_print "- Disabling Tethering Hardware Acceleration"
 settings put global tether_offload_disabled 1
 
-ui_print "* sevcator.t.me / sevcator.github.io *"
+ui_print "* sevcator.t.me ! sevcator.github.io *"
 
 if [ -d "$MODUPDATEPATH" ]; then
-  ui_print "- Restart your device to continue using zapret"
+  ui_print "- Please reboot the device to continue use module"
 fi
