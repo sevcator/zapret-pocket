@@ -6,7 +6,6 @@ CLOAKINGUPDATE=$(cat "$MODPATH/config/dnscrypt-cloaking-update" 2>/dev/null || e
 CLOAKINGRULESLINK=$(cat "$MODPATH/config/cloaking-rules-link" 2>/dev/null || echo "https://raw.githubusercontent.com/sevcator/dnscrypt-proxy-stuff/refs/heads/main/cloaking-rules.txt")
 BLOCKEDUPDATE=$(cat "$MODPATH/config/dnscrypt-blocked-update" 2>/dev/null || echo "0")
 BLOCKEDNAMESLINK=$(cat "$MODPATH/config/blocked-names-link" 2>/dev/null || echo "https://raw.githubusercontent.com/sevcator/dnscrypt-proxy-stuff/refs/heads/main/lite-blocked-names.txt")
-
 command_info() {
     echo "! Zapret Module for Magisk - @sevcator/zapret-magisk"
     echo "! Current strategy: $CURRENTSTRATEGY"
@@ -23,7 +22,6 @@ command_info() {
     echo "zapret setup    - Configure the zapret service"
     echo "zapret update   - Update the DNSCrypt-Proxy files"
 }
-
 start_service() {
     if pgrep -f "nfqws" > /dev/null; then
         echo "! nfqws is already running"
@@ -36,7 +34,6 @@ start_service() {
         fi
     fi
 }
-
 stop_service() {
     if [ -x "$MODPATH/uninstall.sh" ]; then
         su -c "$MODPATH/uninstall.sh" > /dev/null 2>&1 && echo "- Service stopped"
@@ -44,7 +41,6 @@ stop_service() {
         echo "! uninstall.sh not found or not executable"
     fi
 }
-
 toggle_service() {
     if pgrep -f "nfqws" > /dev/null; then
         stop_service
@@ -52,30 +48,23 @@ toggle_service() {
         start_service
     fi
 }
-
 restart_service() {
     stop_service
     sleep 1
     start_service
 }
-
 setup() {
     clear
-
     mkdir -p "$MODPATH/config"
-
     DNSCRYPTENABLE="0"
     CLOAKINGUPDATE="0"
     BLOCKEDUPDATE="0"
-
     echo "! If the selection is anything other than "Y" or "Yes", it is considered a negative choice"
-
     echo -n "- Enable DNSCrypt-Proxy? "
     IFS= read response
     case "$(echo "$response" | tr A-Z a-z)" in
         y|yes) echo "- Enabled"; DNSCRYPTENABLE="1" ;;
     esac
-
     echo "- Available strategies:"
     strategy_list=()
     find "$MODPATH/strategy" -type f -name "*.sh" 2>/dev/null | while IFS= read -r file; do
@@ -83,7 +72,6 @@ setup() {
         echo "  * $strategy_name"
         strategy_list+=("$strategy_name")
     done
-    
     echo -n "- Enter the strategy name: "
     IFS= read user_strategy
     if [ ! -f "$MODPATH/strategy/${user_strategy}.sh" ]; then
@@ -92,20 +80,17 @@ setup() {
     else
         echo "- Strategy selected!"
     fi
-
     if [ "$DNSCRYPTENABLE" = "1" ]; then
         echo -n "- Auto-update cloaking rules for DNSCrypt-Proxy? "
         IFS= read resp
         case "$(echo "$resp" | tr A-Z a-z)" in
             y|yes) CLOAKINGUPDATE="1"; echo "- Enabled" ;;
         esac
-
         echo -n "- Auto-update blocked names for DNSCrypt-Proxy? "
         IFS= read resp
         case "$(echo "$resp" | tr A-Z a-z)" in
             y|yes) BLOCKEDUPDATE="1"; echo "- Enabled" ;;
         esac
-
         echo -n "- Do you want to change source links? "
         read resp
         case "$(echo "$resp" | tr A-Z a-z)" in
@@ -118,7 +103,6 @@ setup() {
                 else
                     echo "- Keeping old link: $CLOAKINGRULESLINK"
                 fi
-
                 echo -n "- Enter link to blocking-names.txt (leave blank to keep current): "
                 read new_blocking
                 if [ -n "$new_blocking" ]; then
@@ -130,29 +114,23 @@ setup() {
             ;;
         esac
     fi
-
     echo "$DNSCRYPTENABLE" > "$MODPATH/config/dnscrypt-enable"
     echo "$user_strategy" > "$MODPATH/config/current-strategy"
     echo "$CLOAKINGUPDATE" > "$MODPATH/config/dnscrypt-blocked-update"
     echo "$CLOAKINGRULESLINK" > "$MODPATH/config/cloaking-rules-link"
     echo "$BLOCKEDUPDATE" > "$MODPATH/config/dnscrypt-blocked-update"
     echo "$BLOCKEDNAMESLINK" > "$MODPATH/config/blocked-names-link"
-
     echo "- Done! Changes will apply on next start"
 }
-
 update() {
     echo "! If the selection is anything other than "Y" or "Yes", it is considered a negative choice"
-    echo ""
-    echo "! Cloaking rules link: $CLOAKINGRULESLINK"
-    echo "! Blocked names link: $BLOCKEDNAMESLINK"
-    echo "! Wget path: $WGETPATH"
-
+    echo "* Cloaking rules link: $CLOAKINGRULESLINK"
+    echo "* Blocked names link: $BLOCKEDNAMESLINK"
     if [ -z "$WGETPATH" ]; then
         echo "! wget path not found in $MODPATH/wgetpath"
-        return
+    else
+        echo "* Wget path: $WGETPATH"
     fi
-
     echo -n "- Update cloaking rules? "
     read resp
     resp=$(echo "$resp" | tr A-Z a-z)
@@ -160,7 +138,6 @@ update() {
         $WGETPATH -q -O "$MODPATH/dnscrypt/cloaking-rules.txt" "$CLOAKINGRULESLINK" && \
         echo "- Cloaking rules updated!"
     fi
-
     echo -n "- Update blocked names? "
     read resp
     resp=$(echo "$resp" | tr A-Z a-z)
@@ -168,14 +145,11 @@ update() {
         $WGETPATH -q -O "$MODPATH/dnscrypt/blocked-names.txt" "$BLOCKEDNAMESLINK" && \
         echo "- Blocked names updated!"
     fi
-
     echo "- Done! Changes will apply on next start"
 }
-
 unknown_command() {
     echo "! Unknown command: $1"
 }
-
 case "$1" in
     "") command_info ;;
     start) start_service ;;
