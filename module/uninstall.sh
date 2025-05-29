@@ -1,4 +1,3 @@
-#!/system/bin/sh
 for iface in all default lo; do
     sysctl "net.ipv6.conf.$iface.disable_ipv6=0" > /dev/null
 done
