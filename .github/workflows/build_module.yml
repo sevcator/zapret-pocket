@@ -46,7 +46,6 @@ jobs:
           export STRIP=$TOOLCHAIN/bin/llvm-strip
           export PKG_CONFIG_PATH=$DEPS_DIR/lib/pkgconfig
 
-          # Download and build netfilter libs
           wget -qO- https://www.netfilter.org/pub/libnfnetlink/libnfnetlink-1.0.2.tar.bz2 | tar -xj
           wget -qO- https://www.netfilter.org/pub/libmnl/libmnl-1.0.5.tar.bz2 | tar -xj
           wget -qO- https://www.netfilter.org/pub/libnetfilter_queue/libnetfilter_queue-1.0.5.tar.bz2 | tar -xj
@@ -177,13 +176,9 @@ jobs:
           echo "name=zapret" >> module.prop
           echo "version=${version}" >> module.prop
           echo "versionCode=${version_code}" >> module.prop
-          echo "author=sevcator, ImMALWARE, Fenrir-0xFF, bol-van, DNSCrypt, Flowseal" >> module.prop
-          echo "description=⚡ Bypass internet-censorship via DPI modification and get extra experience with additional features" >> module.prop
+          echo "author=sevcator, bol-van, DNSCrypt, ImMALWARE, Fenrir-0xFF, Flowseal" >> module.prop
+          echo "description=⚡ DPI bypass on Android with additional features" >> module.prop
           echo "updateJson=https://raw.githubusercontent.com/${{ github.repository }}/refs/heads/main/update.json" >> module.prop
-
-          for file in ./*.sh; do
-            [ -f "$file" ] && sed -i -e '$a\' "$file"
-          done
 
           cd ..
           7z a zapret-Magisk.zip ./module/*
