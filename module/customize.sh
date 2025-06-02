@@ -6,9 +6,9 @@ check_requirements() {
   grep -q 'NFQUEUE' /proc/net/ip_tables_targets || abort "! Bad iptables"
   grep -q 'NFQUEUE' /proc/net/ip6_tables_targets || abort "! Bad ip6tables"
   command -v iptables >/dev/null 2>&1 || abort "! iptables: Not found"
-  ui_print "* iptables: Found"
+  ui_print "- iptables: Found"
   command -v ip6tables >/dev/null 2>&1 || abort "! ip6tables: Not found"
-  ui_print "* ip6tables: Found"
+  ui_print "- ip6tables: Found"
   for bb in /data/adb/magisk/busybox /system/bin/busybox /system/xbin/busybox /data/adb/ksu/bin/busybox; do
     if [ -x "$bb" ] && "$bb" wget --help 2>&1 | grep -q "Usage: wget \[-cqS\]"; then
       WGET_CMD="$bb wget"
@@ -18,11 +18,11 @@ check_requirements() {
   if [ -z "$WGET_CMD" ]; then
     abort "! wtf bro ??? download busybox pls"
   else
-    ui_print "* wget: Found"
+    ui_print "- wget: Found"
   fi
   API=$(grep_get_prop ro.build.version.sdk)
   [ -n "$API" ] || abort "! Failed to detect Android API"
-  ui_print "* Device Android API: $API"
+  ui_print "- Device Android API: $API"
   [ "$API" -ge 28 ] || abort "! Minimum required API 28 (Android 9)"
 }
 mkdir -p "$MODPATH"
@@ -36,9 +36,9 @@ binary_by_architecture() {
     x86)          BINARY="nfqws-x86";     BINARY2="dnscrypt-proxy-i386" ;;
     *)            abort "! Unsupported Architecture: $ABI" ;;
   esac
-  ui_print "* Device Architecture: $ABI"
-  ui_print "* Binary (Zapret): $BINARY"
-  ui_print "* Binary (DNSCrypt): $BINARY2"
+  ui_print "- Device Architecture: $ABI"
+  ui_print "- Binary (Zapret): $BINARY"
+  ui_print "- Binary (DNSCrypt): $BINARY2"
 }
 check_requirements
 binary_by_architecture
