@@ -34,12 +34,6 @@ discord-attachments-uploads-prd.storage.googleapis.com
 7tv.io
 10tv.app
 betterttv.net
-7tv.app
-7tv.io
-10tv.app
-lolz.guru
-zelenka.guru
-lolz.live
 x.com
 twitter.com
 twimg.com
