@@ -1,5 +1,5 @@
 #!/bin/bash
-# Custom configuration (2) by sevcator
+# Custom configuration (3) by sevcator
 
 # Zapret Configuration
 # <-- -->
