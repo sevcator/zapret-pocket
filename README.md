@@ -1,5 +1,5 @@
 > [!CAUTION]
-> This notice is governed by the applicable law in the user’s jurisdiction. The author does not accept any responsibility for legal consequences arising from the use of this software in violation of local laws. See the [DISCLAMER](https://raw.githubusercontent.com/sevcator/zapret-magisk/refs/heads/main/DISCLAMER) file for details.
+> This notice is governed by the applicable law in the user’s jurisdiction. The author does not accept any responsibility for legal consequences arising from the use of this software in violation of local laws. See the [DISCLAMER](https://github.com/sevcator/zapret-magisk/blob/main/DISCLAMER) file for details.
 
 <p align="center">
   <img src="https://github.com/sevcator/zapret-magisk/blob/main/icon.png?raw=true" 
@@ -16,7 +16,7 @@
 </div>
 
 # License
-This project is licensed. See the [LICENSE](https://raw.githubusercontent.com/sevcator/zapret-magisk/refs/heads/main/LICENSE) file for details.
+This project is licensed. See the [LICENSE](https://github.com/sevcator/zapret-magisk/blob/main/LICENSE) file for details.
 
 # Contributing
 Feel free to contribute to this project by submitting issues or pull requests.
