@@ -1,4 +1,5 @@
 browser-intake-datadoghq.com
+app-measurement.com
 googleusercontent.com
 googlesyndication.com
 googleadservices.com
