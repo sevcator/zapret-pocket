@@ -135,14 +135,14 @@ update() {
     read resp
     resp=$(echo "$resp" | tr A-Z a-z)
     if [ "$resp" = "y" ] || [ "$resp" = "yes" ]; then
-        $WGETPATH -q -O "$MODPATH/dnscrypt/cloaking-rules.txt" "$CLOAKINGRULESLINK" && \
+        $WGETPATH --no-check-certificate -q -O "$MODPATH/dnscrypt/cloaking-rules.txt" "$CLOAKINGRULESLINK" && \
         echo "- Cloaking rules updated!"
     fi
     echo -n "- Update blocked names? "
     read resp
     resp=$(echo "$resp" | tr A-Z a-z)
     if [ "$resp" = "y" ] || [ "$resp" = "yes" ]; then
-        $WGETPATH -q -O "$MODPATH/dnscrypt/blocked-names.txt" "$BLOCKEDNAMESLINK" && \
+        $WGETPATH --no-check-certificate -q -O "$MODPATH/dnscrypt/blocked-names.txt" "$BLOCKEDNAMESLINK" && \
         echo "- Blocked names updated!"
     fi
     echo "- Done! Changes will apply on next start"
