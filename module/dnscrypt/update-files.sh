@@ -7,7 +7,7 @@ BLOCKEDNAMESLINK=$(cat "$MODPATH/config/blocked-names-link" 2>/dev/null || echo 
 if [ "$CLOAKINGUPDATE" = "1" ]; then
     if [ -n "$CLOAKINGRULESLINK" ]; then
         if [ -n "$WGET_CMD" ]; then
-            $WGET_CMD -q -O "$MODPATH/dnscrypt/cloaking-rules.txt" "$CLOAKINGRULESLINK"
+            $WGET_CMD --no-check-certificate -q -O "$MODPATH/dnscrypt/cloaking-rules.txt" "$CLOAKINGRULESLINK"
         else
             echo "wget command not found, can't download cloaking file" >> "$MODPATH/warns.log"
         fi
@@ -18,7 +18,7 @@ fi
 if [ "$BLOCKEDUPDATE" = "1" ]; then
     if [ -n "$BLOCKEDNAMESLINK" ]; then
         if [ -n "$WGET_CMD" ]; then
-            $WGET_CMD -q -O "$MODPATH/dnscrypt/blocked-names.txt" "$BLOCKEDNAMESLINK"
+            $WGET_CMD --no-check-certificate -q -O "$MODPATH/dnscrypt/blocked-names.txt" "$BLOCKEDNAMESLINK"
         else
             echo "wget command not found, can't download blocked-names file" >> "$MODPATH/warns.log"
         fi
