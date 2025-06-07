@@ -2,7 +2,7 @@
 #         For github.com/sevcator/zapret-magisk        #
 ########################################################
 
-listen_addresses = ['127.0.0.2:53']
+listen_addresses = ['127.0.0.1:5253']
 
 server_names = ['controld-unfiltered', 'nextdns', 'nextdns-ultralow']
 
@@ -31,11 +31,16 @@ netprobe_timeout = 10
 netprobe_address = '45.90.28.0:53'
 
 block_ipv6 = false
-block_unqualified = true
-block_undelegated = true
+block_unqualified = false
+block_undelegated = false
 reject_ttl = 10
 
-cache = false
+cache = true
+cache_size = 1024
+cache_min_ttl = 2400
+cache_max_ttl = 86400
+cache_neg_min_ttl = 60
+cache_neg_max_ttl = 600
 
 cloaking_rules = 'cloaking-rules.txt'
 
@@ -49,7 +54,7 @@ blocked_ips_file = 'blocked-ips.txt'
 fragments_blocked = ['cisco', 'cisco-ipv6', 'cisco-familyshield', 'cisco-familyshield-ipv6', 'cisco-sandbox', 'cleanbrowsing-adult', 'cleanbrowsing-adult-ipv6', 'cleanbrowsing-family', 'cleanbrowsing-family-ipv6', 'cleanbrowsing-security', 'cleanbrowsing-security-ipv6']
 
 [anonymized_dns]
-skip_incompatible = false
+skip_incompatible = true
 
 [static]
 [static.'controld-unfiltered']
