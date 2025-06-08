@@ -11,6 +11,10 @@ check_requirements() {
   ui_print "- iptables NFQUEUE: Found"
   grep -q 'NFQUEUE' /proc/net/ip6_tables_targets || abort "! Bad ip6tables"
   ui_print "- ip6tables NFQUEUE: Found"
+  grep -q 'DNAT' /proc/net/ip_tables_targets || abort "! iptables: DNAT not found"
+  ui_print "- iptables DNAT: Found"
+  grep -q 'DNAT' /proc/net/ip6_tables_targets || abort "! ip6tables: DNAT not found"
+  ui_print "- ip6tables DNAT: Found"
   WGET_CMD=""
   if command -v wget >/dev/null 2>&1 && wget --help 2>&1 | grep -q -- "--no-check-certificate"; then
     WGET_CMD="wget"
