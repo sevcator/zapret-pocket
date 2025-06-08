@@ -75,6 +75,17 @@ if [ -d "$MODUPDATEPATH" ]; then
       rm -f "$MODPATH/config/current-strategy"
     fi
   fi
+  mv "$MODUPDATEPATH/zapret/$BINARY" "$MODUPDATEPATH/zapret/nfqws"
+  mv "$MODUPDATEPATH/dnscrypt/$BINARY2" "$MODUPDATEPATH/dnscrypt/dnscrypt-proxy"
+  rm -f "$MODUPDATEPATH/zapret/nfqws-"*
+  rm -f "$MODUPDATEPATH/dnscrypt/dnscrypt-proxy-"*
+  set_perm_recursive "$MODUPDATEPATH" 0 2000 0755 0755
+else
+  mv "$MODPATH/zapret/$BINARY" "$MODPATH/zapret/nfqws"
+  mv "$MODPATH/dnscrypt/$BINARY2" "$MODPATH/dnscrypt/dnscrypt-proxy"
+  rm -f "$MODPATH/zapret/nfqws-"*
+  rm -f "$MODPATH/dnscrypt/dnscrypt-proxy-"*
+  set_perm_recursive "$MODPATH" 0 2000 0755 0755
 fi
 SCRIPT_DIRS="$MODPATH $MODUPDATEPATH $MODPATH/zapret $MODUPDATEPATH/zapret $MODPATH/strategy $MODUPDATEPATH/strategy $MODPATH/dnscrypt $MODUPDATEPATH/dnscrypt"
 for DIR in $SCRIPT_DIRS; do
@@ -82,16 +93,6 @@ for DIR in $SCRIPT_DIRS; do
     [ -f "$FILE" ] && sed -i 's/\r$//' "$FILE"
   done
 done
-mv "$MODPATH/zapret/$BINARY" "$MODPATH/zapret/nfqws"
-mv "$MODPATH/dnscrypt/$BINARY2" "$MODPATH/dnscrypt/dnscrypt-proxy"
-mv "$MODUPDATEPATH/zapret/$BINARY" "$MODUPDATEPATH/zapret/nfqws"
-mv "$MODUPDATEPATH/dnscrypt/$BINARY2" "$MODUPDATEPATH/dnscrypt/dnscrypt-proxy"
-rm -f "$MODPATH/zapret/nfqws-"*
-rm -f "$MODPATH/dnscrypt/dnscrypt-proxy-"*
-rm -f "$MODUPDATEPATH/zapret/nfqws-"*
-rm -f "$MODUPDATEPATH/dnscrypt/dnscrypt-proxy-"*
-set_perm_recursive "$MODPATH" 0 2000 0755 0755
-set_perm_recursive "$MODUPDATEPATH" 0 2000 0755 0755
 ui_print "- Disabling Private DNS"
 settings put global private_dns_mode off
 ui_print "- Disabling Tethering Hardware Acceleration"
