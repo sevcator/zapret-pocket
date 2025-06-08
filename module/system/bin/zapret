@@ -127,9 +127,9 @@ update() {
     echo "* Cloaking rules link: $CLOAKINGRULESLINK"
     echo "* Blocked names link: $BLOCKEDNAMESLINK"
     if [ -z "$WGETPATH" ]; then
-        echo "! wget path not found in $MODPATH/wgetpath"
+        echo "! wget command not found in $MODPATH/wgetpath"
     else
-        echo "* Wget path: $WGETPATH"
+        echo "* Wget command: $WGETPATH"
     fi
     echo -n "- Update cloaking rules? "
     read resp
