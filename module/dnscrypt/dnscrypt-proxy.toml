@@ -32,15 +32,10 @@ netprobe_address = '45.90.28.0:53'
 
 block_ipv6 = false
 block_unqualified = false
-block_undelegated = false
+block_undelegated = true
 reject_ttl = 10
 
-cache = true
-cache_size = 1024
-cache_min_ttl = 2400
-cache_max_ttl = 86400
-cache_neg_min_ttl = 60
-cache_neg_max_ttl = 600
+cache = false
 
 cloaking_rules = 'cloaking-rules.txt'
 
