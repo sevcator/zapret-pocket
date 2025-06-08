@@ -8,7 +8,7 @@ ip6tables -t mangle -F
 ip6tables -t mangle -X
 iptables -t nat -F
 iptables -t nat -X
-PROCS=("zapret.sh" "zapret-main.sh" "dnscrypt.sh" "nfqws")
+PROCS=("zapret.sh" "zapret-main.sh" "dnscrypt.sh" "nfqws" "dnscrypt-proxy")
 for p in "${PROCS[@]}"; do
     pids=$(pgrep -f "$p")
     for pid in $pids; do
