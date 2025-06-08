@@ -16,8 +16,10 @@ check_requirements() {
   grep -q 'DNAT' /proc/net/ip6_tables_targets || abort "! ip6tables - DNAT: Found"
   ui_print "- ip6tables - DNAT: Found"
   WGET_CMD=""
-  if command -v wget >/dev/null 2>&1 && wget --help 2>&1 | grep -q -- "--no-check-certificate"; then
-    WGET_CMD="wget"
+  if [ -x /system/bin/wget ] && /system/bin/wget --help 2>&1 | grep -q -- "--no-check-certificate"; then
+    WGET_CMD="/system/bin/wget"
+  elif [ -x /system/xbin/wget ] && /system/xbin/wget --help 2>&1 | grep -q -- "--no-check-certificate"; then
+    WGET_CMD="/system/xbin/wget"
   elif command -v busybox >/dev/null 2>&1 && busybox wget --help 2>&1 | grep -q -- "--no-check-certificate"; then
     WGET_CMD="busybox wget"
   elif [ -x /data/adb/magisk/busybox ] && /data/adb/magisk/busybox wget --help 2>&1 | grep -q -- "--no-check-certificate"; then
@@ -28,11 +30,9 @@ check_requirements() {
   if [ -z "$WGET_CMD" ]; then
     abort "! wget: Not found"
   else
-    ui_print "- wget: Found"
+    ui_print "- wget: Found ($WGET_CMD)"
   fi
 }
-mkdir -p "$MODPATH"
-echo "$WGET_CMD" > "$MODPATH/wgetpath"
 binary_by_architecture() {
   ABI=$(grep_get_prop ro.product.cpu.abi)
   case "$ABI" in
@@ -48,6 +48,8 @@ binary_by_architecture() {
 }
 check_requirements
 binary_by_architecture
+mkdir -p "$MODPATH"
+echo "$WGET_CMD" > "$MODPATH/wgetpath"
 if [ -f "$MODPATH/uninstall.sh" ]; then
     "$MODPATH/uninstall.sh"
 elif [ -f "$MODUPDATEPATH/uninstall.sh" ]; then
