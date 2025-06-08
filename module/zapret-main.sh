@@ -12,7 +12,7 @@ if [ "$(cat "$MODPATH/config/dnscrypt-enable")" = "1" ]; then
     nohup "$MODPATH/dnscrypt/dnscrypt.sh" > /dev/null 2>&1 &
     sleep 5
     for iface in all default lo; do
-        sysctl "net.ipv6.conf.$iface.disable_ipv6=1" > /dev/null
+        sysctl net.ipv6.conf.$iface.disable_ipv6=1
     done
     for proto in udp tcp; do
         iptables -t nat -I OUTPUT -p "$proto" --dport 53 -j DNAT --to 127.0.0.1:5253
