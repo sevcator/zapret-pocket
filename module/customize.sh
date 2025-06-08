@@ -28,7 +28,7 @@ check_requirements() {
   if [ -z "$WGET_CMD" ]; then
     abort "! wget: Not found"
   else
-    ui_print "- wget: Found ($WGET_CMD)"
+    ui_print "- wget: Found"
   fi
 }
 mkdir -p "$MODPATH"
