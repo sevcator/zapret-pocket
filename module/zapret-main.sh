@@ -11,8 +11,5 @@ if [ "$(cat "$MODPATH/config/dnscrypt-enable")" = "1" ]; then
     sleep 3
     nohup "$MODPATH/dnscrypt/dnscrypt.sh" > /dev/null 2>&1 &
     sleep 5
-    for iface in all default lo; do
-        sysctl net.ipv6.conf.$iface.disable_ipv6=1
-    done
 fi
 nohup "$MODPATH/zapret/zapret.sh" > /dev/null 2>&1 &
