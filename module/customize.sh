@@ -7,14 +7,14 @@ check_requirements() {
   ui_print "- iptables: Found"
   command -v ip6tables >/dev/null 2>&1 || abort "! ip6tables: Not found"
   ui_print "- ip6tables: Found"
-  grep -q 'NFQUEUE' /proc/net/ip_tables_targets || abort "! Bad iptables"
-  ui_print "- iptables NFQUEUE: Found"
-  grep -q 'NFQUEUE' /proc/net/ip6_tables_targets || abort "! Bad ip6tables"
-  ui_print "- ip6tables NFQUEUE: Found"
-  grep -q 'DNAT' /proc/net/ip_tables_targets || abort "! iptables: DNAT not found"
-  ui_print "- iptables DNAT: Found"
-  grep -q 'DNAT' /proc/net/ip6_tables_targets || abort "! ip6tables: DNAT not found"
-  ui_print "- ip6tables DNAT: Found"
+  grep -q 'NFQUEUE' /proc/net/ip_tables_targets || abort "! iptables - NFQUEUE: Not found"
+  ui_print "- iptables - NFQUEUE: Found"
+  grep -q 'NFQUEUE' /proc/net/ip6_tables_targets || abort "! ip6tables - NFQUEUE: Not found"
+  ui_print "- ip6tables - NFQUEUE: Found"
+  grep -q 'DNAT' /proc/net/ip_tables_targets || abort "! iptables - DNAT: Found"
+  ui_print "- iptables - DNAT: Found"
+  grep -q 'DNAT' /proc/net/ip6_tables_targets || abort "! ip6tables - DNAT: Found"
+  ui_print "- ip6tables - DNAT: Found"
   WGET_CMD=""
   if command -v wget >/dev/null 2>&1 && wget --help 2>&1 | grep -q -- "--no-check-certificate"; then
     WGET_CMD="wget"
@@ -30,10 +30,6 @@ check_requirements() {
   else
     ui_print "- wget: Found ($WGET_CMD)"
   fi
-  API=$(grep_get_prop ro.build.version.sdk)
-  [ -n "$API" ] || abort "! Failed to detect Android API"
-  ui_print "- Device Android API: $API"
-  [ "$API" -ge 28 ] || abort "! Minimum required API 28 (Android 9)"
 }
 mkdir -p "$MODPATH"
 echo "$WGET_CMD" > "$MODPATH/wgetpath"
