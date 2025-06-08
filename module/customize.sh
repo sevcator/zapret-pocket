@@ -3,22 +3,28 @@ MODUPDATEPATH="/data/adb/modules_update/zapret"
 ui_print "- Mounting /data"
 mount -o remount,rw /data
 check_requirements() {
-  grep -q 'NFQUEUE' /proc/net/ip_tables_targets || abort "! Bad iptables"
-  grep -q 'NFQUEUE' /proc/net/ip6_tables_targets || abort "! Bad ip6tables"
   command -v iptables >/dev/null 2>&1 || abort "! iptables: Not found"
   ui_print "- iptables: Found"
   command -v ip6tables >/dev/null 2>&1 || abort "! ip6tables: Not found"
   ui_print "- ip6tables: Found"
-  for bb in /data/adb/magisk/busybox /system/bin/busybox /system/xbin/busybox /data/adb/ksu/bin/busybox; do
-    if [ -x "$bb" ] && "$bb" wget --help 2>&1 | grep -q "Usage: wget \[-cqS\]"; then
-      WGET_CMD="$bb wget"
-      break
-    fi
-  done
+  grep -q 'NFQUEUE' /proc/net/ip_tables_targets || abort "! Bad iptables"
+  ui_print "- iptables NFQUEUE: Found"
+  grep -q 'NFQUEUE' /proc/net/ip6_tables_targets || abort "! Bad ip6tables"
+  ui_print "- ip6tables NFQUEUE: Found"
+  WGET_CMD=""
+  if command -v wget >/dev/null 2>&1 && wget --help 2>&1 | grep -q -- "--no-check-certificate"; then
+    WGET_CMD="wget"
+  elif command -v busybox >/dev/null 2>&1 && busybox wget --help 2>&1 | grep -q -- "--no-check-certificate"; then
+    WGET_CMD="busybox wget"
+  elif [ -x /data/adb/magisk/busybox ] && /data/adb/magisk/busybox wget --help 2>&1 | grep -q -- "--no-check-certificate"; then
+    WGET_CMD="/data/adb/magisk/busybox wget"
+  elif [ -x /data/adb/ksu/bin/busybox ] && /data/adb/ksu/bin/busybox wget --help 2>&1 | grep -q -- "--no-check-certificate"; then
+    WGET_CMD="/data/adb/ksu/bin/busybox wget"
+  fi
   if [ -z "$WGET_CMD" ]; then
-    abort "! wtf bro ??? download busybox pls"
+    abort "! wget: Not found"
   else
-    ui_print "- wget: Found"
+    ui_print "- wget: Found ($WGET_CMD)"
   fi
   API=$(grep_get_prop ro.build.version.sdk)
   [ -n "$API" ] || abort "! Failed to detect Android API"
