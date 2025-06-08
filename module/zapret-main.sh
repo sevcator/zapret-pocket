@@ -14,9 +14,5 @@ if [ "$(cat "$MODPATH/config/dnscrypt-enable")" = "1" ]; then
     for iface in all default lo; do
         sysctl net.ipv6.conf.$iface.disable_ipv6=1
     done
-    for proto in udp tcp; do
-        iptables -t nat -I OUTPUT -p "$proto" --dport 53 -j DNAT --to 127.0.0.1:5253
-        iptables -t nat -I PREROUTING -p "$proto" --dport 53 -j DNAT --to 127.0.0.1:5253
-    done
 fi
 nohup "$MODPATH/zapret/zapret.sh" > /dev/null 2>&1 &
