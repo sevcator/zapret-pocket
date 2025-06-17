@@ -1,7 +1,8 @@
+#!/system/bin/sh
 for iface in all default lo; do
-    sysctl "net.ipv6.conf.$iface.disable_ipv6=0" > /dev/null
+    sysctl "net.ipv6.conf.$iface.disable_ipv6=0" > /dev/null 2>&1 &
 done
-sysctl net.netfilter.nf_conntrack_tcp_be_liberal=0 > /dev/null;
+sysctl net.netfilter.nf_conntrack_tcp_be_liberal=0 > /dev/null 2>&1
 for proto in udp tcp; do
     iptables -t nat -S | grep -- "-p $proto -m $proto --dport 53 -j DNAT" | while read -r rule; do
         iptables -t nat -D ${rule#-A }
