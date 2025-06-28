@@ -82,7 +82,7 @@ if [ -d "$MODUPDATEPATH" ]; then
     if [ "$API" -ge 35 ]; then
       ui_print "! Device Android API is higher than 35"
       ui_print "! To prevent bootloop, pre-installed app removed"
-      ui_print "! For more - t.me/todayispain/6"
+      ui_print "! For more information - t.me/todayispain/6"
       rm -rf "$MODUPDATEPATH/system/priv-app"
     else
       ui_print "- Device Android API: $API"
@@ -100,8 +100,8 @@ else
   if [ -n "$API" ]; then
     if [ "$API" -ge 35 ]; then
       ui_print "! Device Android API is higher than 35"
-      ui_print "! To prevent bootloop, pre-installed app removed"
-      ui_print "! For more - t.me/todayispain/6"
+      ui_print "! To help prevent bootloop, pre-installed app removed"
+      ui_print "! For more information - t.me/todayispain/6"
       rm -rf "$MODPATH/system/priv-app"
     else
       ui_print "- Device Android API: $API"
