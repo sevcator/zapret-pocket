@@ -185,7 +185,7 @@ jobs:
           mkdir -p list
           curl -s https://raw.githubusercontent.com/bol-van/rulist/refs/heads/main/reestr_hostname.txt -o list/reestr_hostname.txt || true
 
-          curl -sSL https://raw.githubusercontent.com/sevcator/dnscrypt-proxy-stuff/refs/heads/main/cloaking-rules.txt -o module/dnscrypt/dnscrypt-proxy/cloaking-rules.txt || true
+          curl -sSL https://raw.githubusercontent.com/sevcator/dnscrypt-proxy-stuff/refs/heads/main/cloaking-rules.txt -o dnscrypt/dnscrypt-proxy/cloaking-rules.txt || true
 
           echo "id=zapret" > module.prop
           echo "name=zapret" >> module.prop
