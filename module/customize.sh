@@ -46,25 +46,27 @@ binary_by_architecture() {
   ui_print "- Binary (Zapret): $BINARY"
   ui_print "- Binary (DNSCrypt): $BINARY2"
 }
+SCRIPT_DIRS="$MODPATH $MODUPDATEPATH $MODPATH/zapret $MODUPDATEPATH/zapret $MODPATH/strategy $MODUPDATEPATH/strategy $MODPATH/dnscrypt $MODUPDATEPATH/dnscrypt"
+for DIR in $SCRIPT_DIRS; do
+  for FILE in "$DIR"/*.sh; do
+    [ -f "$FILE" ] && sed -i 's/\r$//' "$FILE"
+  done
+done
+if [ -f "$MODPATH/uninstall.sh" ]; then
+    "$MODPATH/uninstall.sh"
+fi
 check_requirements
 binary_by_architecture
 mkdir -p "$MODPATH"
 echo "$WGET_CMD" > "$MODPATH/wgetpath"
-if [ -f "$MODPATH/uninstall.sh" ]; then
-    "$MODPATH/uninstall.sh"
-elif [ -f "$MODUPDATEPATH/uninstall.sh" ]; then
-    "$MODUPDATEPATH/uninstall.sh"
-fi
 if [ -d "$MODUPDATEPATH" ]; then
   ui_print "- Updating module"
   cp -f "$MODPATH/wgetpath" "$MODUPDATEPATH/wgetpath"
   mkdir -p "$MODUPDATEPATH/list" "$MODUPDATEPATH/config"
-  cp -f "$MODPATH/list/list-auto.txt" "$MODUPDATEPATH/list/list-auto.txt"
-  cp -f "$MODPATH/list/list-exclude.txt" "$MODUPDATEPATH/list/list-exclude.txt"
   cp -f "$MODPATH/config/dnscrypt-enable" "$MODUPDATEPATH/config/dnscrypt-enable"
   cp -f "$MODPATH/config/dnscrypt-cloaking-update" "$MODUPDATEPATH/config/dnscrypt-cloaking-update"
-  cp -f "$MODPATH/config/cloaking-rules-link" "$MODUPDATEPATH/config/cloaking-rules-link"
   cp -f "$MODPATH/config/dnscrypt-blocked-update" "$MODUPDATEPATH/config/dnscrypt-blocked-update"
+  cp -f "$MODPATH/config/cloaking-rules-link" "$MODUPDATEPATH/config/cloaking-rules-link"
   cp -f "$MODPATH/config/blocked-names-link" "$MODUPDATEPATH/config/blocked-names-link"
   if [ -f "$MODPATH/config/current-strategy" ]; then
     STRATEGY=$(cat "$MODPATH/config/current-strategy")
@@ -80,19 +82,19 @@ if [ -d "$MODUPDATEPATH" ]; then
   rm -f "$MODUPDATEPATH/zapret/nfqws-"*
   rm -f "$MODUPDATEPATH/dnscrypt/dnscrypt-proxy-"*
   set_perm_recursive "$MODUPDATEPATH" 0 2000 0755 0755
+  ui_print "- Installing tethering app"
+  pm install "$MODPATH/app.apk" > /dev/null 2>&1 || ui_print "! Failed to install tethering app"
+  rm -f "$MODPATH/app.apk"
 else
   mv "$MODPATH/zapret/$BINARY" "$MODPATH/zapret/nfqws"
   mv "$MODPATH/dnscrypt/$BINARY2" "$MODPATH/dnscrypt/dnscrypt-proxy"
   rm -f "$MODPATH/zapret/nfqws-"*
   rm -f "$MODPATH/dnscrypt/dnscrypt-proxy-"*
   set_perm_recursive "$MODPATH" 0 2000 0755 0755
+  ui_print "- Installing tethering app"
+  pm install "$MODUPDATEPATH/app.apk" > /dev/null 2>&1 || ui_print "! Failed to install tethering app"
+  rm -f "$MODUPDATEPATH/app.apk"
 fi
-SCRIPT_DIRS="$MODPATH $MODUPDATEPATH $MODPATH/zapret $MODUPDATEPATH/zapret $MODPATH/strategy $MODUPDATEPATH/strategy $MODPATH/dnscrypt $MODUPDATEPATH/dnscrypt"
-for DIR in $SCRIPT_DIRS; do
-  for FILE in "$DIR"/*.sh; do
-    [ -f "$FILE" ] && sed -i 's/\r$//' "$FILE"
-  done
-done
 ui_print "- Disabling Private DNS"
 settings put global private_dns_mode off
 ui_print "- Disabling Tethering Hardware Acceleration"
