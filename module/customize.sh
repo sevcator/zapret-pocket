@@ -77,7 +77,7 @@ if [ -d "$MODUPDATEPATH" ]; then
       rm -f "$MODPATH/config/current-strategy"
     fi
   fi
-	API=$(grep_get_prop ro.build.version.sdk)
+  API=$(grep_get_prop ro.build.version.sdk)
   if [ -n "$API" ]; then
     if [ "$API" -ge 35 ]; then
       ui_print "! Device Android API is higher than 35"
@@ -96,7 +96,7 @@ if [ -d "$MODUPDATEPATH" ]; then
   rm -f "$MODUPDATEPATH/dnscrypt/dnscrypt-proxy-"*
   set_perm_recursive "$MODUPDATEPATH" 0 2000 0755 0755
 else
-	API=$(grep_get_prop ro.build.version.sdk)
+  API=$(grep_get_prop ro.build.version.sdk)
   if [ -n "$API" ]; then
     if [ "$API" -ge 35 ]; then
       ui_print "! Device Android API is higher than 35"
