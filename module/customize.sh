@@ -82,18 +82,12 @@ if [ -d "$MODUPDATEPATH" ]; then
   rm -f "$MODUPDATEPATH/zapret/nfqws-"*
   rm -f "$MODUPDATEPATH/dnscrypt/dnscrypt-proxy-"*
   set_perm_recursive "$MODUPDATEPATH" 0 2000 0755 0755
-  ui_print "- Installing tethering app"
-  pm install "$MODPATH/app.apk" > /dev/null 2>&1 || ui_print "! Failed to install tethering app"
-  rm -f "$MODPATH/app.apk"
 else
   mv "$MODPATH/zapret/$BINARY" "$MODPATH/zapret/nfqws"
   mv "$MODPATH/dnscrypt/$BINARY2" "$MODPATH/dnscrypt/dnscrypt-proxy"
   rm -f "$MODPATH/zapret/nfqws-"*
   rm -f "$MODPATH/dnscrypt/dnscrypt-proxy-"*
   set_perm_recursive "$MODPATH" 0 2000 0755 0755
-  ui_print "- Installing tethering app"
-  pm install "$MODUPDATEPATH/app.apk" > /dev/null 2>&1 || ui_print "! Failed to install tethering app"
-  rm -f "$MODUPDATEPATH/app.apk"
 fi
 ui_print "- Disabling Private DNS"
 settings put global private_dns_mode off
