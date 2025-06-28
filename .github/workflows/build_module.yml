@@ -172,6 +172,17 @@ jobs:
           sudo apt install -y p7zip-full
           cd module
 
+          mkdir -p ./system/priv-app/VpnHotspot
+          apk_url=$(curl -s https://api.github.com/repos/Mygod/VPNHotspot/releases/latest | jq -r '.assets[] | select(.name | endswith(".apk")) | .browser_download_url')
+          curl -L -o ./system/priv-app/VpnHotspot/VpnHotspot.apk "$apk_url" || true
+          mkdir -p ./ipset
+          curl -s https://raw.githubusercontent.com/V3nilla/IPSets-For-Bypass-in-Russia/refs/heads/main/ipset-amazon.txt > /tmp/ipset1.txt || true
+          curl -s https://raw.githubusercontent.com/V3nilla/IPSets-For-Bypass-in-Russia/refs/heads/main/ipset-cloudflare.txt > /tmp/ipset2.txt || true
+          cat /tmp/ipset1.txt /tmp/ipset2.txt > ./ipset/ipset-all.txt || true
+          mkdir -p ./list
+          curl -s https://raw.githubusercontent.com/bol-van/rulist/refs/heads/main/reestr_hostname.txt -o ./list/reestr_hostname.txt || true
+          curl -s https://raw.githubusercontent.com/sevcator/dnscrypt-proxy-stuff/refs/heads/main/cloaking-rules.txt -o ./dnscrypt/cloaking-rules.txt || true
+
           echo "id=zapret" > module.prop
           echo "name=zapret" >> module.prop
           echo "version=${version}" >> module.prop
@@ -197,6 +208,10 @@ jobs:
             "changelog": "https://raw.githubusercontent.com/${{ github.repository }}/main/CHANGELOG.md"
           }' > update.json
           git add update.json
+          git add ./module/system/priv-app/VpnHotspot/VpnHotspot.apk
+          git add ./module/ipset/ipset-all.txt
+          git add ./module/list/reestr_hostname.txt
+          git add ./module/dnscrypt/cloaking-rules.txt
           git commit -m "Release ${{ env.version }}"
           git push origin HEAD:main --force || echo "No changes to commit"
 
