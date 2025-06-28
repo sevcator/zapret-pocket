@@ -60,6 +60,9 @@ binary_by_architecture
 mkdir -p "$MODPATH"
 echo "$WGET_CMD" > "$MODPATH/wgetpath"
 if [ -d "$MODUPDATEPATH" ]; then
+  ui_print "- Backing up old files"
+  mkdir -p "$MODUPDATEPATH/.old_files"
+  cp -a "$MODPATH/"* "$MODUPDATEPATH/.old_files/" 2>/dev/null
   ui_print "- Updating module"
   cp -f "$MODPATH/wgetpath" "$MODUPDATEPATH/wgetpath"
   mkdir -p "$MODUPDATEPATH/list" "$MODUPDATEPATH/config"
