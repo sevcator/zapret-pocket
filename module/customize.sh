@@ -63,6 +63,7 @@ mkdir -p "$MODPATH"
 echo "$WGET_CMD" > "$MODPATH/wgetpath"
 if [ -d "$MODUPDATEPATH" ]; then
   ui_print "- Backing up old files"
+  rm -rf "$MODPATH/.old_files"
   mkdir -p "$MODUPDATEPATH/.old_files"
   cp -a "$MODPATH/"* "$MODUPDATEPATH/.old_files/" 2>/dev/null
   ui_print "- Updating module"
@@ -83,7 +84,7 @@ if [ -d "$MODUPDATEPATH" ]; then
     fi
   fi
   ui_print "- Installing tethering app"
-  if pm install "$APKUPDATEMODPATH"; then
+  if pm install "$APKMODUPDATEPATH" > /dev/null 2>&1; then
     ui_print "- pm install completed"
   else
     ui_print "! pm install failed"
@@ -95,10 +96,16 @@ if [ -d "$MODUPDATEPATH" ]; then
     API=$(getprop ro.build.version.sdk)
     if [ -n "$API" ]; then
       if [ "$API" -gt 34 ]; then
-        ui_print "! Device Android API is higher than 34, pre-installed app will removed"
+        ui_print "! Device Android API: $API => 34"
+        ui_print "! The app will not be pre-installed"
+        rm -rf "$MODUPDATEPATH/system/app"
+      elif [ "$API" -lt 25 ]; then 
+        ui_print "! Device Android API: $API <= 25"
+        ui_print "! The app will not be pre-installed"
         rm -rf "$MODUPDATEPATH/system/app"
       else
         ui_print "- Device Android API: $API"
+        ui_print "- The app will be pre-installed"
       fi
     else
       ui_print "! Failed to detect Android API"
@@ -112,7 +119,7 @@ if [ -d "$MODUPDATEPATH" ]; then
   set_perm_recursive "$MODUPDATEPATH" 0 2000 0755 0755
 else
   ui_print "- Installing tethering app"
-  if pm install "$APKMODPATH"; then
+  if pm install "$APKMODPATH" > /dev/null 2>&1; then
     ui_print "- pm install completed"
   else
     ui_print "! pm install failed"
@@ -124,10 +131,16 @@ else
     API=$(getprop ro.build.version.sdk)
     if [ -n "$API" ]; then
       if [ "$API" -gt 34 ]; then
-        ui_print "! Device Android API is higher than 34, pre-installed app will removed"
+        ui_print "! Device Android API: $API => 34"
+        ui_print "! The app will not be pre-installed"
+        rm -rf "$MODPATH/system/app"
+      elif [ "$API" -lt 25 ]; then 
+        ui_print "! Device Android API: $API <= 25"
+        ui_print "! The app will not be pre-installed"
         rm -rf "$MODPATH/system/app"
       else
         ui_print "- Device Android API: $API"
+        ui_print "- The app will be pre-installed"
       fi
     else
       ui_print "! Failed to detect Android API"
