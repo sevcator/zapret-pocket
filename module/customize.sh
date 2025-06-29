@@ -1,7 +1,7 @@
 MODPATH="/data/adb/modules/zapret"
 MODUPDATEPATH="/data/adb/modules_update/zapret"
-APKMODPATH="$MODPATH/system/app/VpnHotspot/VpnHotspot.apk"
-APKMODUPDATEPATH="$MODUPDATEPATH/system/app/VpnHotspot/VpnHotspot.apk"
+APKMODPATH="$MODPATH/system/app/VpnHotspot.apk"
+APKMODUPDATEPATH="$MODUPDATEPATH/system/app/VpnHotspot.apk"
 ui_print "- Mounting /data"
 mount -o remount,rw /data
 check_requirements() {
