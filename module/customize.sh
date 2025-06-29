@@ -83,13 +83,19 @@ if [ -d "$MODUPDATEPATH" ]; then
     fi
   fi
   ui_print "- Installing tethering app"
-  if pm install "$APKMODUPDATEPATH" || pm install-existing "$APKMODUPDATEPATH"; then
+  if pm install "$APKUPDATEMODPATH"; then
+    ui_print "- pm install completed"
+  else
+    ui_print "! pm install failed"
+  fi
+  if pm list packages | grep -q "be.mygod.vpn.hotspot"; then
+    ui_print "- Tethering app found"
     rm -rf "$MODUPDATEPATH/system/app"
   else
     API=$(getprop ro.build.version.sdk)
     if [ -n "$API" ]; then
-      if [ "$API" -ge 35 ]; then
-        ui_print "! Device Android API is higher than 35"
+      if [ "$API" -gt 34 ]; then
+        ui_print "! Device Android API is higher than 34, pre-installed app will removed"
         rm -rf "$MODUPDATEPATH/system/app"
       else
         ui_print "- Device Android API: $API"
@@ -99,7 +105,6 @@ if [ -d "$MODUPDATEPATH" ]; then
       rm -rf "$MODUPDATEPATH/system/app"
     fi
   fi
-  fi
   mv "$MODUPDATEPATH/zapret/$BINARY" "$MODUPDATEPATH/zapret/nfqws"
   mv "$MODUPDATEPATH/dnscrypt/$BINARY2" "$MODUPDATEPATH/dnscrypt/dnscrypt-proxy"
   rm -f "$MODUPDATEPATH/zapret/nfqws-"*
@@ -107,13 +112,19 @@ if [ -d "$MODUPDATEPATH" ]; then
   set_perm_recursive "$MODUPDATEPATH" 0 2000 0755 0755
 else
   ui_print "- Installing tethering app"
-  if pm install "$APKMODPATH" || pm install-existing "$APKMODPATH"; then
+  if pm install "$APKMODPATH"; then
+    ui_print "- pm install completed"
+  else
+    ui_print "! pm install failed"
+  fi
+  if pm list packages | grep -q "be.mygod.vpn.hotspot"; then
+    ui_print "- Tethering app found"
     rm -rf "$MODPATH/system/app"
   else
     API=$(getprop ro.build.version.sdk)
     if [ -n "$API" ]; then
-      if [ "$API" -ge 35 ]; then
-        ui_print "! Device Android API is higher than 35"
+      if [ "$API" -gt 34 ]; then
+        ui_print "! Device Android API is higher than 34, pre-installed app will removed"
         rm -rf "$MODPATH/system/app"
       else
         ui_print "- Device Android API: $API"
