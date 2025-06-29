@@ -1,5 +1,7 @@
 MODPATH="/data/adb/modules/zapret"
 MODUPDATEPATH="/data/adb/modules_update/zapret"
+APKMODPATH="$MODPATH/system/app/VpnHotspot/VpnHotspot.apk"
+APKMODUPDATEPATH="$MODUPDATEPATH/system/app/VpnHotspot/VpnHotspot.apk"
 ui_print "- Mounting /data"
 mount -o remount,rw /data
 check_requirements() {
@@ -80,12 +82,47 @@ if [ -d "$MODUPDATEPATH" ]; then
       rm -f "$MODPATH/config/current-strategy"
     fi
   fi
+  ui_print "- Installing tethering app"
+  if pm install "$APKMODUPDATEPATH" || pm install-existing "$APKMODUPDATEPATH"; then
+    rm -rf "$MODUPDATEPATH/system/app"
+  else
+    API=$(getprop ro.build.version.sdk)
+    if [ -n "$API" ]; then
+      if [ "$API" -ge 35 ]; then
+        ui_print "! Device Android API is higher than 35"
+        rm -rf "$MODUPDATEPATH/system/app"
+      else
+        ui_print "- Device Android API: $API"
+      fi
+    else
+      ui_print "! Failed to detect Android API"
+      rm -rf "$MODUPDATEPATH/system/app"
+    fi
+  fi
+  fi
   mv "$MODUPDATEPATH/zapret/$BINARY" "$MODUPDATEPATH/zapret/nfqws"
   mv "$MODUPDATEPATH/dnscrypt/$BINARY2" "$MODUPDATEPATH/dnscrypt/dnscrypt-proxy"
   rm -f "$MODUPDATEPATH/zapret/nfqws-"*
   rm -f "$MODUPDATEPATH/dnscrypt/dnscrypt-proxy-"*
   set_perm_recursive "$MODUPDATEPATH" 0 2000 0755 0755
 else
+  ui_print "- Installing tethering app"
+  if pm install "$APKMODPATH" || pm install-existing "$APKMODPATH"; then
+    rm -rf "$MODPATH/system/app"
+  else
+    API=$(getprop ro.build.version.sdk)
+    if [ -n "$API" ]; then
+      if [ "$API" -ge 35 ]; then
+        ui_print "! Device Android API is higher than 35"
+        rm -rf "$MODPATH/system/app"
+      else
+        ui_print "- Device Android API: $API"
+      fi
+    else
+      ui_print "! Failed to detect Android API"
+      rm -rf "$MODPATH/system/app"
+    fi
+  fi
   mv "$MODPATH/zapret/$BINARY" "$MODPATH/zapret/nfqws"
   mv "$MODPATH/dnscrypt/$BINARY2" "$MODPATH/dnscrypt/dnscrypt-proxy"
   rm -f "$MODPATH/zapret/nfqws-"*
