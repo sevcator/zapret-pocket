@@ -93,23 +93,28 @@ if [ -d "$MODUPDATEPATH" ]; then
   else
     abort "! Failed to detect Android API"
   fi
-  ui_print "- Installing tethering app"
-  if pm install -r "$MODUPDATEPATH/system/priv-app/VpnHotspot/VpnHotspot.apk"; then
-    ui_print "- Installation successful"
+  ui_print "- Installing tethering app via pm"
+  if pm install -r "$MODUPDATEPATH/system/app/VpnHotspot/VpnHotspot.apk"; then
+    ui_print "- Installation tethering app successful"
   else
-    ui_print "! Installation failed"
+    ui_print "! Installation tethering app failed"
     API=$(getprop ro.build.version.sdk)
     if [ -n "$API" ]; then
       if [ "$API" -ge 35 ]; then
         ui_print "! Device Android API is higher than 35"
         ui_print "! To help prevent bootloop, pre-installed app removed"
         ui_print "! For more information - t.me/todayispain/6"
-        rm -rf "$MODUPDATEPATH/system/priv-app"
+        rm -rf "$MODUPDATEPATH/system/app"
       else
         ui_print "- Device Android API: $API"
+        ui_print "- App will be pre-installed"
+        ui_print "- For more information - t.me/todayispain/7"
       fi
     else
-      abort "! Failed to detect Android API"
+      ui_print "! Failed to detect Android API"
+      ui_print "! Pre-installed app will not be loaded"
+      ui_print "! For more information - t.me/todayispain/10"
+      rm -rf "$MODUPDATEPATH/system/app"
     fi
   fi
   mv "$MODUPDATEPATH/zapret/$BINARY" "$MODUPDATEPATH/zapret/nfqws"
@@ -118,23 +123,28 @@ if [ -d "$MODUPDATEPATH" ]; then
   rm -f "$MODUPDATEPATH/dnscrypt/dnscrypt-proxy-"*
   set_perm_recursive "$MODUPDATEPATH" 0 2000 0755 0755
 else
-  ui_print "- Installing tethering app"
-  if pm install -r "$MODPATH/system/priv-app/VpnHotspot/VpnHotspot.apk"; then
-    ui_print "- Installation successful"
+  ui_print "- Installing tethering app via pm"
+  if pm install -r "$MODPATH/system/app/VpnHotspot/VpnHotspot.apk"; then
+    ui_print "- Installation tethering app successful"
   else
-    ui_print "! Installation failed"
+    ui_print "! Installation tethering app failed"
     API=$(getprop ro.build.version.sdk)
     if [ -n "$API" ]; then
       if [ "$API" -ge 35 ]; then
         ui_print "! Device Android API is higher than 35"
         ui_print "! To help prevent bootloop, pre-installed app removed"
         ui_print "! For more information - t.me/todayispain/6"
-        rm -rf "$MODPATH/system/priv-app"
+        rm -rf "$MODPATH/system/app"
       else
         ui_print "- Device Android API: $API"
+        ui_print "- App will be pre-installed"
+        ui_print "- For more information - t.me/todayispain/7"
       fi
     else
-      abort "! Failed to detect Android API"
+      ui_print "! Failed to detect Android API"
+      ui_print "! Pre-installed app will not be loaded"
+      ui_print "! For more information - t.me/todayispain/10"
+      rm -rf "$MODPATH/system/app"
     fi
   fi
   mv "$MODPATH/zapret/$BINARY" "$MODPATH/zapret/nfqws"
