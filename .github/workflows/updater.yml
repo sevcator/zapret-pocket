@@ -17,24 +17,11 @@ jobs:
         run: |
           sudo apt update
           sudo apt install curl
-          mkdir -p ./ipset
           curl -s https://raw.githubusercontent.com/V3nilla/IPSets-For-Bypass-in-Russia/refs/heads/main/ipset-amazon.txt > /tmp/ipset1.txt || true
           curl -s https://raw.githubusercontent.com/V3nilla/IPSets-For-Bypass-in-Russia/refs/heads/main/ipset-cloudflare.txt > /tmp/ipset2.txt || true
-          cat /tmp/ipset1.txt /tmp/ipset2.txt > ./ipset/ipset-all.txt || true
-          mkdir -p ./list
-          curl -s https://raw.githubusercontent.com/bol-van/rulist/refs/heads/main/reestr_hostname.txt -o ./list/reestr_hostname.txt || true
-          curl -s https://raw.githubusercontent.com/sevcator/dnscrypt-proxy-stuff/refs/heads/main/cloaking-rules.txt -o ./dnscrypt/cloaking-rules.txt || true
-
-          echo "id=zapret" > module.prop
-          echo "name=zapret" >> module.prop
-          echo "version=${version}" >> module.prop
-          echo "versionCode=${version_code}" >> module.prop
-          echo "author=sevcator, bol-van, DNSCrypt, ImMALWARE, Fenrir-0xFF, Flowseal" >> module.prop
-          echo "description=⚡ DPI bypass on Android with additional features" >> module.prop
-          echo "updateJson=https://raw.githubusercontent.com/${{ github.repository }}/refs/heads/main/update.json" >> module.prop
-
-          cd ..
-          7z a zapret-Magisk.zip ./module/*
+          cat /tmp/ipset1.txt /tmp/ipset2.txt > ipset-all.txt || true
+          curl -s https://raw.githubusercontent.com/bol-van/rulist/refs/heads/main/reestr_hostname.txt -o reestr_hostname.txt || true
+          curl -s https://raw.githubusercontent.com/sevcator/dnscrypt-proxy-stuff/refs/heads/main/cloaking-rules.txt -o cloaking-rules.txt || true
 
       - name: Set up Git
         run: |
@@ -43,8 +30,8 @@ jobs:
           
       - name: Push to Main branch
         run: |
-          git add module/ipset/ipset-all.txt
-          git add module/list/reestr_hostname.txt
-          git add module/dnscrypt/cloaking-rules.txt
+          git add ipset-all.txt
+          git add reestr_hostname.txt
+          git add cloaking-rules.txt
           git commit -m "Update at $(date +'%Y-%m-%d %H:%M:%S')" || echo "No changes to commit"
           git push origin HEAD:main --force || echo "No changes to commit"
