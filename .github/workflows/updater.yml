@@ -10,7 +10,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
+        
       - name: Download files
         shell: bash
         run: |
@@ -21,35 +21,34 @@ jobs:
           curl -sfL https://raw.githubusercontent.com/bol-van/rulist/main/reestr_hostname.txt -o ./module/list/reestr_hostname.txt || true
           curl -sfL https://raw.githubusercontent.com/sevcator/dnscrypt-proxy-stuff/main/cloaking-rules.txt -o ./module/dnscrypt/cloaking-rules.txt || true
 
-      - name: Extract root domains
+      - name: Filter subdomains
+        shell: bash
         run: |
-          sudo apt update
-          sudo apt install -y python3-pip
-          pip3 install tldextract
-          python3 - <<EOF
-import tldextract
+          sort -u ./module/list/reestr_hostname.txt | grep -v '^$' > /tmp/reestr_hostname_sorted.txt
+          awk -F. '
+          {
+            n = split($0, a, ".");
+            if (n >= 2) {
+              print a[n-1] "." a[n];
+            }
+          }' /tmp/reestr_hostname_sorted.txt | sort -u > /tmp/base_domains.txt
+          awk -F. '
+          BEGIN {
+            while ((getline < "/tmp/base_domains.txt") > 0) {
+              base[$0] = 1;
+            }
+          }
+          {
+            domain = $(NF-1) "." $NF;
+            if (!base[domain] || $0 == domain) {
+              print $0;
+            }
+          }' /tmp/reestr_hostname_sorted.txt > ./module/list/reestr_hostname.txt
 
-with open('./module/list/reestr_hostname.txt', 'r') as f:
-    hostnames = [line.strip() for line in f if line.strip()]
-
-root_domains = set()
-for hostname in hostnames:
-    ext = tldextract.extract(hostname)
-    if ext.domain and ext.suffix:
-        root_domains.add(f"{ext.domain}.{ext.suffix}")
-
-with open('./module/list/reestr_hostname.txt', 'w') as f:
-    for domain in sorted(root_domains):
-        f.write(domain + '\\n')
-EOF
-
-      - name: Configure Git
+      - name: Push changes
         run: |
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
-
-      - name: Commit and Push
-        run: |
           git add module/ipset/ipset-all.txt module/list/reestr_hostname.txt module/dnscrypt/cloaking-rules.txt
           git diff --cached --quiet || git commit -m "Update at $(date +'%Y-%m-%d %H:%M:%S')"
           git push origin HEAD:main || echo "No changes to push"
