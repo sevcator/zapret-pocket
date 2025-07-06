@@ -11,26 +11,45 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Download
+      - name: Download files
+        shell: bash
+        run: |
+          mkdir -p module/ipset module/dnscrypt module/list
+          curl -sfL https://raw.githubusercontent.com/V3nilla/IPSets-For-Bypass-in-Russia/main/ipset-amazon.txt -o /tmp/ipset1.txt || true
+          curl -sfL https://raw.githubusercontent.com/V3nilla/IPSets-For-Bypass-in-Russia/main/ipset-cloudflare.txt -o /tmp/ipset2.txt || true
+          cat /tmp/ipset1.txt /tmp/ipset2.txt > ./module/ipset/ipset-all.txt || true
+          curl -sfL https://raw.githubusercontent.com/bol-van/rulist/main/reestr_hostname.txt -o ./module/list/reestr_hostname.txt || true
+          curl -sfL https://raw.githubusercontent.com/sevcator/dnscrypt-proxy-stuff/main/cloaking-rules.txt -o ./module/dnscrypt/cloaking-rules.txt || true
+
+      - name: Extract root domains
         run: |
           sudo apt update
-          sudo apt install curl
-          mkdir -p module module/ipset module/dnscrypt module/list
-          curl -s https://raw.githubusercontent.com/V3nilla/IPSets-For-Bypass-in-Russia/refs/heads/main/ipset-amazon.txt > /tmp/ipset1.txt || true
-          curl -s https://raw.githubusercontent.com/V3nilla/IPSets-For-Bypass-in-Russia/refs/heads/main/ipset-cloudflare.txt > /tmp/ipset2.txt || true
-          cat /tmp/ipset1.txt /tmp/ipset2.txt > ./module/ipset/ipset-all.txt || true
-          curl -s https://raw.githubusercontent.com/bol-van/rulist/refs/heads/main/reestr_hostname.txt -o ./module/list/reestr_hostname.txt || true
-          curl -s https://raw.githubusercontent.com/sevcator/dnscrypt-proxy-stuff/refs/heads/main/cloaking-rules.txt -o ./module/dnscrypt/cloaking-rules.txt || true
+          sudo apt install -y python3-pip
+          pip3 install tldextract
+          python3 - <<EOF
+import tldextract
 
-      - name: Set up Git
+with open('./module/list/reestr_hostname.txt', 'r') as f:
+    hostnames = [line.strip() for line in f if line.strip()]
+
+root_domains = set()
+for hostname in hostnames:
+    ext = tldextract.extract(hostname)
+    if ext.domain and ext.suffix:
+        root_domains.add(f"{ext.domain}.{ext.suffix}")
+
+with open('./module/list/reestr_hostname.txt', 'w') as f:
+    for domain in sorted(root_domains):
+        f.write(domain + '\\n')
+EOF
+
+      - name: Configure Git
         run: |
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
-          
-      - name: Push to Main branch
+
+      - name: Commit and Push
         run: |
-          git add ./module/ipset/ipset-all.txt
-          git add ./module/list/reestr_hostname.txt
-          git add ./module/dnscrypt/cloaking-rules.txt
-          git commit -m "Update at $(date +'%Y-%m-%d %H:%M:%S')" || echo "No changes to commit"
-          git push origin HEAD:main --force || echo "No changes to commit"
+          git add module/ipset/ipset-all.txt module/list/reestr_hostname.txt module/dnscrypt/cloaking-rules.txt
+          git diff --cached --quiet || git commit -m "Update at $(date +'%Y-%m-%d %H:%M:%S')"
+          git push origin HEAD:main || echo "No changes to push"
