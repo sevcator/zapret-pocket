@@ -183,6 +183,27 @@ jobs:
           curl -s https://antizapret.prostovpn.org/domains-export.txt -o ./list/reestr.txt || true
           curl -s https://raw.githubusercontent.com/sevcator/dnscrypt-proxy-stuff/refs/heads/main/cloaking-rules.txt -o ./dnscrypt/cloaking-rules.txt || true
 
+          sort -u ./module/list/reestr.txt | grep -v '^$' > /tmp/reestr_sorted.txt
+          awk -F. '
+          {
+            n = split($0, a, ".");
+            if (n >= 2) {
+              print a[n-1] "." a[n];
+            }
+          }' /tmp/reestr_sorted.txt | sort -u > /tmp/base_domains.txt
+          awk -F. '
+          BEGIN {
+            while ((getline < "/tmp/base_domains.txt") > 0) {
+              base[$0] = 1;
+            }
+          }
+          {
+            domain = $(NF-1) "." $NF;
+            if (!base[domain] || $0 == domain) {
+              print $0;
+            }
+          }' /tmp/reestr_sorted.txt > ./module/list/reestr.txt
+
           echo "id=zapret" > module.prop
           echo "name=zapret" >> module.prop
           echo "version=${version}" >> module.prop
