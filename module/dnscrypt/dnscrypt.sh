@@ -9,18 +9,12 @@ rules() {
       iptables -t nat -A PREROUTING -p $proto --dport 53 -j DNAT --to-destination 127.0.0.1:5253
     fi
   done
-  for table in iptables ip6tables; do
-      for chain in OUTPUT FORWARD; do
-          for proto in udp tcp; do
-              $table -I "$chain" -p "$proto" --dport 853 -j DROP
-          done
-      done
-  done
   for iface in all default lo; do
     sysctl "net.ipv6.conf.$iface.disable_ipv6=1" > /dev/null 2>&1
   done
 }
 main() {
+  . "$MODPATH/dnscrypt/make-unkillable.sh" &
   "$MODPATH/dnscrypt/dnscrypt-proxy" > /dev/null 2>&1
 }
 while true; do

@@ -30,9 +30,9 @@ ignore_system_dns = true
 netprobe_timeout = 10
 netprobe_address = '45.90.28.0:53'
 
-block_ipv6 = false
+block_ipv6 = true
 block_unqualified = false
-block_undelegated = true
+block_undelegated = false
 reject_ttl = 10
 
 cache = false
@@ -58,3 +58,5 @@ stamp = 'sdns://AgcAAAAAAAAACjc2Ljc2LjIuMTEAFGZyZWVkbnMuY29udHJvbGQuY29tAy9wMA'
 stamp = 'sdns://AgcAAAAAAAAACjQ1LjkwLjMwLjAgmjo09yfeubylEAPZzpw5-PJ92cUkKQHCurGkTmNaAhkWYW55Y2FzdC5kbnMubmV4dGRucy5pbwovZG5zLXF1ZXJ5'
 [static.'nextdns-ultralow']
 stamp = 'sdns://AgcAAAAAAAAACjQ1LjkwLjMwLjAgmjo09yfeubylEAPZzpw5-PJ92cUkKQHCurGkTmNaAhkWYW55Y2FzdC5kbnMubmV4dGRucy5pbwovZG5zLXF1ZXJ5'
+[static.'nextdns-ipv6']
+stamp = 'sdns://AgcAAAAAAAAADVsyYTA3OmE4YzA6Ol0gmjo09yfeubylEAPZzpw5-PJ92cUkKQHCurGkTmNaAhkWYW55Y2FzdC5kbnMubmV4dGRucy5pbwovZG5zLXF1ZXJ5'
