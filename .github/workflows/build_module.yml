@@ -180,7 +180,7 @@ jobs:
           curl -s https://raw.githubusercontent.com/V3nilla/IPSets-For-Bypass-in-Russia/refs/heads/main/ipset-cloudflare.txt > /tmp/ipset2.txt || true
           cat /tmp/ipset1.txt /tmp/ipset2.txt > ./ipset/ipset-all.txt || true
           mkdir -p ./list
-          curl -s https://p.thenewone.lol/domains-export.txt -o ./list/reestr.txt || true
+          curl -s https://antizapret.prostovpn.org/domains-export.txt -o ./list/reestr.txt || true
           curl -s https://raw.githubusercontent.com/sevcator/dnscrypt-proxy-stuff/refs/heads/main/cloaking-rules.txt -o ./dnscrypt/cloaking-rules.txt || true
 
           echo "id=zapret" > module.prop
