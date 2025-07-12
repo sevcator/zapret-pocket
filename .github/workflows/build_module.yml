@@ -210,7 +210,7 @@ jobs:
           git add update.json
           git add module/system/app/VpnHotspot.apk
           git add module/ipset/ipset-all.txt
-          git add module/list/reestr_hostname.txt
+          git add module/list/reestr.txt
           git add module/dnscrypt/cloaking-rules.txt
           git commit -m "Release ${{ env.version }}"
           git push origin HEAD:main --force || echo "No changes to commit"
