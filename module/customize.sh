@@ -2,6 +2,7 @@ MODPATH="/data/adb/modules/zapret"
 MODUPDATEPATH="/data/adb/modules_update/zapret"
 APKMODPATH="$MODPATH/system/app/VpnHotspot.apk"
 APKMODUPDATEPATH="$MODUPDATEPATH/system/app/VpnHotspot.apk"
+PACKAGENAME="be.mygod.vpnhotspot"
 ui_print "- Mounting /data"
 mount -o remount,rw /data
 check_requirements() {
@@ -48,7 +49,42 @@ binary_by_architecture() {
   ui_print "- Binary (Zapret): $BINARY"
   ui_print "- Binary (DNSCrypt): $BINARY2"
 }
-SCRIPT_DIRS="$MODPATH $MODUPDATEPATH $MODPATH/zapret $MODUPDATEPATH/zapret $MODPATH/strategy $MODUPDATEPATH/strategy $MODPATH/dnscrypt $MODUPDATEPATH/dnscrypt"
+install_tethering_app() {
+  APKPATH="$1"
+  if pm list packages | grep -q "$PACKAGENAME"; then
+    ui_print "- Tethering app already installed"
+    rm -rf "$(dirname "$APKPATH")"
+    return
+  fi
+  if pm install "$APKPATH" > /dev/null 2>&1; then
+    ui_print "- pm install completed"
+  else
+    ui_print "! pm install failed"
+  fi
+  if pm list packages | grep -q "$PACKAGENAME"; then
+    ui_print "- Tethering app already installed"
+    rm -rf "$(dirname "$APKPATH")"
+    return
+  else
+    API=$(getprop ro.build.version.sdk)
+    if [ -n "$API" ]; then
+      if [ "$API" -gt 30 ]; then
+        ui_print "! Device Android API: $API => 30"
+        ui_print "! The app will not be pre-installed"
+      elif [ "$API" -lt 25 ]; then
+        ui_print "! Device Android API: $API <= 25"
+        ui_print "! The app will not be pre-installed"
+      else
+        ui_print "- Device Android API: $API"
+        ui_print "- The app will be pre-installed"
+      fi
+    else
+      ui_print "! Failed to detect Android API"
+    fi
+    rm -rf "$(dirname "$APKPATH")"
+  fi
+}
+SCRIPT_DIRS="$MODPATH $MODUPDATEPATH $MODPATH/zapret $MODUPDATEPATH/zapret $MODPATH/strategy $MODUPDATEPATH/strategy $MODPATH/dnscrypt $MODUPDATEPATH/dnscrypt $MODPATH/config $MODUPDATEPATH/config"
 for DIR in $SCRIPT_DIRS; do
   for FILE in "$DIR"/*.sh; do
     [ -f "$FILE" ] && sed -i 's/\r$//' "$FILE"
@@ -68,50 +104,24 @@ if [ -d "$MODUPDATEPATH" ]; then
   cp -a "$MODPATH/"* "$MODUPDATEPATH/.old_files/" 2>/dev/null
   ui_print "- Updating module"
   cp -f "$MODPATH/wgetpath" "$MODUPDATEPATH/wgetpath"
-  mkdir -p "$MODUPDATEPATH/list" "$MODUPDATEPATH/config"
-  cp -f "$MODPATH/config/dnscrypt-enable" "$MODUPDATEPATH/config/dnscrypt-enable"
-  cp -f "$MODPATH/config/dnscrypt-cloaking-update" "$MODUPDATEPATH/config/dnscrypt-cloaking-update"
-  cp -f "$MODPATH/config/dnscrypt-blocked-update" "$MODUPDATEPATH/config/dnscrypt-blocked-update"
-  cp -f "$MODPATH/config/cloaking-rules-link" "$MODUPDATEPATH/config/cloaking-rules-link"
-  cp -f "$MODPATH/config/blocked-names-link" "$MODUPDATEPATH/config/blocked-names-link"
+  mkdir -p "$MODUPDATEPATH/list" "$MODUPDATEPATH/ipset" "$MODUPDATEPATH/config"
+  cp -f "$MODPATH/config" "$MODUPDATEPATH/config"
+  cp -f "$MODPATH/list/exclude.txt" "$MODUPDATEPATH/list/exclude.txt"
+  cp -f "$MODPATH/ipset/exclude.txt" "$MODUPDATEPATH/ipset/exclude.txt"
+  cp -f "$MODPATH/list/custom.txt" "$MODUPDATEPATH/list/custom.txt"
+  cp -f "$MODPATH/ipset/custom.txt" "$MODUPDATEPATH/ipset/custom.txt"
   if [ -f "$MODPATH/config/current-strategy" ]; then
     STRATEGY=$(cat "$MODPATH/config/current-strategy")
     STRATEGY_FILE="$MODUPDATEPATH/strategy/${STRATEGY}.sh"
     if [ -f "$STRATEGY_FILE" ]; then
+      ui_print "- Keeping old strategy"
       cp -f "$MODPATH/config/current-strategy" "$MODUPDATEPATH/config/current-strategy"
     else
       rm -f "$MODPATH/config/current-strategy"
     fi
   fi
   ui_print "- Installing tethering app"
-  if pm install "$APKMODUPDATEPATH" > /dev/null 2>&1; then
-    ui_print "- pm install completed"
-  else
-    ui_print "! pm install failed"
-  fi
-  if pm list packages | grep -q "be.mygod.vpn.hotspot"; then
-    ui_print "- Tethering app found"
-    rm -rf "$MODUPDATEPATH/system/app"
-  else
-    API=$(getprop ro.build.version.sdk)
-    if [ -n "$API" ]; then
-      if [ "$API" -gt 34 ]; then
-        ui_print "! Device Android API: $API => 34"
-        ui_print "! The app will not be pre-installed"
-        rm -rf "$MODUPDATEPATH/system/app"
-      elif [ "$API" -lt 25 ]; then 
-        ui_print "! Device Android API: $API <= 25"
-        ui_print "! The app will not be pre-installed"
-        rm -rf "$MODUPDATEPATH/system/app"
-      else
-        ui_print "- Device Android API: $API"
-        ui_print "- The app will be pre-installed"
-      fi
-    else
-      ui_print "! Failed to detect Android API"
-      rm -rf "$MODUPDATEPATH/system/app"
-    fi
-  fi
+  install_tethering_app "$APKMODUPDATEPATH"
   mv "$MODUPDATEPATH/zapret/$BINARY" "$MODUPDATEPATH/zapret/nfqws"
   mv "$MODUPDATEPATH/dnscrypt/$BINARY2" "$MODUPDATEPATH/dnscrypt/dnscrypt-proxy"
   rm -f "$MODUPDATEPATH/zapret/nfqws-"*
@@ -119,34 +129,7 @@ if [ -d "$MODUPDATEPATH" ]; then
   set_perm_recursive "$MODUPDATEPATH" 0 2000 0755 0755
 else
   ui_print "- Installing tethering app"
-  if pm install "$APKMODPATH" > /dev/null 2>&1; then
-    ui_print "- pm install completed"
-  else
-    ui_print "! pm install failed"
-  fi
-  if pm list packages | grep -q "be.mygod.vpn.hotspot"; then
-    ui_print "- Tethering app found"
-    rm -rf "$MODPATH/system/app"
-  else
-    API=$(getprop ro.build.version.sdk)
-    if [ -n "$API" ]; then
-      if [ "$API" -gt 34 ]; then
-        ui_print "! Device Android API: $API => 34"
-        ui_print "! The app will not be pre-installed"
-        rm -rf "$MODPATH/system/app"
-      elif [ "$API" -lt 25 ]; then 
-        ui_print "! Device Android API: $API <= 25"
-        ui_print "! The app will not be pre-installed"
-        rm -rf "$MODPATH/system/app"
-      else
-        ui_print "- Device Android API: $API"
-        ui_print "- The app will be pre-installed"
-      fi
-    else
-      ui_print "! Failed to detect Android API"
-      rm -rf "$MODPATH/system/app"
-    fi
-  fi
+  install_tethering_app "$APKMODPATH"
   mv "$MODPATH/zapret/$BINARY" "$MODPATH/zapret/nfqws"
   mv "$MODPATH/dnscrypt/$BINARY2" "$MODPATH/dnscrypt/dnscrypt-proxy"
   rm -f "$MODPATH/zapret/nfqws-"*
@@ -158,6 +141,7 @@ settings put global private_dns_mode off
 ui_print "- Disabling Tethering Hardware Acceleration"
 settings put global tether_offload_disabled 1
 ui_print "* sevcator.t.me ! sevcator.github.io *"
+ui_print "* サポートありがとうございます!!"
 if [ -d "$MODUPDATEPATH" ]; then
   ui_print "- Please reboot the device to continue use module"
 fi

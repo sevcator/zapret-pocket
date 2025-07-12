@@ -1,15 +1,29 @@
 #!/system/bin/sh
 for iface in all default lo; do
-    sysctl "net.ipv6.conf.$iface.disable_ipv6=0" > /dev/null 2>&1 &
+    sysctl "net.ipv6.conf.$iface.disable_ipv6=0" > /dev/null 2>&1
 done
 sysctl net.netfilter.nf_conntrack_tcp_be_liberal=0 > /dev/null 2>&1
-sysctl net.netfilter.nf_conntrack_checksum=1 > /dev/null > /dev/null 2>&1
-PROCS=("zapret.sh" "zapret-main.sh" "dnscrypt.sh" "nfqws" "dnscrypt-proxy")
-for proc in "${PROCS[@]}"; do
-    pkill -9 -f "$proc" 2>/dev/null
-    while pgrep -f "$proc" > /dev/null; do
-        sleep 0.2
-    done
+sysctl net.netfilter.nf_conntrack_checksum=1 > /dev/null 2>&1
+SCRIPT_PIDS=$(pgrep -f "dnscrypt.sh")
+DNSCRYPT_PIDS=$(pgrep dnscrypt-proxy)
+SCRIPT2_PIDS=$(pgrep -f "zapret.sh")
+NFQWS_PIDS=$(pgrep nfqws)
+SCRIPT3_PIDS=$(pgrep -f "zapret-main.sh")
+ALL_PIDS="$SCRIPT_PIDS $DNSCRYPT_PIDS $SCRIPT2_PIDS $NFQWS_PIDS $SCRIPT3_PIDS"
+for pid in $ALL_PIDS; do
+    if [ -d "/proc/$pid" ]; then
+        renice -n 0 -p "$pid" 2>/dev/null
+        if [ -w "/proc/$pid/oom_score_adj" ]; then
+            echo 0 > "/proc/$pid/oom_score_adj"
+        elif [ -w "/proc/$pid/oom_adj" ]; then
+            echo 0 > "/proc/$pid/oom_adj"
+        fi
+        kill -9 "$pid" 2>/dev/null
+        while [ -d "/proc/$pid" ]; do
+            sleep 0.2
+        done
+        echo "- Killed process, ID: $pid"
+    fi
 done
 iptables -t mangle -F POSTROUTING
 iptables -t mangle -F PREROUTING
