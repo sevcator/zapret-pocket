@@ -1,5 +1,5 @@
 #!/bin/bash
-# Flowseal ALT6 Configuration from https://github.com/Flowseal/zapret-discord-youtube
+# V3nilla old strategy suggested for zapret-discord-youtube
 
 # Zapret Configuration
 # <-- -->
