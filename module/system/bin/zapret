@@ -97,13 +97,13 @@ setup() {
     UPDATEONSTART="0"
     echo "! If the selection is anything other than \"Y\" or \"Yes\", it is considered a negative choice"
 
-    printf "- Enable update on start? "
+    echo "- Enable update on start? "
     read response
     case "$(echo "$response" | tr A-Z a-z)" in
         y|yes) echo "- Enabled"; UPDATEONSTART="1" ;;
     esac
 
-    printf "- Enable DNSCrypt? "
+    echo -n "- Enable DNSCrypt? "
     read response
     case "$(echo "$response" | tr A-Z a-z)" in
         y|yes) echo "- Enabled"; DNSCRYPTENABLE="1" ;;
@@ -115,7 +115,7 @@ setup() {
         echo "  * $strategy_name"
     done
 
-    printf "- Enter the strategy name: "
+    echo -n "- Enter the strategy name: "
     read user_strategy
     if [ ! -f "$MODPATH/strategy/${user_strategy}.sh" ]; then
         echo "! Invalid or empty strategy, using current: $CURRENTSTRATEGY"
@@ -125,23 +125,23 @@ setup() {
     fi
 
     if [ "$DNSCRYPTENABLE" = "1" ]; then
-        printf "- Auto-update cloaking rules for DNSCrypt-Proxy? "
+        echo -n "- Auto-update cloaking rules for DNSCrypt-Proxy? "
         read resp
         case "$(echo "$resp" | tr A-Z a-z)" in
             y|yes) CLOAKINGUPDATE="1"; echo "- Enabled" ;;
         esac
 
-        printf "- Auto-update blocked names for DNSCrypt-Proxy? "
+        echo -n "- Auto-update blocked names for DNSCrypt-Proxy? "
         read resp
         case "$(echo "$resp" | tr A-Z a-z)" in
             y|yes) BLOCKEDUPDATE="1"; echo "- Enabled" ;;
         esac
 
-        printf "- Do you want to change source links? "
+        echo -n "- Do you want to change source links? "
         read resp
         case "$(echo "$resp" | tr A-Z a-z)" in
             y|yes)
-                printf "- Enter link to cloaking-rules.txt (leave blank to keep current): "
+                echo -n "- Enter link to cloaking-rules.txt (leave blank to keep current): "
                 read new_cloaking
                 if [ -n "$new_cloaking" ]; then
                     CLOAKINGRULESLINK="$new_cloaking"
@@ -150,7 +150,7 @@ setup() {
                     echo "- Keeping old link: $CLOAKINGRULESLINK"
                 fi
 
-                printf "- Enter link to blocking-names.txt (leave blank to keep current): "
+                echo -n "- Enter link to blocking-names.txt (leave blank to keep current): "
                 read new_blocking
                 if [ -n "$new_blocking" ]; then
                     BLOCKEDNAMESLINK="$new_blocking"
