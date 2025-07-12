@@ -2,100 +2,146 @@ MODPATH="/data/adb/modules/zapret"
 WGETPATH=$(cat "$MODPATH/wgetpath" 2>/dev/null)
 CURRENTSTRATEGY=$(cat "$MODPATH/config/current-strategy" 2>/dev/null || echo "Unknown")
 DNSCRYPTENABLE=$(cat "$MODPATH/config/dnscrypt-enable" 2>/dev/null || echo "0")
-CLOAKINGUPDATE=$(cat "$MODPATH/config/dnscrypt-cloaking-update" 2>/dev/null || echo "0")
-CLOAKINGRULESLINK=$(cat "$MODPATH/config/cloaking-rules-link" 2>/dev/null || echo "https://raw.githubusercontent.com/sevcator/dnscrypt-proxy-stuff/refs/heads/main/cloaking-rules.txt")
-BLOCKEDUPDATE=$(cat "$MODPATH/config/dnscrypt-blocked-update" 2>/dev/null || echo "0")
-BLOCKEDNAMESLINK=$(cat "$MODPATH/config/blocked-names-link" 2>/dev/null || echo "https://raw.githubusercontent.com/sevcator/dnscrypt-proxy-stuff/refs/heads/main/blocked-yandex.txt")
+CLOAKINGUPDATE=$(cat "$MODPATH/config/dnscrypt-cloaking-rules-update" 2>/dev/null || echo "0")
+CLOAKINGRULESLINK=$(cat "$MODPATH/config/dnscrypt-cloaking-rules-link" 2>/dev/null || echo "https://raw.githubusercontent.com/sevcator/dnscrypt-proxy-stuff/refs/heads/main/cloaking-rules.txt")
+BLOCKEDUPDATE=$(cat "$MODPATH/config/dnscrypt-blocked-names-update" 2>/dev/null || echo "0")
+BLOCKEDNAMESLINK=$(cat "$MODPATH/config/dnscrypt-blocked-names-link" 2>/dev/null || echo "https://raw.githubusercontent.com/sevcator/dnscrypt-proxy-stuff/refs/heads/main/blocked-yandex.txt")
+UPDATEONSTART=$(cat "$MODPATH/config/update-on-start" 2>/dev/null || echo "1")
+
 command_info() {
-    echo "! Zapret Module for Magisk - @sevcator/zapret-magisk"
+    echo "--- Zapret Module for Magisk ---"
     echo "! Current strategy: $CURRENTSTRATEGY"
-    case "$DNSCRYPTENABLE" in
-        1) echo "! DNSCrypt-Proxy enabled" ;;
-        0) echo "! No DNS" ;;
-        *) echo "! Unknown DNS state" ;;
-    esac
-    echo "- Available commands:"
-    echo "zapret start    - Start the zapret service"
-    echo "zapret stop     - Stop the zapret service"
-    echo "zapret restart  - Restart the zapret service"
-    echo "zapret toggle   - Toggle the zapret service"
-    echo "zapret setup    - Configure the zapret service"
-    echo "zapret update   - Update the DNSCrypt-Proxy files"
+    if [ -f "$MODPATH/config/update-on-start" ]; then
+        if [ "$UPDATEONSTART" = "1" ]; then
+            echo "! Update on start enabled"
+        else
+            echo "! Update on start disabled"
+        fi
+    else
+        echo "! Update on start is not set up, default value: $UPDATEONSTART"
+    fi
+    if [ -f "$MODPATH/config/dnscrypt-cloaking-rules-update" ]; then
+        if [ "$CLOAKINGUPDATE" = "1" ]; then
+            echo "! DNSCrypt cloaking rules auto-update enabled"
+        else
+            echo "! DNSCrypt cloaking rules auto-update disabled"
+        fi
+    else
+        echo "! DNSCrypt cloaking rules auto-update is not set up, default value: $CLOAKINGUPDATE"
+    fi
+    if [ -f "$MODPATH/config/dnscrypt-blocked-names-update" ]; then
+        if [ "$BLOCKEDUPDATE" = "1" ]; then
+            echo "! DNSCrypt blocked names auto-update enabled"
+        else
+            echo "! DNSCrypt blocked names auto-update disabled"
+        fi
+    else
+        echo "! DNSCrypt blocked names auto-update is not set up, default value: $BLOCKEDUPDATE"
+    fi
+    echo "------ Available commands ------"
+    echo "  * Service control"
+    echo "  zapret start    - Start the zapret service"
+    echo "  zapret stop     - Stop the zapret service"
+    echo "  zapret restart  - Restart the zapret service"
+    echo "  zapret toggle   - Toggle the zapret service"
+    echo "  zapret setup    - Configure the zapret service"
+    echo "  * Hostlists, ipsets and other"
+    echo "  zapret update   - Update the module files"
+    echo "  zapret search   - Search the domain/ip/cidr"
+    echo "  zapret custom   - Add to custom list/ipset"
+    echo "  zapret exclude  - Add to exclude list/ipset"
+    return 0
 }
+
 start_service() {
-    if pgrep -f "nfqws" > /dev/null; then
+    if pgrep -f "nfqws" >/dev/null 2>&1; then
         echo "! nfqws is already running"
+        return 1
     else
         if [ -x "$MODPATH/service.sh" ]; then
-            "$MODPATH/service.sh" > /dev/null 2>&1 &
+            "$MODPATH/service.sh" >/dev/null 2>&1
             echo "- Service started"
+            return 0
         else
             echo "! service.sh not found or not executable"
+            return 1
         fi
     fi
 }
+
 stop_service() {
     if [ -x "$MODPATH/uninstall.sh" ]; then
-        su -c "$MODPATH/uninstall.sh" > /dev/null 2>&1 && echo "- Service stopped"
+        su -c "$MODPATH/uninstall.sh" >/dev/null 2>&1 && echo "- Service stopped" && return 0
+        echo "! Failed to stop service"
+        return 1
     else
         echo "! uninstall.sh not found or not executable"
+        return 1
     fi
 }
+
 toggle_service() {
-    if pgrep -f "nfqws" > /dev/null; then
-        stop_service
-    else
-        start_service
-    fi
+    . "$MODPATH/action.sh" && return 0 || return 1
 }
+
 restart_service() {
-    stop_service
-    sleep 1
-    start_service
+    stop_service && sleep 1 && start_service && return 0
+    return 1
 }
+
 setup() {
-    clear
     mkdir -p "$MODPATH/config"
     DNSCRYPTENABLE="0"
     CLOAKINGUPDATE="0"
     BLOCKEDUPDATE="0"
-    echo "! If the selection is anything other than "Y" or "Yes", it is considered a negative choice"
-    echo -n "- Enable DNSCrypt-Proxy? "
-    IFS= read response
+    UPDATEONSTART="0"
+    echo "! If the selection is anything other than \"Y\" or \"Yes\", it is considered a negative choice"
+
+    printf "- Enable update on start? "
+    read response
+    case "$(echo "$response" | tr A-Z a-z)" in
+        y|yes) echo "- Enabled"; UPDATEONSTART="1" ;;
+    esac
+
+    printf "- Enable DNSCrypt? "
+    read response
     case "$(echo "$response" | tr A-Z a-z)" in
         y|yes) echo "- Enabled"; DNSCRYPTENABLE="1" ;;
     esac
+
     echo "- Available strategies:"
-    strategy_list=()
     find "$MODPATH/strategy" -type f -name "*.sh" 2>/dev/null | while IFS= read -r file; do
         strategy_name=$(basename "$file" .sh)
         echo "  * $strategy_name"
-        strategy_list+=("$strategy_name")
     done
-    echo -n "- Enter the strategy name: "
-    IFS= read user_strategy
+
+    printf "- Enter the strategy name: "
+    read user_strategy
     if [ ! -f "$MODPATH/strategy/${user_strategy}.sh" ]; then
         echo "! Invalid or empty strategy, using current: $CURRENTSTRATEGY"
         user_strategy="$CURRENTSTRATEGY"
     else
         echo "- Strategy selected!"
     fi
+
     if [ "$DNSCRYPTENABLE" = "1" ]; then
-        echo -n "- Auto-update cloaking rules for DNSCrypt-Proxy? "
-        IFS= read resp
+        printf "- Auto-update cloaking rules for DNSCrypt-Proxy? "
+        read resp
         case "$(echo "$resp" | tr A-Z a-z)" in
             y|yes) CLOAKINGUPDATE="1"; echo "- Enabled" ;;
         esac
-        echo -n "- Auto-update blocked names for DNSCrypt-Proxy? "
-        IFS= read resp
+
+        printf "- Auto-update blocked names for DNSCrypt-Proxy? "
+        read resp
         case "$(echo "$resp" | tr A-Z a-z)" in
             y|yes) BLOCKEDUPDATE="1"; echo "- Enabled" ;;
         esac
-        echo -n "- Do you want to change source links? "
+
+        printf "- Do you want to change source links? "
         read resp
         case "$(echo "$resp" | tr A-Z a-z)" in
             y|yes)
-                echo -n "- Enter link to cloaking-rules.txt (leave blank to keep current): "
+                printf "- Enter link to cloaking-rules.txt (leave blank to keep current): "
                 read new_cloaking
                 if [ -n "$new_cloaking" ]; then
                     CLOAKINGRULESLINK="$new_cloaking"
@@ -103,7 +149,8 @@ setup() {
                 else
                     echo "- Keeping old link: $CLOAKINGRULESLINK"
                 fi
-                echo -n "- Enter link to blocking-names.txt (leave blank to keep current): "
+
+                printf "- Enter link to blocking-names.txt (leave blank to keep current): "
                 read new_blocking
                 if [ -n "$new_blocking" ]; then
                     BLOCKEDNAMESLINK="$new_blocking"
@@ -114,49 +161,132 @@ setup() {
             ;;
         esac
     fi
+
     echo "$DNSCRYPTENABLE" > "$MODPATH/config/dnscrypt-enable"
     echo "$user_strategy" > "$MODPATH/config/current-strategy"
-    echo "$CLOAKINGUPDATE" > "$MODPATH/config/dnscrypt-blocked-update"
-    echo "$CLOAKINGRULESLINK" > "$MODPATH/config/cloaking-rules-link"
-    echo "$BLOCKEDUPDATE" > "$MODPATH/config/dnscrypt-blocked-update"
-    echo "$BLOCKEDNAMESLINK" > "$MODPATH/config/blocked-names-link"
+    echo "$CLOAKINGUPDATE" > "$MODPATH/config/dnscrypt-cloaking-rules-update"
+    echo "$CLOAKINGRULESLINK" > "$MODPATH/config/dnscrypt-cloaking-rules-link"
+    echo "$BLOCKEDUPDATE" > "$MODPATH/config/dnscrypt-blocked-names-update"
+    echo "$BLOCKEDNAMESLINK" > "$MODPATH/config/dnscrypt-blocked-names-link"
+    echo "$UPDATEONSTART" > "$MODPATH/config/update-on-start"
+
     echo "- Done! Changes will apply on next start"
+    return 0
 }
+
 update() {
-    echo "! If the selection is anything other than "Y" or "Yes", it is considered a negative choice"
-    echo "* Cloaking rules link: $CLOAKINGRULESLINK"
-    echo "* Blocked names link: $BLOCKEDNAMESLINK"
-    if [ -z "$WGETPATH" ]; then
-        echo "! wget command not found in $MODPATH/wgetpath"
-    else
-        echo "* Wget command: $WGETPATH"
-    fi
-    echo -n "- Update cloaking rules? "
-    read resp
-    resp=$(echo "$resp" | tr A-Z a-z)
-    if [ "$resp" = "y" ] || [ "$resp" = "yes" ]; then
-        $WGETPATH --no-check-certificate -q -O "$MODPATH/dnscrypt/cloaking-rules.txt" "$CLOAKINGRULESLINK" && \
-        echo "- Cloaking rules updated!"
-    fi
-    echo -n "- Update blocked names? "
-    read resp
-    resp=$(echo "$resp" | tr A-Z a-z)
-    if [ "$resp" = "y" ] || [ "$resp" = "yes" ]; then
-        $WGETPATH --no-check-certificate -q -O "$MODPATH/dnscrypt/blocked-names.txt" "$BLOCKEDNAMESLINK" && \
-        echo "- Blocked names updated!"
-    fi
-    echo "- Done! Changes will apply on next start"
+    . "$MODPATH/update.sh" && return 0 || return 1
 }
+
+search() {
+    query="$1"
+    if [ -z "$query" ]; then
+        echo "! No query provided"
+        return 1
+    fi
+
+    SEARCH_DIRS="$MODPATH/list $MODPATH/ipset"
+    total_matches=0
+    file_matches=0
+
+    for dir in $SEARCH_DIRS; do
+        [ -d "$dir" ] || continue
+        for file in "$dir"/*.txt; do
+            [ -f "$file" ] || continue
+            matches=$(grep -iF "$query" "$file" 2>/dev/null)
+            if [ -n "$matches" ]; then
+                file_matches=$((file_matches + 1))
+                count=$(echo "$matches" | wc -l)
+                total_matches=$((total_matches + count))
+                echo "  * $(basename "$file") [$count match(es)]:"
+                echo "$matches" | sort -u | sed 's/^/    /'
+            fi
+        done
+    done
+
+    if [ "$total_matches" -eq 0 ]; then
+        echo "! Nothing found"
+        return 1
+    else
+        echo "- Found $total_matches line(s) in $file_matches file(s)!"
+        return 0
+    fi
+}
+
+custom() {
+    entry="$1"
+    [ -z "$entry" ] && echo "! No domain/IP/CIDR provided" && return 1
+
+    LIST_CUSTOM="$MODPATH/list/custom.txt"
+    IPSET_CUSTOM="$MODPATH/ipset/custom.txt"
+
+    if grep -Fq "$entry" "$LIST_CUSTOM" 2>/dev/null || grep -Fq "$entry" "$IPSET_CUSTOM" 2>/dev/null; then
+        for file in "$LIST_CUSTOM" "$IPSET_CUSTOM"; do
+            [ -f "$file" ] || continue
+            sed -i "s|$entry||g" "$file"
+            sed -i '/^[[:space:]]*$/d' "$file"
+        done
+        echo "- Removed"
+        return 0
+    fi
+
+    if find "$MODPATH/list" "$MODPATH/ipset" -type f -name "*.txt" ! -name "custom.txt" 2>/dev/null | xargs grep -Fq "$entry" 2>/dev/null; then
+        echo "! Already added in other lists, aborted"
+        return 1
+    fi
+
+    if echo "$entry" | grep -q "/"; then
+        echo "$entry" >> "$IPSET_CUSTOM"
+    else
+        echo "$entry" >> "$LIST_CUSTOM"
+    fi
+
+    echo "- Added"
+    return 0
+}
+
+exclude() {
+    entry="$1"
+    [ -z "$entry" ] && echo "! No domain/IP/CIDR provided" && return 1
+
+    LIST_CUSTOM="$MODPATH/list/exclude.txt"
+    IPSET_CUSTOM="$MODPATH/ipset/exclude.txt"
+
+    if grep -Fq "$entry" "$LIST_CUSTOM" 2>/dev/null || grep -Fq "$entry" "$IPSET_CUSTOM" 2>/dev/null; then
+        for file in "$LIST_CUSTOM" "$IPSET_CUSTOM"; do
+            [ -f "$file" ] || continue
+            sed -i "s|$entry||g" "$file"
+            sed -i '/^[[:space:]]*$/d' "$file"
+        done
+        echo "- Removed"
+        return 0
+    fi
+
+    if echo "$entry" | grep -q "/"; then
+        echo "$entry" >> "$IPSET_CUSTOM"
+    else
+        echo "$entry" >> "$LIST_CUSTOM"
+    fi
+
+    echo "- Added"
+    return 0
+}
+
 unknown_command() {
     echo "! Unknown command: $1"
+    return 1
 }
+
 case "$1" in
-    "") command_info ;;
-    start) start_service ;;
-    stop) stop_service ;;
-    toggle) toggle_service ;;
-    restart) restart_service ;;
-    setup) setup ;;
-    update) update ;;
-    *) unknown_command "$1" ;;
+    ""|help|-help|--help|h|--h|-h) command_info ;;
+    start)      start_service ;;
+    stop)       stop_service ;;
+    toggle)     toggle_service ;;
+    restart)    restart_service ;;
+    setup)      setup ;;
+    update)     update ;;
+    search)     search "$2" ;;
+    custom)     custom "$2" ;;
+    exclude)    exclude "$2" ;;
+    *)          unknown_command "$1" ;;
 esac
