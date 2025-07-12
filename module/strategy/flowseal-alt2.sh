@@ -1,17 +1,17 @@
 #!/bin/bash
-# Flowseal ALT6 Configuration from https://github.com/Flowseal/zapret-discord-youtube
+# Flowseal ALT2 Configuration from https://github.com/Flowseal/zapret-discord-youtube
 
 # Zapret Configuration
 # <-- -->
 
 # Default list
 config="--filter-tcp=80 --hostlist=$MODPATH/list/default.txt --dpi-desync=fake,multisplit --dpi-desync-fooling=md5sig --dpi-desync-split-pos=midsld --dpi-desync-fake-http=0x00000000 --dpi-desync-autottl --new"
-config="$config --filter-tcp=443 --hostlist=$MODPATH/list/default.txt --dpi-desync=multisplit --dpi-desync-repeats=2 --dpi-desync-split-seqovl=681 --dpi-desync-split-pos=1 --dpi-desync-split-seqovl-pattern=$MODPATH/fake/tls_clienthello_www_google_com.bin --new"
+config="$config --filter-tcp=443 --hostlist=$MODPATH/list/default.txt --dpi-desync=multisplit --dpi-desync-split-seqovl=652 --dpi-desync-split-pos=2 --dpi-desync-split-seqovl-pattern=$MODPATH/fake/tls_clienthello_www_google_com.bin --new"
 config="$config --filter-udp=80,443 --hostlist=$MODPATH/list/default.txt --dpi-desync=fake --dpi-desync-repeats=6 --dpi-desync-fake-quic=$MODPATH/fake/quic_initial_www_google_com.bin --new"
 
-# Reestr Roscomnadzor
+# Reestr Roscomnadzor + Custom
 config="$config --filter-tcp=80 --hostlist=$MODPATH/list/reestr.txt --hostlist=$MODPATH/list/custom.txt --ipset=$MODPATH/ipset/custom.txt --hostlist-exclude=$MODPATH/list/default.txt --hostlist-exclude=$MODPATH/list/exclude.txt --ipset-exclude=$MODPATH/ipset/exclude.txt --dpi-desync=fake,multisplit --dpi-desync-fooling=md5sig --dpi-desync-split-pos=midsld --dpi-desync-fake-http=0x00000000 --dpi-desync-autottl --new"
-config="$config --filter-tcp=443 --hostlist=$MODPATH/list/reestr.txt --hostlist=$MODPATH/list/custom.txt --ipset=$MODPATH/ipset/custom.txt --hostlist-exclude=$MODPATH/list/default.txt --hostlist-exclude=$MODPATH/list/exclude.txt --ipset-exclude=$MODPATH/ipset/exclude.txt --dpi-desync=multisplit --dpi-desync-repeats=2 --dpi-desync-split-seqovl=681 --dpi-desync-split-pos=1 --dpi-desync-split-seqovl-pattern=$MODPATH/fake/tls_clienthello_www_google_com.bin --new"
+config="$config --filter-tcp=443 --hostlist=$MODPATH/list/reestr.txt --hostlist=$MODPATH/list/custom.txt --ipset=$MODPATH/ipset/custom.txt --hostlist-exclude=$MODPATH/list/default.txt --hostlist-exclude=$MODPATH/list/exclude.txt --ipset-exclude=$MODPATH/ipset/exclude.txt --dpi-desync=multisplit --dpi-desync-split-seqovl=652 --dpi-desync-split-pos=2 --dpi-desync-split-seqovl-pattern=$MODPATH/fake/tls_clienthello_www_google_com.bin --new"
 config="$config --filter-udp=80,443 --hostlist=$MODPATH/list/reestr.txt --hostlist=$MODPATH/list/custom.txt --ipset=$MODPATH/ipset/custom.txt --hostlist-exclude=$MODPATH/list/default.txt --hostlist-exclude=$MODPATH/list/exclude.txt --ipset-exclude=$MODPATH/ipset/exclude.txt --dpi-desync=fake --dpi-desync-repeats=6 --dpi-desync-fake-quic=$MODPATH/fake/quic_initial_www_google_com.bin --new"
 
 # Cloudflare, Amazon and etc.
