@@ -97,7 +97,7 @@ setup() {
     UPDATEONSTART="0"
     echo "! If the selection is anything other than \"Y\" or \"Yes\", it is considered a negative choice"
 
-    echo "- Enable update on start? "
+    echo -n "- Enable update on start? "
     read response
     case "$(echo "$response" | tr A-Z a-z)" in
         y|yes) echo "- Enabled"; UPDATEONSTART="1" ;;
