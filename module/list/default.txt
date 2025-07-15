@@ -43,3 +43,7 @@ t.co
 soundcloud.com
 sndcdn.com
 soundcloud.cloud
+instagram.com
+cdninstagram.com
+facebook.com
+fbcdn.net
