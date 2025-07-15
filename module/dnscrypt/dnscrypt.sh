@@ -12,6 +12,8 @@ rules() {
   for iface in all default lo; do
     sysctl "net.ipv6.conf.$iface.disable_ipv6=1" > /dev/null 2>&1
   done
+  echo 0 > /proc/sys/net/ipv6/conf/wlan0/accept_ra
+  echo 1 > /proc/sys/net/ipv6/conf/all/disable_ipv6
 }
 main() {
   . "$MODPATH/dnscrypt/make-unkillable.sh" &

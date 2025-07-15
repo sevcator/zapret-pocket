@@ -6,7 +6,7 @@ listen_addresses = ['127.0.0.1:5253']
 
 server_names = ['controld-unfiltered', 'nextdns', 'nextdns-ultralow']
 
-max_clients = 250
+max_clients = 900
 ipv4_servers = true
 ipv6_servers = false
 dnscrypt_servers = true
@@ -19,8 +19,8 @@ disabled_server_names = []
 
 force_tcp = false
 http3 = true
-timeout = 2500
-keepalive = 30
+timeout = 8000
+keepalive = 60
 
 use_syslog = false
 
@@ -31,11 +31,11 @@ netprobe_timeout = 10
 netprobe_address = '45.90.28.0:53'
 
 block_ipv6 = true
-block_unqualified = false
-block_undelegated = false
+block_unqualified = true
+block_undelegated = true
 reject_ttl = 10
 
-cache = false
+cache = true
 
 cloaking_rules = 'cloaking-rules.txt'
 
