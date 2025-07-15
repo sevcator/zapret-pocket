@@ -6,7 +6,7 @@ listen_addresses = ['127.0.0.1:5253']
 
 server_names = ['controld-unfiltered', 'nextdns', 'nextdns-ultralow']
 
-max_clients = 1000
+max_clients = 250
 ipv4_servers = true
 ipv6_servers = false
 dnscrypt_servers = true
