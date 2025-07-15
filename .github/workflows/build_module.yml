@@ -244,12 +244,12 @@ jobs:
           curl -X POST \
             -H "Content-Type: application/json" \
             -d '{
-              "chat_id": "'"${TELEGRAM_CHAT_ID_MAIN}"'",
-              "text": "🔔 Нoвый рeлиз <b>'"${VERSION}"'</b> мoдyля вышeл! <a href=\"'"${LINK_TO_CHANNEL}"'\">Подробнее...</a>",
+              "chat_id": "'"${TELEGRAM_CHAT_ID_2}"'",
+              "text": "🔔 Нoвый рeлиз <b>'"${VERSION}"'</b> мoдyля ZM вышeл! <a href=\"'"${LINK_TO_CHANNEL}"'\">Скачать...</a>",
               "parse_mode": "HTML",
               "disable_web_page_preview": true
             }' \
-            "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage?chat_id=${TELEGRAM_CHAT_ID_MAIN}"
+            "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN_2}/sendMessage?chat_id=${TELEGRAM_CHAT_ID_2}"
         env:
           VERSION: ${{ github.ref_name }}
           SHA256: ${{ env.SHA256 }}
