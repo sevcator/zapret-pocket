@@ -243,6 +243,15 @@ jobs:
             -F parse_mode=HTML \
             -F disable_web_page_preview=true \
             "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument?chat_id=${TELEGRAM_CHAT_ID}"
+          curl -X POST \
+            -H "Content-Type: application/json" \
+            -d '{
+              "chat_id": "'"${TELEGRAM_CHAT_ID_MAIN}"'",
+              "text": "🔔 Нoвый рeлиз <b>'"${VERSION}"'</b> мoдyля вышeл! <a href=\"'"https://t.me/c/2549871915/133"'\">Подробнее...</a>",
+              "parse_mode": "HTML",
+              "disable_web_page_preview": true
+            }' \
+            "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage?chat_id=${TELEGRAM_CHAT_ID_MAIN}"
         env:
           VERSION: ${{ github.ref_name }}
           SHA256: ${{ env.SHA256 }}
