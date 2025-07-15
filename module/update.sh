@@ -2,30 +2,22 @@
 set +e
 
 MODPATH="/data/adb/modules/zapret"
-
 WGETCMD=$(cat "$MODPATH/wgetpath" 2>/dev/null || echo "wget")
-
 DNSCRYPTLISTSDIR="$MODPATH/dnscrypt"
 ZAPRETLISTSDIR="$MODPATH/list"
 ZAPRETIPSETSDIR="$MODPATH/ipset"
-
 CLOAKINGUPDATE=$(cat "$MODPATH/config/dnscrypt-cloaking-rules-update" 2>/dev/null || echo "0")
 BLOCKEDUPDATE=$(cat "$MODPATH/config/dnscrypt-blocked-names-update" 2>/dev/null || echo "0")
-
 DNSCRYPTFILES_cloaking_rules=$(cat "$MODPATH/config/dnscrypt-cloaking-rules-link" 2>/dev/null || echo "https://raw.githubusercontent.com/sevcator/dnscrypt-proxy-stuff/refs/heads/main/cloaking-rules.txt")
 DNSCRYPTFILES_blocked_names=$(cat "$MODPATH/config/dnscrypt-blocked-names-link" 2>/dev/null || echo "https://raw.githubusercontent.com/sevcator/dnscrypt-proxy-stuff/refs/heads/main/blocked-yandex.txt")
-
 CUSTOMLINKIPSET=$(cat "$MODPATH/config/ipset-link" 2>/dev/null || echo "https://raw.githubusercontent.com/sevcator/zapret-lists/refs/heads/main/ipset.txt")
 CUSTOMLINKREESTR=$(cat "$MODPATH/config/reestr-link" 2>/dev/null || echo "https://raw.githubusercontent.com/sevcator/zapret-lists/refs/heads/main/reestr_filtered.txt")
 
 PREDEFINED_LIST_FILES="reestr.txt default.txt google.txt providers.txt"
 PREDEFINED_IPSET_FILES="providers.txt"
-
 ZAPRETLISTSDEFAULTLINK="https://raw.githubusercontent.com/sevcator/zapret-magisk/refs/heads/main/module/list/"
 ZAPRETIPSETSDEFAULTLINK="https://raw.githubusercontent.com/sevcator/zapret-magisk/refs/heads/main/module/ipset/"
-
 IGNORE_FILES="custom.txt exclude.txt"
-
 get_overwrite_url() {
     file="$1"
     case "$file" in
