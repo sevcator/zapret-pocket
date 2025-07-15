@@ -7,6 +7,8 @@ CLOAKINGRULESLINK=$(cat "$MODPATH/config/dnscrypt-cloaking-rules-link" 2>/dev/nu
 BLOCKEDUPDATE=$(cat "$MODPATH/config/dnscrypt-blocked-names-update" 2>/dev/null || echo "0")
 BLOCKEDNAMESLINK=$(cat "$MODPATH/config/dnscrypt-blocked-names-link" 2>/dev/null || echo "https://raw.githubusercontent.com/sevcator/dnscrypt-proxy-stuff/refs/heads/main/blocked-yandex.txt")
 UPDATEONSTART=$(cat "$MODPATH/config/update-on-start" 2>/dev/null || echo "1")
+CUSTOMLINKIPSET=$(cat "$MODPATH/config/ipset-link" 2>/dev/null || echo "https://raw.githubusercontent.com/sevcator/zapret-lists/refs/heads/main/ipset.txt")
+CUSTOMLINKREESTR=$(cat "$MODPATH/config/reestr-link" 2>/dev/null || echo "https://raw.githubusercontent.com/sevcator/zapret-lists/refs/heads/main/reestr_filtered.txt")
 
 command_info() {
     echo "--- Zapret Module for Magisk ---"
@@ -124,22 +126,48 @@ setup() {
         echo "- Strategy selected!"
     fi
 
+    if [ "$UPDATEONSTART" = "1" ]; then
+        echo -n "- Do you want to change source links for update zapret files? "
+        read resp
+        case "$(echo "$resp" | tr A-Z a-z)" in
+            y|yes)
+                echo -n "- Enter link to ipset.txt (leave blank to keep current): "
+                read new_ipset
+                if [ -n "$new_ipset" ]; then
+                    CUSTOMLINKIPSET="$new_ipset"
+                    echo "- Link updated"
+                else
+                    echo "- Keeping old link: $CUSTOMLINKIPSET"
+                fi
+
+                echo -n "- Enter link to reestr.txt (leave blank to keep current): "
+                read new_reestr
+                if [ -n "$new_reestr" ]; then
+                    CUSTOMLINKREESTR="$new_reestr"
+                    echo "- Link updated"
+                else
+                    echo "- Keeping old link: $CUSTOMLINKREESTR"
+                fi
+            ;;
+        esac
+    fi
+    
     if [ "$DNSCRYPTENABLE" = "1" ]; then
-        echo -n "- Auto-update cloaking rules for DNSCrypt-Proxy? "
+        echo -n "- Auto-update cloaking rules for DNSCrypt? "
         read resp
         case "$(echo "$resp" | tr A-Z a-z)" in
             y|yes) CLOAKINGUPDATE="1"; echo "- Enabled" ;;
         esac
 
-        echo -n "- Auto-update blocked names for DNSCrypt-Proxy? "
+        echo -n "- Auto-update blocked names for DNSCrypt? "
         read resp
         case "$(echo "$resp" | tr A-Z a-z)" in
             y|yes) BLOCKEDUPDATE="1"; echo "- Enabled" ;;
         esac
 
-        echo -n "- Do you want to change source links? "
-        read resp
-        case "$(echo "$resp" | tr A-Z a-z)" in
+        echo -n "- Do you want to change source links for update DNSCrypt files? "
+        read resp2
+        case "$(echo "$resp2" | tr A-Z a-z)" in
             y|yes)
                 echo -n "- Enter link to cloaking-rules.txt (leave blank to keep current): "
                 read new_cloaking
