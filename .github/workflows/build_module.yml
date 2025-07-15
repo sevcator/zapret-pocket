@@ -229,8 +229,6 @@ jobs:
         with:
           fail_on_unmatched_files: true
           draft: false
-          body: |
-            🔑 SHA256: ${{ env.SHA256 }}
           files: |
             zapret-Magisk.zip
 
