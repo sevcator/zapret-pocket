@@ -2,6 +2,8 @@
 for iface in all default lo; do
     sysctl "net.ipv6.conf.$iface.disable_ipv6=0" > /dev/null 2>&1
 done
+echo 1 > /proc/sys/net/ipv6/conf/wlan0/accept_ra
+echo 0 > /proc/sys/net/ipv6/conf/all/disable_ipv6
 sysctl net.netfilter.nf_conntrack_tcp_be_liberal=0 > /dev/null 2>&1
 sysctl net.netfilter.nf_conntrack_checksum=1 > /dev/null 2>&1
 SCRIPT_PIDS=$(pgrep -f "dnscrypt.sh")
