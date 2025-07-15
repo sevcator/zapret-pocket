@@ -2,16 +2,38 @@
 set +e
 
 MODPATH="/data/adb/modules/zapret"
+
 WGETCMD=$(cat "$MODPATH/wgetpath" 2>/dev/null || echo "wget")
+
 DNSCRYPTLISTSDIR="$MODPATH/dnscrypt"
 ZAPRETLISTSDIR="$MODPATH/list"
 ZAPRETIPSETSDIR="$MODPATH/ipset"
+
 CLOAKINGUPDATE=$(cat "$MODPATH/config/dnscrypt-cloaking-rules-update" 2>/dev/null || echo "0")
 BLOCKEDUPDATE=$(cat "$MODPATH/config/dnscrypt-blocked-names-update" 2>/dev/null || echo "0")
+
 DNSCRYPTFILES_cloaking_rules=$(cat "$MODPATH/config/dnscrypt-cloaking-rules-link" 2>/dev/null || echo "https://raw.githubusercontent.com/sevcator/dnscrypt-proxy-stuff/refs/heads/main/cloaking-rules.txt")
 DNSCRYPTFILES_blocked_names=$(cat "$MODPATH/config/dnscrypt-blocked-names-link" 2>/dev/null || echo "https://raw.githubusercontent.com/sevcator/dnscrypt-proxy-stuff/refs/heads/main/blocked-yandex.txt")
 
-source "$MODPATH/config/updater.sh"
+CUSTOMLINKIPSET=$(cat "$MODPATH/config/ipset-link" 2>/dev/null || echo "https://raw.githubusercontent.com/sevcator/zapret-lists/refs/heads/main/ipset.txt")
+CUSTOMLINKREESTR=$(cat "$MODPATH/config/reestr-link" 2>/dev/null || echo "https://raw.githubusercontent.com/sevcator/zapret-lists/refs/heads/main/reestr_filtered.txt")
+
+PREDEFINED_LIST_FILES="reestr.txt default.txt google.txt providers.txt"
+PREDEFINED_IPSET_FILES="providers.txt"
+
+ZAPRETLISTSDEFAULTLINK="https://raw.githubusercontent.com/sevcator/zapret-magisk/refs/heads/main/module/list/"
+ZAPRETIPSETSDEFAULTLINK="https://raw.githubusercontent.com/sevcator/zapret-magisk/refs/heads/main/module/ipset/"
+
+IGNORE_FILES="custom.txt exclude.txt"
+
+get_overwrite_url() {
+    file="$1"
+    case "$file" in
+        "reestr.txt") echo "$CUSTOMLINKREESTR" ;;
+        "providers.txt") echo "$CUSTOMLINKIPSET" ;;
+        *) echo "" ;;
+    esac
+}
 
 update_file() {
     file="$1"
@@ -42,39 +64,48 @@ update_dir() {
     predefined_files="$3"
 
     mkdir -p "$dir"
+    updated_files=""
 
     for file_path in "$dir"/*; do
         [ -f "$file_path" ] || continue
         file_name=$(basename "$file_path")
+
         case " $IGNORE_FILES " in
             *" $file_name "*) continue ;;
         esac
+        case " $updated_files " in
+            *" $file_name "*) continue ;;
+        esac
 
-        overwrite_url=$(get_overwrite_url "$file_name")
-        if [ -z "$overwrite_url" ]; then
-            url="${base_url}${file_name}"
+        if [ "$dir" = "$ZAPRETIPSETSDIR" ]; then
+            url=$(get_overwrite_url "$file_name")
+            url="${url:-${base_url}${file_name}}"
         else
-            url="$overwrite_url"
+            url="${base_url}${file_name}"
         fi
 
         update_file "$file_path" "$url"
+        updated_files="$updated_files $file_name"
     done
 
     for file_name in $predefined_files; do
         case " $IGNORE_FILES " in
             *" $file_name "*) continue ;;
         esac
+        case " $updated_files " in
+            *" $file_name "*) continue ;;
+        esac
 
         file_path="$dir/$file_name"
-        if [ ! -f "$file_path" ]; then
-            overwrite_url=$(get_overwrite_url "$file_name")
-            if [ -z "$overwrite_url" ]; then
-                url="${base_url}${file_name}"
-            else
-                url="$overwrite_url"
-            fi
-            update_file "$file_path" "$url"
+        if [ "$dir" = "$ZAPRETIPSETSDIR" ]; then
+            url=$(get_overwrite_url "$file_name")
+            url="${url:-${base_url}${file_name}}"
+        else
+            url="${base_url}${file_name}"
         fi
+
+        update_file "$file_path" "$url"
+        updated_files="$updated_files $file_name"
     done
 }
 
