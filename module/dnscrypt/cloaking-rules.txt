@@ -32,9 +32,7 @@ aitestkitchen.withgoogle.com 204.12.192.222
 alkalimakersuite-pa.clients6.google.com 204.12.192.221
 android.chat.openai.com 204.12.192.219
 anthropic.com 204.12.192.220
-api.github.com 50.7.87.84
 api.imgur.com 204.12.192.220
-api.individual.githubcopilot.com 204.12.192.222
 assistant-s3-pa.googleapis.com 204.12.192.221
 auth0.com 204.12.192.222
 brawlstarsgame.com 179.43.168.109
@@ -61,7 +59,6 @@ game.clashroyaleapp.com 51.158.190.98
 gamea.clashofclans.com 70.34.251.56
 gemini.google.com 204.12.192.222
 generativelanguage.googleapis.com 204.12.192.222
-ggpht.com 64.233.164.198
 grok.com 204.12.192.222
 guilded.gg 204.12.192.219
 images.tidal.com 204.12.192.221
@@ -80,7 +77,6 @@ openai.com 204.12.192.222
 operator.chatgpt.com 204.12.192.221
 plugins.jetbrains.com 107.150.34.100
 proactivebackend-pa.googleapis.com 204.12.192.222
-proxy.individual.githubcopilot.com 204.12.192.222
 rewards.bing.com 204.12.192.221
 scdn.co 204.12.192.222
 security.id.supercell.com 18.172.112.81

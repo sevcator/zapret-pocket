@@ -1,6 +1,6 @@
 {
-  "version": "19.2",
-  "versionCode": "192",
-  "zipUrl": "https://github.com/sevcator/zapret-magisk/releases/download/19.2/zapret-Magisk.zip",
+  "version": "19.3",
+  "versionCode": "193",
+  "zipUrl": "https://github.com/sevcator/zapret-magisk/releases/download/19.3/zapret-Magisk.zip",
   "changelog": "https://raw.githubusercontent.com/sevcator/zapret-magisk/main/CHANGELOG.md"
 }
