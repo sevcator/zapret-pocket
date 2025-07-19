@@ -10,7 +10,8 @@ CLOAKINGUPDATE=$(cat "$MODPATH/config/dnscrypt-cloaking-rules-update" 2>/dev/nul
 BLOCKEDUPDATE=$(cat "$MODPATH/config/dnscrypt-blocked-names-update" 2>/dev/null || echo "0")
 DNSCRYPTFILES_cloaking_rules=$(cat "$MODPATH/config/dnscrypt-cloaking-rules-link" 2>/dev/null || echo "https://raw.githubusercontent.com/sevcator/dnscrypt-proxy-stuff/refs/heads/main/cloaking-rules.txt")
 DNSCRYPTFILES_blocked_names=$(cat "$MODPATH/config/dnscrypt-blocked-names-link" 2>/dev/null || echo "https://raw.githubusercontent.com/sevcator/dnscrypt-proxy-stuff/refs/heads/main/blocked-yandex.txt")
-CUSTOMLINKIPSET=$(cat "$MODPATH/config/ipset-link" 2>/dev/null || echo "https://raw.githubusercontent.com/sevcator/zapret-lists/refs/heads/main/ipset.txt")
+CUSTOMLINKIPSETV4=$(cat "$MODPATH/config/ipset-v4-link" 2>/dev/null || echo "https://raw.githubusercontent.com/sevcator/zapret-lists/refs/heads/main/ipset-v4.txt")
+CUSTOMLINKIPSETV6=$(cat "$MODPATH/config/ipset-v6-link" 2>/dev/null || echo "https://raw.githubusercontent.com/sevcator/zapret-lists/refs/heads/main/ipset-v6.txt")
 CUSTOMLINKREESTR=$(cat "$MODPATH/config/reestr-link" 2>/dev/null || echo "https://raw.githubusercontent.com/sevcator/zapret-lists/refs/heads/main/reestr_filtered.txt")
 
 PREDEFINED_LIST_FILES="reestr.txt default.txt google.txt providers.txt"
@@ -22,7 +23,8 @@ get_overwrite_url() {
     file="$1"
     case "$file" in
         "reestr.txt") echo "$CUSTOMLINKREESTR" ;;
-        "providers.txt") echo "$CUSTOMLINKIPSET" ;;
+        "ipset-v4.txt") echo "$CUSTOMLINKIPSETV4" ;;
+        "ipset-v6.txt") echo "$CUSTOMLINKIPSETV6" ;;
         *) echo "" ;;
     esac
 }
