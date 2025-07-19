@@ -134,7 +134,7 @@ setup() {
         case "$(echo "$resp" | tr A-Z a-z)" in
             y|yes)
                 echo -n "- Enter link to ipset-v4.txt (leave blank to keep current): "
-                read new_ipset
+                read new_ipset_v4
                 if [ -n "$new_ipset_v4" ]; then
                     CUSTOMLINKIPSETV4="$new_ipset_v4"
                     echo "- Link updated"
@@ -143,7 +143,7 @@ setup() {
                 fi
 
                 echo -n "- Enter link to ipset-v6.txt (leave blank to keep current): "
-                read new_ipset
+                read new_ipset_v6
                 if [ -n "$new_ipset_v6" ]; then
                     CUSTOMLINKIPSETV6="$new_ipset_v6"
                     echo "- Link updated"
