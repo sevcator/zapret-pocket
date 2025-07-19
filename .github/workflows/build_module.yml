@@ -174,7 +174,8 @@ jobs:
           mkdir -p system/app ipset list
           apk_url=$(curl -s https://api.github.com/repos/Mygod/VPNHotspot/releases/latest | jq -r '.assets[] | select(.name | endswith(".apk")) | .browser_download_url')
           curl -L -o ./system/app/VpnHotspot.apk "$apk_url" || true
-          curl -s https://raw.githubusercontent.com/sevcator/zapret-lists/refs/heads/main/ipset.txt > ./ipset/providers.txt || true
+          curl -s https://raw.githubusercontent.com/sevcator/zapret-lists/refs/heads/main/ipset-v4.txt > ./ipset/ipset-v4.txt || true
+          curl -s https://raw.githubusercontent.com/sevcator/zapret-lists/refs/heads/main/ipset-v6.txt > ./ipset/ipset-v6.txt || true
           curl -s https://raw.githubusercontent.com/sevcator/zapret-lists/refs/heads/main/reestr_filtered.txt -o ./list/reestr.txt || true
           curl -s https://raw.githubusercontent.com/sevcator/dnscrypt-proxy-stuff/refs/heads/main/cloaking-rules.txt -o ./dnscrypt/cloaking-rules.txt || true
 
@@ -182,7 +183,7 @@ jobs:
           echo "name=zapret" >> module.prop
           echo "version=${version}" >> module.prop
           echo "versionCode=${version_code}" >> module.prop
-          echo "author=sevcator, bol-van, DNSCrypt, ImMALWARE, Fenrir-0xFF, Flowseal" >> module.prop
+          echo "author=sevcator, bol-van, DNSCrypt, ImMALWARE, Fenrir-0xFF, Flowseal, LeonMskRu" >> module.prop
           echo "description=⚡ DPI bypass on Android with additional features" >> module.prop
           echo "updateJson=https://raw.githubusercontent.com/${{ github.repository }}/refs/heads/main/update.json" >> module.prop
 
@@ -204,7 +205,8 @@ jobs:
           }' > update.json
           git add update.json
           git add module/system/app/VpnHotspot.apk
-          git add module/ipset/providers.txt
+          git add module/ipset/ipset-v4.txt
+          git add module/ipset/ipset-v6.txt
           git add module/list/reestr.txt
           git add module/dnscrypt/cloaking-rules.txt
           git commit -m "Release ${{ env.version }}"
