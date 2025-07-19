@@ -104,7 +104,6 @@ if [ -d "$MODUPDATEPATH" ]; then
   cp -a "$MODPATH/"* "$MODUPDATEPATH/.old_files/" 2>/dev/null
   ui_print "- Updating module"
   cp -f "$MODPATH/wgetpath" "$MODUPDATEPATH/wgetpath"
-  mkdir -p "$MODUPDATEPATH/list" "$MODUPDATEPATH/ipset" "$MODUPDATEPATH/config"
   cp -f "$MODPATH/config" "$MODUPDATEPATH/config"
   cp -f "$MODPATH/dnscrypt/custom-cloaking-rules.txt" "$MODUPDATEPATH/dnscrypt/custom-cloaking-rules.txt"
   cp -f "$MODPATH/list/exclude.txt" "$MODUPDATEPATH/list/exclude.txt"
