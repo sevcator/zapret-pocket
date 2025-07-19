@@ -97,7 +97,6 @@ jobs:
           curl -sSL "https://raw.githubusercontent.com/${{ github.repository }}/refs/heads/main/.github/modified-ci-build.sh" | bash
           mkdir binaries
           mv dnscrypt-proxy-* binaries/
-          mv localhost.pem binaries/
           
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
