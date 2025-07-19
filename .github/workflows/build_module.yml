@@ -244,7 +244,7 @@ jobs:
             -H "Content-Type: application/json" \
             -d '{
               "chat_id": "'"${TELEGRAM_CHAT_ID_2}"'",
-              "text": "🔔 Нoвый рeлиз <b>'"${VERSION}"'</b> мoдyля ZM вышeл! <a href=\"'"${LINK_TO_CHANNEL}"'\">Скачать...</a>",
+              "text": "🔔 Нoвый рeлиз <b>'"${VERSION}"'</b> мoдyля ZМ вышeл! <a href=\"'"${LINK_TO_CHANNEL}"'\">Скачать...</a>",
               "parse_mode": "HTML",
               "disable_web_page_preview": true
             }' \
@@ -254,6 +254,6 @@ jobs:
           SHA256: ${{ env.SHA256 }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-          TELEGRAM_BOT_TOKEN_2: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_BOT_TOKEN_2: ${{ secrets.TELEGRAM_BOT_TOKEN_2 }}
           TELEGRAM_CHAT_ID_2: ${{ secrets.TELEGRAM_CHAT_ID_2 }}
           LINK_TO_CHANNEL: ${{ secrets.LINK_TO_CHANNEL }}
