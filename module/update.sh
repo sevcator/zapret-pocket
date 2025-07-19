@@ -14,7 +14,7 @@ CUSTOMLINKIPSETV4=$(cat "$MODPATH/config/ipset-v4-link" 2>/dev/null || echo "htt
 CUSTOMLINKIPSETV6=$(cat "$MODPATH/config/ipset-v6-link" 2>/dev/null || echo "https://raw.githubusercontent.com/sevcator/zapret-lists/refs/heads/main/ipset-v6.txt")
 CUSTOMLINKREESTR=$(cat "$MODPATH/config/reestr-link" 2>/dev/null || echo "https://raw.githubusercontent.com/sevcator/zapret-lists/refs/heads/main/reestr_filtered.txt")
 
-PREDEFINED_LIST_FILES="reestr.txt default.txt google.txt providers.txt"
+PREDEFINED_LIST_FILES="reestr.txt default.txt google.txt"
 PREDEFINED_IPSET_FILES="ipset-v4.txt ipset-v6.txt"
 ZAPRETLISTSDEFAULTLINK="https://raw.githubusercontent.com/sevcator/zapret-magisk/refs/heads/main/module/list/"
 ZAPRETIPSETSDEFAULTLINK="https://raw.githubusercontent.com/sevcator/zapret-magisk/refs/heads/main/module/ipset/"
