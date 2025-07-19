@@ -7,7 +7,8 @@ CLOAKINGRULESLINK=$(cat "$MODPATH/config/dnscrypt-cloaking-rules-link" 2>/dev/nu
 BLOCKEDUPDATE=$(cat "$MODPATH/config/dnscrypt-blocked-names-update" 2>/dev/null || echo "0")
 BLOCKEDNAMESLINK=$(cat "$MODPATH/config/dnscrypt-blocked-names-link" 2>/dev/null || echo "https://raw.githubusercontent.com/sevcator/dnscrypt-proxy-stuff/refs/heads/main/blocked-yandex.txt")
 UPDATEONSTART=$(cat "$MODPATH/config/update-on-start" 2>/dev/null || echo "1")
-CUSTOMLINKIPSET=$(cat "$MODPATH/config/ipset-link" 2>/dev/null || echo "https://raw.githubusercontent.com/sevcator/zapret-lists/refs/heads/main/ipset.txt")
+CUSTOMLINKIPSETV4=$(cat "$MODPATH/config/ipset-v4-link" 2>/dev/null || echo "https://raw.githubusercontent.com/sevcator/zapret-lists/refs/heads/main/ipset-v4.txt")
+CUSTOMLINKIPSETV6=$(cat "$MODPATH/config/ipset-v6-link" 2>/dev/null || echo "https://raw.githubusercontent.com/sevcator/zapret-lists/refs/heads/main/ipset-v6.txt")
 CUSTOMLINKREESTR=$(cat "$MODPATH/config/reestr-link" 2>/dev/null || echo "https://raw.githubusercontent.com/sevcator/zapret-lists/refs/heads/main/reestr_filtered.txt")
 
 command_info() {
@@ -132,13 +133,22 @@ setup() {
         read resp
         case "$(echo "$resp" | tr A-Z a-z)" in
             y|yes)
-                echo -n "- Enter link to ipset.txt (leave blank to keep current): "
+                echo -n "- Enter link to ipset-v4.txt (leave blank to keep current): "
                 read new_ipset
-                if [ -n "$new_ipset" ]; then
-                    CUSTOMLINKIPSET="$new_ipset"
+                if [ -n "$new_ipset_v4" ]; then
+                    CUSTOMLINKIPSETV4="$new_ipset_v4"
                     echo "- Link updated"
                 else
-                    echo "- Keeping old link: $CUSTOMLINKIPSET"
+                    echo "- Keeping old link: $CUSTOMLINKIPSETV4"
+                fi
+
+                echo -n "- Enter link to ipset-v6.txt (leave blank to keep current): "
+                read new_ipset
+                if [ -n "$new_ipset_v6" ]; then
+                    CUSTOMLINKIPSETV6="$new_ipset_v6"
+                    echo "- Link updated"
+                else
+                    echo "- Keeping old link: $CUSTOMLINKIPSETV6"
                 fi
 
                 echo -n "- Enter link to reestr.txt (leave blank to keep current): "
@@ -198,6 +208,9 @@ setup() {
     echo "$BLOCKEDUPDATE" > "$MODPATH/config/dnscrypt-blocked-names-update"
     echo "$BLOCKEDNAMESLINK" > "$MODPATH/config/dnscrypt-blocked-names-link"
     echo "$UPDATEONSTART" > "$MODPATH/config/update-on-start"
+    echo "$CUSTOMLINKIPSETV4" > "$MODPATH/config/ipset-v4-link"
+    echo "$CUSTOMLINKIPSETV6" > "$MODPATH/config/ipset-v6-link"
+    echo "$CUSTOMLINKREESTR" > "$MODPATH/config/reestr-link"
 
     echo "- Done! Changes will apply on next start"
     return 0
