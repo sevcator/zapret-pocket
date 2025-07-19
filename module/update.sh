@@ -42,7 +42,10 @@ update_file() {
         local_size=$(stat -c%s "$file" 2>/dev/null || echo 0)
     fi
 
-    if [ "$remote_size" -ne "$local_size" ] 2>/dev/null; then
+    diff=$(( remote_size - local_size ))
+    [ "$diff" -lt 0 ] && diff=$(( -diff ))
+
+    if [ "$diff" -gt 2 ]; then
         echo "[ $local_size/$remote_size; $name ] Downloading"
         $WGETCMD -q -O "$file" "$url"
     else
@@ -101,8 +104,14 @@ update_dir() {
     done
 }
 
+. $MODPATH/dnscrypt/custom-cloaking-rules.sh disappend > /dev/null 2>&1 &
+sleep 2
+
 update_dir "$ZAPRETLISTSDIR" "$ZAPRETLISTSDEFAULTLINK" "$PREDEFINED_LIST_FILES"
 update_dir "$ZAPRETIPSETSDIR" "$ZAPRETIPSETSDEFAULTLINK" "$PREDEFINED_IPSET_FILES"
 
 [ "$CLOAKINGUPDATE" = "1" ] && update_file "$DNSCRYPTLISTSDIR/cloaking-rules.txt" "$DNSCRYPTFILES_cloaking_rules"
 [ "$BLOCKEDUPDATE" = "1" ] && update_file "$DNSCRYPTLISTSDIR/blocked-names.txt" "$DNSCRYPTFILES_blocked_names"
+
+. $MODPATH/dnscrypt/custom-cloaking-rules.sh append > /dev/null 2>&1 &
+sleep 2
