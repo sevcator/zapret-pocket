@@ -14,9 +14,9 @@ check_requirements() {
   ui_print "- iptables - NFQUEUE: Found"
   grep -q 'NFQUEUE' /proc/net/ip6_tables_targets || abort "! ip6tables - NFQUEUE: Not found"
   ui_print "- ip6tables - NFQUEUE: Found"
-  grep -q 'DNAT' /proc/net/ip_tables_targets || abort "! iptables - DNAT: Found"
+  grep -q 'DNAT' /proc/net/ip_tables_targets || abort "! iptables - DNAT: Not found"
   ui_print "- iptables - DNAT: Found"
-  grep -q 'DNAT' /proc/net/ip6_tables_targets || abort "! ip6tables - DNAT: Found"
+  grep -q 'DNAT' /proc/net/ip6_tables_targets || abort "! ip6tables - DNAT: Not found"
   ui_print "- ip6tables - DNAT: Found"
   WGET_CMD=""
   if [ -x /system/bin/wget ] && /system/bin/wget --help 2>&1 | grep -q -- "--no-check-certificate"; then
@@ -98,12 +98,12 @@ binary_by_architecture
 mkdir -p "$MODPATH"
 echo "$WGET_CMD" > "$MODPATH/wgetpath"
 if [ -d "$MODUPDATEPATH" ]; then
+  cp -an "$MODPATH/strategy/"* "$MODUPDATEPATH/strategy/"
   ui_print "- Backing up old files"
   rm -rf "$MODPATH/.old_files"
   mkdir -p "$MODUPDATEPATH/.old_files"
   cp -a "$MODPATH/"* "$MODUPDATEPATH/.old_files/" 2>/dev/null
   ui_print "- Updating module"
-  mkdir -p "$MODUPDATEPATH/dnscrypt" "$MODUPDATEPATH/list" "$MODUPDATEPATH/ipset" "$MODUPDATEPATH/config"
   cp -f "$MODPATH/wgetpath" "$MODUPDATEPATH/wgetpath"
   cp -f "$MODPATH/config" "$MODUPDATEPATH/config"
   cp -f "$MODPATH/dnscrypt/custom-cloaking-rules.txt" "$MODUPDATEPATH/dnscrypt/custom-cloaking-rules.txt"
@@ -111,16 +111,6 @@ if [ -d "$MODUPDATEPATH" ]; then
   cp -f "$MODPATH/ipset/exclude.txt" "$MODUPDATEPATH/ipset/exclude.txt"
   cp -f "$MODPATH/list/custom.txt" "$MODUPDATEPATH/list/custom.txt"
   cp -f "$MODPATH/ipset/custom.txt" "$MODUPDATEPATH/ipset/custom.txt"
-  if [ -f "$MODPATH/config/current-strategy" ]; then
-    STRATEGY=$(cat "$MODPATH/config/current-strategy")
-    STRATEGY_FILE="$MODUPDATEPATH/strategy/${STRATEGY}.sh"
-    if [ -f "$STRATEGY_FILE" ]; then
-      ui_print "- Keeping old strategy"
-      cp -f "$MODPATH/config/current-strategy" "$MODUPDATEPATH/config/current-strategy"
-    else
-      rm -f "$MODPATH/config/current-strategy"
-    fi
-  fi
   ui_print "- Installing tethering app"
   install_tethering_app "$APKMODUPDATEPATH"
   mv "$MODUPDATEPATH/zapret/$BINARY" "$MODUPDATEPATH/zapret/nfqws"

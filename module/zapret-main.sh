@@ -15,13 +15,6 @@ touch "$MODPATH/list/exclude.txt"
 touch "$MODPATH/list/providers.txt"
 touch "$MODPATH/list/google.txt"
 touch "$MODPATH/list/reestr.txt"
-while true; do
-    if ping -c 1 google.com &>/dev/null; then
-        break
-    else
-        sleep 1
-    fi
-done
 if [ "$UPDATEONSTART" = "1" ]; then
     . $MODPATH/update.sh > /dev/null 2>&1
     sleep 2
