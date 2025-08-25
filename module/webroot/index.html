@@ -994,6 +994,16 @@
       </h2>
 <div class="settings">
 <div class="setting-item">
+<label data-i18n="bypass_calls">
+         Включить обход звонков
+        </label>
+<label class="switch">
+<input id="toggle-bypass-calls" type="checkbox"/>
+<span class="slider">
+</span>
+</label>
+</div>
+<div class="setting-item">
 <label data-i18n="active_strategy">
          Активная стратегия
         </label>
@@ -1248,6 +1258,7 @@
                 "btn_save": "Сохранить",
                 "settings_title": "Настройки",
                 "module_settings_title": "Параметры модуля",
+                "bypass_calls": "Включить обход звонков",
                 "active_strategy": "Стратегия",
                 "dnscrypt_proxy": "DNSCrypt Proxy",
                 "dnscrypt_rules_refresh": "Обновление правил",
@@ -1294,6 +1305,7 @@
                 "btn_save": "Save",
                 "settings_title": "Settings",
                 "module_settings_title": "Module Parameters",
+                "bypass_calls": "Enable bypass calls",
                 "active_strategy": "Strategy",
                 "dnscrypt_proxy": "DNSCrypt Proxy",
                 "dnscrypt_rules_refresh": "Refresh rules",  
@@ -1582,6 +1594,7 @@ async function waitForPidChange(oldPid, timeout = 5000) {
                         const updateOnStart = await run(`cat ${MODPATH}/config/update-on-start 2>/dev/null || true`);
                         const cloakingUpdate = await run(`cat ${MODPATH}/config/dnscrypt-cloaking-rules-update 2>/dev/null || true`);
                         const blockedNamesUpdate = await run(`cat ${MODPATH}/config/dnscrypt-blocked-names-update 2>/dev/null || true`);
+                        const bypassCalls = await run(`cat ${MODPATH}/config/bypass-calls 2>/dev/null || true`);
                         const ipv6Enable = await run(`cat ${MODPATH}/config/ipv6-enable 2>/dev/null || true`);
                         const networkTweaks = await run(`cat ${MODPATH}/config/network-tweaks 2>/dev/null || true`);
                         
@@ -1641,6 +1654,7 @@ async function waitForPidChange(oldPid, timeout = 5000) {
                         toggleUpdateOnStart.checked = updateOnStart === '1' || updateOnStart === '';
                         toggleCloakingUpdate.checked = cloakingUpdate === '1';
                         toggleBlockedNamesUpdate.checked = blockedNamesUpdate === '1';
+                        document.getElementById('toggle-bypass-calls').checked = bypassCalls === '1';
                         document.getElementById('toggle-ipv6').checked = ipv6Enable === '1';
                         document.getElementById('toggle-network-tweaks').checked = networkTweaks === '1';
                         
@@ -1752,6 +1766,7 @@ btnPrimary.addEventListener('click', async () => {
                 setupToggle(toggleUpdateOnStart, 'update-on-start');
                 setupToggle(toggleCloakingUpdate, 'dnscrypt-cloaking-rules-update');
                 setupToggle(toggleBlockedNamesUpdate, 'dnscrypt-blocked-names-update');
+                setupToggle(document.getElementById('toggle-bypass-calls'), 'bypass-calls');
                 setupToggle(document.getElementById('toggle-ipv6'), 'ipv6-enable');
                 setupToggle(document.getElementById('toggle-network-tweaks'), 'network-tweaks');
 

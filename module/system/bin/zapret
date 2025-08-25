@@ -12,6 +12,7 @@ CUSTOMLINKIPSETV6=$(cat "$MODPATH/config/ipset-v6-link" 2>/dev/null || echo "htt
 CUSTOMLINKREESTR=$(cat "$MODPATH/config/reestr-link" 2>/dev/null || echo "https://raw.githubusercontent.com/sevcator/zapret-lists/refs/heads/main/reestr_filtered.txt")
 IPV6ENABLE=$(cat "$MODPATH/config/ipv6-enable" 2>/dev/null || echo "0")
 NETWORKTWEAKS=$(cat "$MODPATH/config/network-tweaks" 2>/dev/null || echo "0")
+BYPASSCALLS=$(cat "$MODPATH/config/bypass-calls" 2>/dev/null || echo "0")
 
 command_info() {
     echo "--- Zapret Module for Magisk ---"
@@ -35,6 +36,11 @@ command_info() {
         echo "! Network tweaks enabled"
     else
         echo "! Network tweaks disabled"
+    fi
+    if [ "$BYPASSCALLS" = "1" ]; then
+        echo "! Bypass calls enabled"
+    else
+        echo "! Bypass calls disabled"
     fi
     echo "------ Available commands ------"
     echo "  * Service control"
@@ -94,6 +100,7 @@ setup() {
     CLOAKINGUPDATE="0"
     BLOCKEDUPDATE="0"
     UPDATEONSTART="0"
+    BYPASSCALLS="0"
     echo "! If the selection is anything other than \"Y\" or \"Yes\", it is considered a negative choice"
 
     echo -n "- Enable update on start? "
@@ -108,10 +115,16 @@ setup() {
         y|yes) echo "- Enabled"; IPV6ENABLE="1" ;;
     esac
     
-    echo -n "- Enable Network Traces? "
+    echo -n "- Enable Network Tweaks? "
     read response
     case "$(echo "$response" | tr A-Z a-z)" in
         y|yes) echo "- Enabled"; NETWORKTWEAKS="1" ;;
+    esac
+
+    echo -n "- Enable bypass calls? "
+    read response
+    case "$(echo "$response" | tr A-Z a-z)" in
+        y|yes) echo "- Enabled"; BYPASSCALLS="1" ;;
     esac
     
     echo -n "- Enable DNSCrypt? "
@@ -220,6 +233,7 @@ setup() {
     echo "$CUSTOMLINKREESTR" > "$MODPATH/config/reestr-link"
     echo "$IPV6ENABLE" > "$MODPATH/config/ipv6-enable"
     echo "$NETWORKTWEAKS" > "$MODPATH/config/network-tweaks"
+    echo "$BYPASSCALLS" > "$MODPATH/config/bypass-calls"
     
     echo "- Done! Changes will apply on next start"
     return 0
