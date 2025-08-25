@@ -1,0 +1,1980 @@
+<!DOCTYPE html>
+
+<html lang="ru">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+<title>
+   zapret
+  </title>
+<style>
+   :root {
+            
+            --bg-main: #121212;
+            --bg-card: #1E1E1E;
+            --bg-input: #2C2C2C;
+            --border-color: #333333;
+            --text-primary: #E0E0E0;
+            --text-secondary: #A0A0A0;
+            --accent-color: #FFFFFF;
+            --disabled-color: #555555;
+            
+            
+            --tab-bar-height: 60px;
+            
+            
+            --shadow-color-feedback: rgba(255, 255, 255, 0.15);
+            --btn-hover-bg: #383838;
+            --btn-hover-border: #454545;
+        }
+
+        
+        * {
+            box-sizing: border-box;
+        }
+
+        button, select, textarea, input {
+            -webkit-tap-highlight-color: transparent;
+            outline: none;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-primary);
+            margin: 0;
+            padding: 30px 30px var(--tab-bar-height) 30px; 
+            padding-top: calc(16px + env(safe-area-inset-top));
+            -webkit-font-smoothing: antialiased;
+        }
+
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+            position: relative;
+            min-height: calc(100vh - var(--tab-bar-height) - 60px);
+        }
+
+        header {
+            text-align: center;
+            margin-top: 30px;
+            margin-bottom: 30px;
+        }
+
+        header h1 {
+            margin: 0;
+            font-weight: 600;
+            font-size: 2.5rem;
+            letter-spacing: -1px;
+        }
+
+        section > header h1 { 
+            font-size: 2rem; 
+        }
+
+        header p {
+            margin: 4px 0 10px 0;
+            color: var(--text-secondary);
+            font-size: 1rem;
+        }
+
+        .version-info {
+            font-size: 0.8em;
+            color: var(--text-secondary);
+            opacity: 0.7;
+        }
+
+        
+        .card {
+            background-color: var(--bg-card);
+            border-radius: 12px;
+            padding: 20px 24px;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease-in-out;
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card-title {
+            margin: 0 0 20px 0;
+            font-weight: 500;
+            font-size: 1.25rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 12px;
+            transition: color 0.3s ease-in-out;
+        }
+
+        .subsection-title {
+            margin: 30px 0 15px 0;
+            font-weight: 500;
+            font-size: 1.1rem;
+            color: var(--text-primary);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 8px;
+        }
+
+        .card.all-running {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.15);
+        }
+
+        .card.all-running .card-title {
+            color: var(--accent-color);
+        }
+
+        
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        .page > main {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            min-height: auto;
+        }
+
+        
+        .status-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+        }
+
+        .status-indicator .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: var(--disabled-color);
+            border: 1px solid var(--text-secondary);
+            transition: all 0.3s;
+        }
+
+        .status-indicator.running .dot {
+            background-color: var(--accent-color);
+            border-color: var(--accent-color);
+        }
+
+        .status-indicator.running .text {
+            color: var(--accent-color);
+        }
+
+        .status-indicator.stopped .text {
+            color: var(--text-secondary);
+        }
+
+        
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+        }
+
+        .btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 16px;
+            border-radius: 8px;
+            background-color: var(--bg-input);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            font-weight: 500;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .btn:hover:not(:disabled) {
+            background-color: var(--btn-hover-bg);
+            border-color: var(--btn-hover-border);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-save {
+            flex-grow: 1;
+        }
+
+        .btn-icon {
+            padding: 8px;
+            width: 40px;
+            height: 40px;
+            flex-shrink: 0;
+        }
+
+        .btn-icon svg {
+            width: 24px;
+            height: 24px;
+            fill: currentColor;
+        }
+
+        .active-feedback {
+            border-color: var(--accent-color) !important; 
+            box-shadow: 0 0 10px var(--shadow-color-feedback) !important;
+            transform: scale(0.98);
+        }
+
+        
+        .settings {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            min-height: 40px;
+        }
+
+        .setting-item > label {
+            flex-shrink: 0;
+            margin-right: 16px;
+            font-weight: 500;
+        }
+
+        
+        select {
+            background-color: var(--bg-input);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 1em;
+            width: 100%;
+            max-width: 250px;
+        }
+
+        
+        .text-input {
+            background-color: var(--bg-input);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 1em;
+            width: 100%;
+            max-width: 350px;
+            transition: border-color 0.2s ease;
+        }
+
+        .text-input:focus {
+            border-color: var(--accent-color);
+        }
+
+        .text-input:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        
+        .dnscrypt-dependent {
+            transition: opacity 0.3s ease;
+        }
+
+        .dnscrypt-dependent.disabled {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        .dnscrypt-dependent.disabled .text-input {
+            cursor: not-allowed;
+            background-color: var(--disabled-color);
+        }
+
+        .dnscrypt-dependent.disabled .switch {
+            pointer-events: none;
+        }
+
+        .dnscrypt-dependent.disabled .slider {
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
+        
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+            flex-shrink: 0;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--bg-input);
+            transition: .3s;
+            border-radius: 24px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: var(--text-secondary);
+            transition: .3s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: var(--accent-color);
+        }
+
+        input:checked + .slider:before {
+            background-color: var(--bg-card);
+            transform: translateX(20px);
+        }
+
+        
+        .tab-content {
+            display: none;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .tab-content.active {
+            display: flex;
+        }
+
+        textarea {
+            width: 100%;
+            background-color: var(--bg-input);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px;
+            font-family: 'SF Mono', 'Courier New', monospace;
+            resize: vertical;
+            min-height: 180px;
+            font-size: 0.9em;
+        }
+
+        .list-selector {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .list-btn {
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 0.9em;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            flex-grow: 1;
+            text-align: center;
+        }
+
+        .list-btn:hover {
+            background-color: var(--btn-hover-bg);
+            color: var(--text-primary);
+        }
+
+        .list-btn.active {
+            background-color: var(--bg-input);
+            color: var(--accent-color);
+            border-color: var(--accent-color);
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+        }
+
+        .textarea-footer {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .line-counter {
+            font-size: 0.9em;
+            color: var(--text-secondary);
+            margin-right: auto;
+        }
+
+        
+        .logs {
+            background-color: var(--bg-main);
+            border-radius: 8px;
+            padding: 16px;
+            height: 300px;
+            overflow-y: auto;
+            font-family: 'SF Mono', 'Courier New', monospace;
+            font-size: 0.85em;
+            border: 1px solid var(--border-color);
+        }
+
+        #logs-content-zapret,
+        #logs-content-dnscrypt {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            min-height: 100%;
+        }
+
+        .logs-empty,
+        .logs-disabled {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        .logs-disabled {
+            opacity: 0.7;
+        }
+
+        .log-line {
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .log-line .log-info {
+            color: #81A1C1;
+        }
+
+        .log-line .log-warn {
+            color: #EBCB8B;
+        }
+
+        .log-line .log-error {
+            color: #BF616A;
+        }
+
+        .log-line .log-debug {
+            color: var(--text-secondary);
+            opacity: 0.7;
+        }
+
+        .log-line .log-date {
+            color: var(--text-secondary);
+            opacity: 0.7;
+            margin-right: 8px;
+        }
+
+        .log-raw {
+            color: var(--text-secondary);
+            opacity: 0.8;
+            font-size: 0.9em;
+            margin-left: 10px;
+        }
+
+        
+        .log-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .log-header .card-title {
+            margin: 0;
+            border: none;
+            padding: 0;
+        }
+
+        
+        .tab-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: var(--tab-bar-height);
+            background-color: var(--bg-card);
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-around;
+            padding-bottom: env(safe-area-inset-bottom);
+            z-index: 100;
+        }
+
+        .tab-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            font-size: 0.75rem;
+            padding: 4px 12px;
+            flex-grow: 1;
+            transition: color 0.2s, transform 0.1s ease;
+            cursor: pointer;
+        }
+
+        .tab-btn svg {
+            width: 24px;
+            height: 24px;
+            fill: currentColor;
+        }
+
+        .tab-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .tab-btn.active {
+            color: var(--accent-color);
+        }
+
+        .tab-btn:active {
+            transform: scale(0.9);
+        }
+
+        
+        .credits-section {
+            margin-top: 20px;
+        }
+
+        .credits-text {
+            text-align: center;
+            font-size: 0.9em;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            margin: 0;
+        }
+
+        .credits-text a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: opacity 0.2s ease;
+        }
+
+        .credits-text a:hover {
+            opacity: 0.8;
+            text-decoration: underline;
+        }
+
+        .credits-author {
+            color: var(--text-secondary);
+            cursor: default;
+        }
+
+        
+        .note {
+            font-size: 0.9em;
+            color: var(--text-secondary);
+            opacity: 0.8;
+            margin-top: 1rem;
+            text-align: center;
+        }
+
+        
+        body.light-theme {
+            --bg-main: #F5F5F5;
+            --bg-card: #FFFFFF;
+            --bg-input: #F0F0F0;
+            --border-color: #E0E0E0;
+            --text-primary: #212121;
+            --text-secondary: #757575;
+            --accent-color: #007AFF;
+            --shadow-color-feedback: rgba(0, 122, 255, 0.25);
+            --btn-hover-bg: #E0E0E0;
+            --btn-hover-border: #C7C7C7;
+        }
+
+        .light-theme .status-indicator.running .dot,
+        .light-theme .status-indicator.running .text,
+        .light-theme .card.all-running .card-title,
+        .light-theme .tab-btn.active {
+            color: var(--accent-color);
+        }
+
+        .light-theme .status-indicator.running .dot {
+            background-color: var(--accent-color);
+            border-color: var(--accent-color);
+        }
+
+        .light-theme input:checked + .slider {
+            background-color: var(--accent-color);
+        }
+
+        .light-theme .card.all-running {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 15px rgba(0, 122, 255, 0.2);
+        }
+
+        .light-theme .list-btn.active {
+            color: var(--accent-color);
+            border-color: var(--accent-color);
+            background-color: #E8F4FF;
+            box-shadow: none;
+        }
+
+        .light-theme .log-line .log-info { 
+            color: #00529B; 
+        }
+
+        .light-theme .log-line .log-warn { 
+            color: #9F6000; 
+        }
+
+        .light-theme .log-line .log-error { 
+            color: #D8000C; 
+        }
+
+        .light-theme .log-line .log-debug { 
+            color: var(--text-secondary); 
+            opacity: 0.8; 
+        }
+
+        .light-theme .credits-text a,
+        .light-theme .credits-author {
+            color: var(--text-secondary);
+        }
+
+        .light-theme .credits-author {
+            cursor: default;
+        }
+
+        
+        .fumo {
+            position: fixed;
+            z-index: 9999;
+            pointer-events: none;
+            opacity: 1;
+            transition: opacity 1s ease-out;
+        }
+
+        .fumo.fade-out {
+            opacity: 0;
+        }
+
+        
+        @media (max-width: 480px) {
+            body {
+                padding: 20px 20px var(--tab-bar-height) 20px;
+                padding-top: calc(8px + env(safe-area-inset-top));
+            }
+
+            .card {
+                padding: 16px;
+            }
+
+            header h1 {
+                font-size: 2rem;
+            }
+
+            .controls {
+                grid-template-columns: 1fr;
+            }
+
+            .setting-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+                min-height: auto;
+            }
+
+            .setting-item select,
+            .setting-item .text-input {
+                max-width: 100%;
+                width: 100%;
+            }
+
+            .setting-item label.switch {
+                align-self: flex-end;
+                margin-top: -30px;
+            }
+        }
+    
+
+#loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(51,51,51,0.5) 0%, rgba(0,0,0,0.5) 100%);
+    background-size: 200% 200%;
+    z-index: 9999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    animation: gradientShift 5s ease infinite alternate;
+}
+#loading-overlay.hidden {
+    display: none;
+}
+.loader {
+    width: 50px;
+    height: 50px;
+    border: 6px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+@keyframes gradientShift {
+    0% { background-position: 0% 0%; }
+    100% { background-position: 100% 100%; }
+}
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+  
+@keyframes bgChange {
+    0.0% { background-color: #888888; }
+    7.14% { background-color: #7e7e7e; }
+    14.29% { background-color: #757575; }
+    21.43% { background-color: #6b6b6b; }
+    28.57% { background-color: #616161; }
+    35.71% { background-color: #575757; }
+    42.86% { background-color: #4e4e4e; }
+    50.0% { background-color: #444444; }
+    57.14% { background-color: #3a3a3a; }
+    64.29% { background-color: #313131; }
+    71.43% { background-color: #272727; }
+    78.57% { background-color: #1d1d1d; }
+    85.71% { background-color: #131313; }
+    92.86% { background-color: #0a0a0a; }
+    100.0% { background-color: #000000; }
+}
+</style>
+</head>
+<body>
+<div class="hidden" id="loading-overlay">
+<div class="loader">
+</div>
+</div>
+<div class="container">
+<section class="page active" id="page-home">
+<header>
+<h1 data-i18n="home_title">
+      zapret
+     </h1>
+<div class="version-info">
+<span id="module-version">
+       v...
+      </span>
+</div>
+</header>
+<main>
+<div class="card">
+<h2 class="card-title" data-i18n="status_card_title">
+       Статус
+      </h2>
+<div class="status-list">
+<div class="status-item">
+<span data-i18n="status_zapret">
+         Zapret
+        </span>
+<div class="status-indicator" id="status-nfqws">
+<span class="dot">
+</span>
+<span class="text">
+          Loading...
+         </span>
+</div>
+</div>
+<div class="status-item">
+<span data-i18n="status_dnscrypt">
+         DNSCrypt Proxy
+        </span>
+<div class="status-indicator" id="status-dnscrypt">
+<span class="dot">
+</span>
+<span class="text">
+          Loading...
+         </span>
+</div>
+</div>
+</div>
+</div>
+<div class="card">
+<h2 class="card-title" data-i18n="controls_card_title">
+       Управление
+      </h2>
+<div class="controls">
+<button class="btn" id="btn-primary">
+<svg fill="currentColor" id="btn-primary-icon" viewbox="0 0 24 24">
+<path d="M8 5v14l11-7z">
+</path>
+</svg>
+<span data-i18n="btn_start" id="btn-primary-text">
+         Запустить
+        </span>
+</button>
+</div>
+</div>
+<div class="credits-section">
+<p class="credits-text">
+       zapret module by
+       <a href="javascript:void(0)" id="sevcator-link" target="_blank">
+        sevcator
+       </a>
+<br/>
+       WebUI for module by
+       <span class="credits-author">
+        @nigga2011
+       </span>
+</p>
+</div>
+</main>
+</section>
+<section class="page" id="page-editor">
+<header>
+<h1 data-i18n="editor_title">
+      Редактор списков
+     </h1>
+</header>
+<main>
+<div class="card">
+<div class="list-selector">
+<button class="list-btn active" data-i18n="list_custom" data-tab="tab-list-custom">
+        List Custom
+       </button>
+<button class="list-btn" data-i18n="list_exclude" data-tab="tab-list-exclude">
+        List Exclude
+       </button>
+<button class="list-btn" data-i18n="ipset_custom" data-tab="tab-ipset-custom">
+        IPSet Custom
+       </button>
+<button class="list-btn" data-i18n="ipset_exclude" data-tab="tab-ipset-exclude">
+        IPSet Exclude
+       </button>
+<button class="list-btn" data-i18n="dnscrypt_custom" data-tab="tab-dnscrypt-custom">
+        DNSCrypt Custom
+       </button>
+</div>
+<div class="tab-content-wrapper">
+<div class="tab-content active" id="tab-list-custom">
+<textarea id="file-list-custom" rows="10"></textarea>
+<div class="textarea-footer">
+<span class="line-counter" data-i18n-base="line_counter">
+          Строк: 0
+         </span>
+<button class="btn btn-icon btn-clear" data-i18n-title="btn_clear_title" data-target="file-list-custom">
+<svg viewbox="0 0 24 24">
+<path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z">
+</path>
+</svg>
+</button>
+<button class="btn btn-save" data-i18n="btn_save" data-path="list/custom.txt">
+          Сохранить
+         </button>
+</div>
+</div>
+<div class="tab-content" id="tab-list-exclude">
+<textarea id="file-list-exclude" rows="10"></textarea>
+<div class="textarea-footer">
+<span class="line-counter" data-i18n-base="line_counter">
+          Строк: 0
+         </span>
+<button class="btn btn-icon btn-clear" data-i18n-title="btn_clear_title" data-target="file-list-exclude">
+<svg viewbox="0 0 24 24">
+<path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z">
+</path>
+</svg>
+</button>
+<button class="btn btn-save" data-i18n="btn_save" data-path="list/exclude.txt">
+          Сохранить
+         </button>
+</div>
+</div>
+<div class="tab-content" id="tab-ipset-custom">
+<textarea id="file-ipset-custom" rows="10"></textarea>
+<div class="textarea-footer">
+<span class="line-counter" data-i18n-base="line_counter">
+          Строк: 0
+         </span>
+<button class="btn btn-icon btn-clear" data-i18n-title="btn_clear_title" data-target="file-ipset-custom">
+<svg viewbox="0 0 24 24">
+<path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z">
+</path>
+</svg>
+</button>
+<button class="btn btn-save" data-i18n="btn_save" data-path="ipset/custom.txt">
+          Сохранить
+         </button>
+</div>
+</div>
+<div class="tab-content" id="tab-ipset-exclude">
+<textarea id="file-ipset-exclude" rows="10"></textarea>
+<div class="textarea-footer">
+<span class="line-counter" data-i18n-base="line_counter">
+          Строк: 0
+         </span>
+<button class="btn btn-icon btn-clear" data-i18n-title="btn_clear_title" data-target="file-ipset-exclude">
+<svg viewbox="0 0 24 24">
+<path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z">
+</path>
+</svg>
+</button>
+<button class="btn btn-save" data-i18n="btn_save" data-path="ipset/exclude.txt">
+          Сохранить
+         </button>
+</div>
+</div>
+<div class="tab-content" id="tab-dnscrypt-custom">
+<textarea id="file-dnscrypt-custom" rows="10"></textarea>
+<div class="textarea-footer">
+<span class="line-counter" data-i18n-base="line_counter">
+          Строк: 0
+         </span>
+<button class="btn btn-icon btn-clear" data-i18n-title="btn_clear_title" data-target="file-dnscrypt-custom">
+<svg viewbox="0 0 24 24">
+<path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z">
+</path>
+</svg>
+</button>
+<button class="btn btn-save" data-i18n="btn_save" data-path="dnscrypt/custom-cloaking-rules.txt">
+          Сохранить
+         </button>
+</div>
+</div>
+</div>
+</div>
+</main>
+</section>
+<section class="page" id="page-settings">
+<header>
+<h1 data-i18n="settings_title">
+      Настройки
+     </h1>
+</header>
+<main>
+<div class="card">
+<h2 class="card-title" data-i18n="module_settings_title">
+       Параметры модуля
+      </h2>
+<div class="settings">
+<div class="setting-item">
+<label data-i18n="active_strategy">
+         Активная стратегия
+        </label>
+<select id="strategy-select">
+</select>
+</div>
+<div class="setting-item">
+<label data-i18n="ipv6_enable">
+         Включить IPv6
+        </label>
+<label class="switch">
+<input id="toggle-ipv6" type="checkbox"/>
+<span class="slider">
+</span>
+</label>
+</div>
+<div class="setting-item">
+<label data-i18n="network_tweaks">
+         Сетевые оптимизации
+        </label>
+<label class="switch">
+<input id="toggle-network-tweaks" type="checkbox"/>
+<span class="slider">
+</span>
+</label>
+</div>
+<div class="setting-item">
+<label data-i18n="dnscrypt_proxy">
+         DNSCrypt Proxy
+        </label>
+<label class="switch">
+<input id="toggle-dnscrypt" type="checkbox"/>
+<span class="slider">
+</span>
+</label>
+</div>
+<div class="setting-item dnscrypt-dependent">
+<label data-i18n="dnscrypt_rules_refresh">
+         Обновление правил
+        </label>
+<label class="switch">
+<input id="toggle-rules-recheck" type="checkbox"/>
+<span class="slider">
+</span>
+</label>
+</div>
+<div class="setting-item">
+<label data-i18n="update_on_start">
+         Обновление при запуске
+        </label>
+<label class="switch">
+<input id="toggle-update-on-start" type="checkbox"/>
+<span class="slider">
+</span>
+</label>
+</div>
+<div class="setting-item dnscrypt-dependent">
+<label data-i18n="update_cloaking">
+         Обновление Cloaking Rules
+        </label>
+<label class="switch">
+<input id="toggle-cloaking-update" type="checkbox"/>
+<span class="slider">
+</span>
+</label>
+</div>
+<div class="setting-item dnscrypt-dependent">
+<label data-i18n="update_blocked_names">
+         Обновление доменов для блокировки
+        </label>
+<label class="switch">
+<input id="toggle-blocked-names-update" type="checkbox"/>
+<span class="slider">
+</span>
+</label>
+</div>
+</div>
+<h3 class="subsection-title" data-i18n="custom_links_title">
+       Свои ссылки
+      </h3>
+<div class="settings">
+<div class="setting-item">
+<label data-i18n="ipv4_ranges_link">
+         Ссылка на IPv4 диапазоны
+        </label>
+<input class="text-input" id="input-ipv4-ranges" placeholder="https://example.github.io/ipset-v4.txt" type="text"/>
+</div>
+<div class="setting-item">
+<label data-i18n="ipv6_ranges_link">
+         Ссылка на IPv6 диапазоны
+        </label>
+<input class="text-input" id="input-ipv6-ranges" placeholder="https://example.github.io/ipset-v6.txt" type="text"/>
+</div>
+<div class="setting-item">
+<label data-i18n="registry_link">
+         Ссылка на реестр
+        </label>
+<input class="text-input" id="input-rkn-registry" placeholder="https://example.github.io/reestr.txt" type="text"/>
+</div>
+<div class="setting-item dnscrypt-dependent">
+<label data-i18n="cloaking_rules_link">
+         Ссылка на Cloaking Rules
+        </label>
+<input class="text-input" id="input-cloaking-rules" placeholder="https://example.github.io/cloaking-rules.txt" type="text"/>
+</div>
+<div class="setting-item dnscrypt-dependent">
+<label data-i18n="blocked_names_link">
+         Ссылка на Blocked Names
+        </label>
+<input class="text-input" id="input-blocked-names" placeholder="https://example.github.io/blocked-names.txt" type="text"/>
+</div>
+</div>
+<p class="note" data-i18n="note_restart">
+       После изменения настроек не забудьте перезапустить службу.
+      </p>
+</div>
+<div class="card">
+<h2 class="card-title" data-i18n="interface_settings_title">
+       Интерфейс
+      </h2>
+<div class="settings">
+<div class="setting-item">
+<label data-i18n="dark_theme">
+         Темная тема
+        </label>
+<label class="switch">
+<input id="toggle-theme" type="checkbox"/>
+<span class="slider">
+</span>
+</label>
+</div>
+<div class="setting-item">
+<label data-i18n="language">
+         Язык
+        </label>
+<select id="language-select">
+<option value="ru">
+          Русский
+         </option>
+<option value="en">
+          English
+         </option>
+</select>
+</div>
+</div>
+</div>
+</main>
+</section>
+<section class="page" id="page-logs">
+<header>
+<h1 data-i18n="logs_title">
+      Логи
+     </h1>
+</header>
+<main>
+<div class="card">
+<div class="log-header">
+<h2 class="card-title" data-i18n="status_zapret">
+        Zapret
+       </h2>
+<button class="btn btn-icon" data-i18n-title="copy_log_title" id="btn-copy-log-zapret">
+<svg viewbox="0 0 24 24">
+<path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z">
+</path>
+</svg>
+</button>
+</div>
+<div class="logs">
+<div id="logs-content-zapret">
+        Загрузка...
+       </div>
+</div>
+</div>
+<div class="card">
+<div class="log-header">
+<h2 class="card-title" data-i18n="status_dnscrypt">
+        DNSCrypt Proxy
+       </h2>
+<button class="btn btn-icon" data-i18n-title="copy_log_title" id="btn-copy-log-dnscrypt">
+<svg viewbox="0 0 24 24">
+<path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z">
+</path>
+</svg>
+</button>
+</div>
+<div class="logs">
+<div id="logs-content-dnscrypt">
+        Загрузка...
+       </div>
+</div>
+</div>
+</main>
+</section>
+</div>
+<footer class="tab-bar">
+<button class="tab-btn active" data-page="page-home">
+<svg viewbox="0 0 24 24">
+<path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z">
+</path>
+</svg>
+<span data-i18n="tab_home">
+     Главная
+    </span>
+</button>
+<button class="tab-btn" data-page="page-editor">
+<svg viewbox="0 0 24 24">
+<path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z">
+</path>
+</svg>
+<span data-i18n="tab_editor">
+     Редактор
+    </span>
+</button>
+<button class="tab-btn" data-page="page-settings">
+<svg fill="currentColor" viewbox="0 0 24 24">
+<path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.23,5.35C8.64,5.59,8.11,5.92,7.61,6.29L5.22,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.71,8.87 C2.6,9.08,2.66,9.34,2.83,9.48l2.03,1.58C4.84,11.36,4.82,11.68,4.82,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.38,2.54 c0.04,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.38-2.54c0.59-0.24,1.12-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z">
+</path>
+</svg>
+<span data-i18n="tab_settings">
+     Настройки
+    </span>
+</button>
+<button class="tab-btn" data-page="page-logs">
+<svg viewbox="0 0 24 24">
+<path d="M9 21.035V19.035H5V5H19V11.035H21V5C21 3.9 20.1 3 19 3H5C3.9 3 3 3.9 3 5V19C3 20.1 3.9 21 5 21H9.035V21.035ZM11 21.035V19.035H13V21.035H11ZM7 17H17V15H7V17ZM7 13H17V11H7V13ZM7 9H17V7H7V9Z">
+</path>
+</svg>
+<span data-i18n="tab_logs">
+     Логи
+    </span>
+</button>
+</footer>
+<script>
+   // ===== EMBEDDED LANGUAGE DATA =====
+        const LANG_DATA = {
+            ru: {
+                "home_title": "zapret",
+                "status_card_title": "Статус",
+                "status_zapret": "Zapret",
+                "status_dnscrypt": "DNSCrypt Proxy",
+                "controls_card_title": "Управление",
+                "btn_start": "Запустить",
+                "btn_stop": "Остановить",
+                "editor_title": "Редактор списков",
+                "list_custom": "List Custom",
+                "list_exclude": "List Exclude",
+                "ipset_custom": "IPSet Custom",
+                "ipset_exclude": "IPSet Exclude",
+                "dnscrypt_custom": "Пользовательский cloaking-rules.txt",
+                "line_counter": "Строк: {count}",
+                "btn_clear_title": "Очистить список",
+                "btn_save": "Сохранить",
+                "settings_title": "Настройки",
+                "module_settings_title": "Параметры модуля",
+                "active_strategy": "Стратегия",
+                "dnscrypt_proxy": "DNSCrypt Proxy",
+                "dnscrypt_rules_refresh": "Обновление правил",
+                "update_on_start": "Обновление при запуске",
+                "update_cloaking": "Обновление Cloaking Rules",
+                "update_blocked_names": "Обновление Blocked Names",
+                "ipv6_enable": "Включить IPv6",
+                "network_tweaks": "Твики интернета",
+                "custom_links_title": "Пользовательские источники",
+                "ipv4_ranges_link": "Ссылка на IPv4 диапазоны",
+                "ipv6_ranges_link": "Ссылка на IPv6 диапазоны",
+                "registry_link": "Ссылка на реестр",
+                "cloaking_rules_link": "Ссылка на Cloaking Rules",
+                "blocked_names_link": "Ссылка на Blocked Names",
+                "note_restart": "После изменения настроек не забудьте перезапустить службу",
+                "interface_settings_title": "Интерфейс",
+                "dark_theme": "Темная тема",
+                "language": "Язык",
+                "logs_title": "Логи",
+                "copy_log_title": "Копировать лог",
+                "logs_empty": "Пусто",
+                "logs_disabled": "Отключен",
+                "tab_home": "Главная",
+                "tab_editor": "Редактор",
+                "tab_settings": "Настройки",
+                "tab_logs": "Логи"
+            },
+            en: {
+                "home_title": "zapret",
+                "status_card_title": "Status",
+                "status_zapret": "Zapret",
+                "status_dnscrypt": "DNSCrypt Proxy",
+                "controls_card_title": "Controls",
+                "btn_start": "Start",
+                "btn_stop": "Stop",
+                "editor_title": "List Editor",
+                "list_custom": "List Custom",
+                "list_exclude": "List Exclude",
+                "ipset_custom": "IPSet Custom",
+                "ipset_exclude": "IPSet Exclude",
+                "dnscrypt_custom": "Custom cloaking-rules.txt",
+                "line_counter": "Lines: {count}",
+                "btn_clear_title": "Clear list",
+                "btn_save": "Save",
+                "settings_title": "Settings",
+                "module_settings_title": "Module Parameters",
+                "active_strategy": "Strategy",
+                "dnscrypt_proxy": "DNSCrypt Proxy",
+                "dnscrypt_rules_refresh": "Refresh rules",  
+                "update_on_start": "Update on startup",
+                "update_cloaking": "Update Cloaking Rules",
+                "update_blocked_names": "Update Blocked Names",
+                "ipv6_enable": "Enable IPv6",
+                "network_tweaks": "Network Tweaks",
+                "custom_links_title": "Custom Links",
+                "ipv4_ranges_link": "IPv4 Ranges Link",
+                "ipv6_ranges_link": "IPv6 Ranges Link",
+                "registry_link": "Reestr Link",
+                "cloaking_rules_link": "Cloaking Rules Link",
+                "blocked_names_link": "Blocked Names Link",
+                "note_restart": "Restart the service after changing settings",
+                "interface_settings_title": "Interface",
+                "dark_theme": "Dark Theme",
+                "language": "Language",
+                "logs_title": "Logs",
+                "copy_log_title": "Copy Log",
+                "logs_empty": "Empty",
+                "logs_disabled": "Disabled",
+                "tab_home": "Home",
+                "tab_editor": "Editor",
+                "tab_settings": "Settings",
+                "tab_logs": "Logs"
+            }
+        };
+
+        // ===== MAIN APPLICATION =====
+        // Utility functions
+        const countLines = (text) => {
+            if (!text) return 0;
+            return text.split('\n').filter(line => line.trim() !== '').length;
+        };
+
+        let callbackCounter = 0;
+        function getUniqueCallbackName(prefix) {
+            return `${prefix}_callback_${Date.now()}_${callbackCounter++}`;
+        }
+
+        // KernelSU API wrapper
+        function ksu_exec(command, options) {
+            const ksuApi = typeof kernelsu !== 'undefined' ? kernelsu : (typeof ksu !== 'undefined' ? ksu : null);
+            if (!ksuApi) {
+                return Promise.reject(new Error("KernelSU API is not available"));
+            }
+
+            if (typeof options === "undefined") {
+                options = {};
+            }
+
+            return new Promise((resolve, reject) => {
+                const callbackFuncName = getUniqueCallbackName("exec");
+                window[callbackFuncName] = (errno, stdout, stderr) => {
+                    delete window[callbackFuncName];
+                    resolve({ errno, stdout, stderr });
+                };
+                try {
+                    ksuApi.exec(command, JSON.stringify(options), callbackFuncName);
+                } catch (error) {
+                    delete window[callbackFuncName];
+                    reject(error);
+                }
+            });
+        }
+
+        // Main application
+        if (typeof kernelsu !== 'undefined' || typeof ksu !== 'undefined') {
+            document.addEventListener('DOMContentLoaded', async () => {
+                const MODPATH = '/data/adb/modules/zapret';
+
+                let langData = {};
+
+                // Language system
+                const applyLanguage = () => {
+                    document.querySelectorAll('[data-i18n]').forEach(el => {
+                        const key = el.getAttribute('data-i18n');
+                        if (langData[key]) {
+                            const textNode = Array.from(el.childNodes).find(node => node.nodeType === Node.TEXT_NODE && node.textContent.trim().length > 0);
+                            if (textNode) {
+                                textNode.textContent = langData[key];
+                            } else if (el.childElementCount === 0) {
+                                el.textContent = langData[key];
+                            }
+                        }
+                    });
+                    document.querySelectorAll('[data-i18n-title]').forEach(el => {
+                        const key = el.getAttribute('data-i18n-title');
+                        if (langData[key]) {
+                            el.title = langData[key];
+                        }
+                    });
+                };
+
+                const loadLanguage = async (lang) => {
+                    try {
+                        langData = LANG_DATA[lang] || LANG_DATA['ru'];
+                        applyLanguage();
+                    } catch (e) {
+                        console.error("Failed to load language:", e);
+                        langData = LANG_DATA['ru'];
+                        applyLanguage();
+                    }
+                };
+
+                
+const loadingOverlay = document.getElementById('loading-overlay');
+function showLoading() {
+    btnPrimary.disabled = true;
+    loadingOverlay.classList.remove('hidden');
+}
+function hideLoading() {
+    btnPrimary.disabled = false;
+    loadingOverlay.classList.add('hidden');
+}
+async function waitForPidChange(oldPid, timeout = 5000) {
+    const start = Date.now();
+    while (Date.now() - start < timeout) {
+        const status = await run('pgrep -f "nfqws" >/dev/null && echo "Running" || echo "Stopped"');
+        if (oldPid === 'Stopped' ? status.trim() === 'Running' : status.trim() === 'Stopped') {
+            return status;
+        }
+        await new Promise(res => setTimeout(res, 500));
+    }
+    throw new Error('Status did not change');
+}
+
+// DOM Elements
+                const statusNfqws = document.getElementById('status-nfqws');
+                const statusDnscrypt = document.getElementById('status-dnscrypt');
+                const btnPrimary = document.getElementById('btn-primary');
+                const btnPrimaryIcon = document.getElementById('btn-primary-icon');
+                const btnPrimaryText = document.getElementById('btn-primary-text');
+                const strategySelect = document.getElementById('strategy-select');
+                const toggleDnscrypt = document.getElementById('toggle-dnscrypt');
+                const toggleRulesRecheck = document.getElementById('toggle-rules-recheck');
+                const toggleUpdateOnStart = document.getElementById('toggle-update-on-start');
+                const toggleCloakingUpdate = document.getElementById('toggle-cloaking-update');
+                const toggleBlockedNamesUpdate = document.getElementById('toggle-blocked-names-update');
+                const logsContentZapret = document.getElementById('logs-content-zapret');
+                const logsContentDnscrypt = document.getElementById('logs-content-dnscrypt');
+                const toggleTheme = document.getElementById('toggle-theme');
+                const btnCopyLogZapret = document.getElementById('btn-copy-log-zapret');
+                const btnCopyLogDnscrypt = document.getElementById('btn-copy-log-dnscrypt');
+                const languageSelect = document.getElementById('language-select');
+                const moduleVersionEl = document.getElementById('module-version');
+                const sevcatorLink = document.getElementById('sevcator-link');
+                
+                // Custom links inputs
+                const inputIpv4Ranges = document.getElementById('input-ipv4-ranges');
+                const inputIpv6Ranges = document.getElementById('input-ipv6-ranges');
+                const inputRknRegistry = document.getElementById('input-rkn-registry');
+                const inputCloakingRules = document.getElementById('input-cloaking-rules');
+                const inputBlockedNames = document.getElementById('input-blocked-names');
+                
+                let currentZapretLogText = '';
+                let currentDnscryptLogText = '';
+                
+                // File contents mapping
+                const fileContents = {
+                    'list/custom.txt': document.getElementById('file-list-custom'),
+                    'list/exclude.txt': document.getElementById('file-list-exclude'),
+                    'ipset/custom.txt': document.getElementById('file-ipset-custom'),
+                    'ipset/exclude.txt': document.getElementById('file-ipset-exclude'),
+                    'dnscrypt/custom-cloaking-rules.txt': document.getElementById('file-dnscrypt-custom')
+                };
+
+                // Track dirty state of file contents
+                const isDirty = {};
+                Object.keys(fileContents).forEach(path => {
+                    isDirty[path] = false;
+                });
+
+                // Helper functions
+                const updateStatusIndicator = (element, status) => {
+                    const textEl = element.querySelector('.text');
+                    if (status === 'Running') {
+                        element.classList.add('running');
+                        element.classList.remove('stopped');
+                        if (textEl) textEl.textContent = 'Running';
+                    } else {
+                        element.classList.add('stopped');
+                        element.classList.remove('running');
+                        if (textEl) textEl.textContent = 'Stopped';
+                    }
+                };
+
+                const run = async (command) => {
+                    const { errno, stdout, stderr } = await ksu_exec(command);
+                    if (errno !== 0) {
+                        console.error(`Command failed: ${command}\nStderr: ${stderr}`);
+                        throw new Error(stderr || `Command failed with code ${errno}`);
+                    }
+                    return stdout.trim();
+                };
+
+                const updateDnscryptDependentFields = (dnscryptEnabled) => {
+                    const dnscryptDependentElements = document.querySelectorAll('.dnscrypt-dependent');
+                    dnscryptDependentElements.forEach(element => {
+                        if (dnscryptEnabled) {
+                            element.classList.remove('disabled');
+                            const input = element.querySelector('.text-input');
+                            if (input) input.disabled = false;
+                            const toggle = element.querySelector('input[type="checkbox"]');
+                            if (toggle) toggle.disabled = false;
+                        } else {
+                            element.classList.add('disabled');
+                            const input = element.querySelector('.text-input');
+                            if (input) input.disabled = true;
+                            const toggle = element.querySelector('input[type="checkbox"]');
+                            if (toggle) toggle.disabled = true;
+                        }
+                    });
+                };
+
+                // Log rendering functions
+                const renderZapretLogs = (logText) => {
+                    if (!logText) {
+                        logsContentZapret.innerHTML = `<div class="logs-empty">${langData.logs_empty || 'Пусто'}</div>`;
+                        return;
+                    }
+                    const lines = logText.split('\n');
+                    let html = '';
+                    lines.forEach(line => {
+                        if (!line.trim()) return;
+
+                        const match = line.match(/^(\[.*?\])\s\[(INFO|WARN|ERROR|DEBUG)\]\s(.*)/);
+                        if (match) {
+                            const date = match[1];
+                            const level = match[2].toLowerCase();
+                            const message = match[3];
+                            const levelClass = (level === 'debug') ? 'log-debug' : `log-${level}`;
+                            html += `<div class="log-line"><span class="log-date">${date}</span><span class="${levelClass}">[${level.toUpperCase()}]</span> ${message}</div>`;
+                        } else {
+                            html += `<div class="log-line log-raw">${line}</div>`;
+                        }
+                    });
+                    logsContentZapret.innerHTML = html;
+                    logsContentZapret.parentElement.scrollTop = logsContentZapret.parentElement.scrollHeight;
+                };
+
+                const renderDnscryptLogs = (logText, dnscryptEnabled, dnscryptRunning) => {
+                    if (!dnscryptEnabled) {
+                        logsContentDnscrypt.innerHTML = `<div class="logs-disabled">${langData.logs_disabled || 'Отключен'}</div>`;
+                        return;
+                    }
+                    if (!logText) {
+                        logsContentDnscrypt.innerHTML = `<div class="logs-empty">${langData.logs_empty || 'Пусто'}</div>`;
+                        return;
+                    }
+                    const lines = logText.split('\n');
+                    let html = '';
+                    lines.forEach(line => {
+                        if (!line.trim()) return;
+
+                        const match = line.match(/^(\[.*?\])\s\[(INFO|WARN|ERROR|DEBUG)\]\s(.*)/);
+                        if (match) {
+                            const date = match[1];
+                            const level = match[2].toLowerCase();
+                            const message = match[3];
+                            const levelClass = (level === 'debug') ? 'log-debug' : `log-${level}`;
+                            html += `<div class="log-line"><span class="log-date">${date}</span><span class="${levelClass}">[${level.toUpperCase()}]</span> ${message}</div>`;
+                        } else {
+                            html += `<div class="log-line log-raw">${line}</div>`;
+                        }
+                    });
+                    logsContentDnscrypt.innerHTML = html;
+                    logsContentDnscrypt.parentElement.scrollTop = logsContentDnscrypt.parentElement.scrollHeight;
+                };
+
+                // Data fetching and UI updates
+                const fetchData = async () => {
+                    try {
+                        // Get service statuses
+                        const nfqwsStatus = await run('pgrep -f "nfqws" >/dev/null 2>&1 && echo "Running" || echo "Stopped"');
+                        const dnscryptStatus = await run('pgrep -f "dnscrypt-proxy" >/dev/null 2>&1 && echo "Running" || echo "Stopped"');
+                        
+                        // Get strategies and current strategy
+                        const strategiesRaw = await run(`ls ${MODPATH}/strategy | sed 's/\\.sh$//'`);
+                        const currentStrategy = await run(`cat ${MODPATH}/config/current-strategy 2>/dev/null || true`);
+                        
+                        // Get configuration settings
+                        const dnscryptEnabled = await run(`cat ${MODPATH}/config/dnscrypt-enable 2>/dev/null || true`);
+                        const rulesRecheck = await run(`cat ${MODPATH}/config/dnscrypt-rules-fix 2>/dev/null || true`);
+                        const updateOnStart = await run(`cat ${MODPATH}/config/update-on-start 2>/dev/null || true`);
+                        const cloakingUpdate = await run(`cat ${MODPATH}/config/dnscrypt-cloaking-rules-update 2>/dev/null || true`);
+                        const blockedNamesUpdate = await run(`cat ${MODPATH}/config/dnscrypt-blocked-names-update 2>/dev/null || true`);
+                        const ipv6Enable = await run(`cat ${MODPATH}/config/ipv6-enable 2>/dev/null || true`);
+                        const networkTweaks = await run(`cat ${MODPATH}/config/network-tweaks 2>/dev/null || true`);
+                        
+                        // Get custom links
+                        const ipv4RangesLink = await run(`cat ${MODPATH}/config/ipset-v4-link 2>/dev/null || true`);
+                        const ipv6RangesLink = await run(`cat ${MODPATH}/config/ipset-v6-link 2>/dev/null || true`);
+                        const rknRegistryLink = await run(`cat ${MODPATH}/config/reestr-link 2>/dev/null || true`);
+                        const cloakingRulesLink = await run(`cat ${MODPATH}/config/dnscrypt-cloaking-rules-link 2>/dev/null || true`);
+                        const blockedNamesLink = await run(`cat ${MODPATH}/config/dnscrypt-blocked-names-link 2>/dev/null || true`);
+                        
+                        // Get file contents
+                        const listCustom = await run(`cat ${MODPATH}/list/custom.txt 2>/dev/null || true`);
+                        const listExclude = await run(`cat ${MODPATH}/list/exclude.txt 2>/dev/null || true`);
+                        const ipsetCustom = await run(`cat ${MODPATH}/ipset/custom.txt 2>/dev/null || true`);
+                        const ipsetExclude = await run(`cat ${MODPATH}/ipset/exclude.txt 2>/dev/null || true`);
+                        const dnscryptCustom = await run(`cat ${MODPATH}/dnscrypt/custom-cloaking-rules.txt 2>/dev/null || true`);
+                        
+                        // Get logs
+                        const zapretLogs = await run(`cat ${MODPATH}/zapret/latest.log 2>/dev/null || true`);
+                        const dnscryptLogs = await run(`cat ${MODPATH}/dnscrypt/latest.log 2>/dev/null || true`);
+                        currentZapretLogText = zapretLogs;
+                        currentDnscryptLogText = dnscryptLogs;
+                        const moduleProp = await run(`cat ${MODPATH}/module.prop 2>/dev/null || true`);
+
+                        // Update UI - Service status and buttons
+                        const isRunning = nfqwsStatus === 'Running';
+                        updateStatusIndicator(statusNfqws, nfqwsStatus);
+                        updateStatusIndicator(statusDnscrypt, dnscryptStatus);
+                        
+                        // Update primary button based on service status
+                        if (isRunning) {
+                            btnPrimaryIcon.innerHTML = '<path d="M6 6h12v12H6z"></path>';
+                            btnPrimaryText.textContent = langData.btn_stop || 'Остановить';
+                            btnPrimary.dataset.action = 'stop';
+                        } else {
+                            btnPrimaryIcon.innerHTML = '<path d="M8 5v14l11-7z"></path>';
+                            btnPrimaryText.textContent = langData.btn_start || 'Запустить';
+                            btnPrimary.dataset.action = 'start';
+                        }
+
+                        // Update strategies dropdown
+                        strategySelect.innerHTML = '';
+                        strategiesRaw.split('\n').forEach(strategy => {
+                            if (strategy) {
+                                const option = document.createElement('option');
+                                option.value = strategy;
+                                option.textContent = strategy;
+                                if (strategy === currentStrategy) option.selected = true;
+                                strategySelect.appendChild(option);
+                            }
+                        });
+                        
+                        // Update toggles
+                        const isDnscryptChecked = dnscryptEnabled === '1';
+                        toggleDnscrypt.checked = isDnscryptChecked;
+                        toggleRulesRecheck.checked = rulesRecheck === '1';
+                        toggleUpdateOnStart.checked = updateOnStart === '1' || updateOnStart === '';
+                        toggleCloakingUpdate.checked = cloakingUpdate === '1';
+                        toggleBlockedNamesUpdate.checked = blockedNamesUpdate === '1';
+                        document.getElementById('toggle-ipv6').checked = ipv6Enable === '1';
+                        document.getElementById('toggle-network-tweaks').checked = networkTweaks === '1';
+                        
+                        // Update custom links
+                        inputIpv4Ranges.value = ipv4RangesLink;
+                        inputIpv6Ranges.value = ipv6RangesLink;
+                        inputRknRegistry.value = rknRegistryLink;
+                        inputCloakingRules.value = cloakingRulesLink;
+                        inputBlockedNames.value = blockedNamesLink;
+                        
+                        // Update DNSCrypt dependent fields
+                        updateDnscryptDependentFields(isDnscryptChecked);
+
+                        // Update file contents (only if not dirty)
+                        Object.keys(fileContents).forEach(path => {
+                            if (!isDirty[path]) {
+                                const textarea = fileContents[path];
+                                let content = '';
+                                switch (path) {
+                                    case 'list/custom.txt': content = listCustom; break;
+                                    case 'list/exclude.txt': content = listExclude; break;
+                                    case 'ipset/custom.txt': content = ipsetCustom; break;
+                                    case 'ipset/exclude.txt': content = ipsetExclude; break;
+                                    case 'dnscrypt/custom-cloaking-rules.txt': content = dnscryptCustom; break;
+                                }
+                                textarea.value = content;
+                            }
+                        });
+
+                        // Update line counters
+                        Object.keys(fileContents).forEach(path => {
+                            const textarea = fileContents[path];
+                            const counter = textarea.parentElement.querySelector('.line-counter');
+                            if (counter) {
+                                const count = countLines(textarea.value);
+                                counter.textContent = (langData.line_counter || 'Строк: {count}').replace('{count}', count);
+                            }
+                        });
+
+                        // Render logs
+                        renderZapretLogs(currentZapretLogText);
+                        renderDnscryptLogs(currentDnscryptLogText, isDnscryptChecked, dnscryptStatus === 'Running');
+
+                        // Update status card highlight
+                        const statusCard = statusNfqws.closest('.card');
+                        const isNfqwsRunning = nfqwsStatus === 'Running';
+                        const isDnscryptOk = !isDnscryptChecked || (isDnscryptChecked && dnscryptStatus === 'Running');
+
+                        if (isNfqwsRunning && isDnscryptOk) {
+                            statusCard.classList.add('all-running');
+                        } else {
+                            statusCard.classList.remove('all-running');
+                        }
+
+                        // Update version display
+                        const versionMatch = moduleProp.match(/^version=(.*)/m);
+                        if (versionMatch) {
+                            moduleVersionEl.textContent = `v${versionMatch[1]}`;
+                        }
+
+                    } catch (e) {
+                        console.error(`Ошибка загрузки данных: ${e.message}`);
+                    }
+                };
+
+                // Event Listeners - Service Control
+                
+btnPrimary.addEventListener('click', async () => {
+    showLoading();
+    try {
+        const action = btnPrimary.dataset.action;
+        if (action === 'start') {
+            await run(`sh ${MODPATH}/service.sh`);
+            await new Promise(res => setTimeout(res, 5000));
+            const status = await run('pgrep -f "nfqws" >/dev/null && echo "Running" || echo "Stopped"');
+            if (status.trim() !== 'Running') console.error('nfqws did not start');
+        } else {
+            await run(`sh ${MODPATH}/uninstall.sh`);
+            await new Promise(res => setTimeout(res, 5000));
+            const status = await run('pgrep -f "nfqws" >/dev/null && echo "Running" || echo "Stopped"');
+            if (status.trim() !== 'Stopped') console.error('nfqws did not stop');
+        }
+        await fetchData();
+    } finally {
+        hideLoading();
+    }
+});
+
+
+                // Strategy selection
+                strategySelect.addEventListener('change', async (e) => {
+                    await run(`echo '${e.target.value}' > ${MODPATH}/config/current-strategy`);
+                });
+
+                // Toggle setup helper
+                const setupToggle = (element, configName, callback) => {
+                    element.addEventListener('change', async () => {
+                        const value = element.checked ? '1' : '0';
+                        await run(`echo '${value}' > ${MODPATH}/config/${configName}`);
+                        if (callback) callback();
+                    });
+                };
+                
+                // Setup all toggles
+                setupToggle(toggleDnscrypt, 'dnscrypt-enable', () => {
+                    updateDnscryptDependentFields(toggleDnscrypt.checked);
+                });
+                setupToggle(toggleRulesRecheck, 'dnscrypt-rules-fix');
+                setupToggle(toggleUpdateOnStart, 'update-on-start');
+                setupToggle(toggleCloakingUpdate, 'dnscrypt-cloaking-rules-update');
+                setupToggle(toggleBlockedNamesUpdate, 'dnscrypt-blocked-names-update');
+                setupToggle(document.getElementById('toggle-ipv6'), 'ipv6-enable');
+                setupToggle(document.getElementById('toggle-network-tweaks'), 'network-tweaks');
+
+                // Custom links setup helper
+                const setupCustomLinkInput = (input, configName) => {
+                    input.addEventListener('blur', async () => {
+                        const value = input.value.trim();
+                        if (value === '') {
+                            // Remove config file if input is empty
+                            await run(`rm -f ${MODPATH}/config/${configName}`);
+                        } else {
+                            // Save URL to config file
+                            await run(`echo '${value}' > ${MODPATH}/config/${configName}`);
+                        }
+                    });
+                };
+
+                // Setup custom links
+                setupCustomLinkInput(inputIpv4Ranges, 'custom-ipv4-ranges-url');
+                setupCustomLinkInput(inputIpv6Ranges, 'custom-ipv6-ranges-url');
+                setupCustomLinkInput(inputRknRegistry, 'custom-rkn-registry-url');
+                setupCustomLinkInput(inputCloakingRules, 'custom-cloaking-rules-url');
+                setupCustomLinkInput(inputBlockedNames, 'custom-blocked-names-url');
+
+                // File save buttons
+                document.querySelectorAll('.btn-save').forEach(button => {
+                    button.addEventListener('click', async () => {
+                        const path = button.dataset.path;
+                        const content = fileContents[path].value.replace(/'/g, "'\\''");
+                        await run(`echo '${content}' > ${MODPATH}/${path}`);
+                        isDirty[path] = false;
+                    });
+                });
+
+                // File content change tracking
+                Object.keys(fileContents).forEach(path => {
+                    const textarea = fileContents[path];
+                    textarea.addEventListener('input', () => {
+                        isDirty[path] = true;
+                        const counter = textarea.parentElement.querySelector('.line-counter');
+                        if (counter) {
+                            const count = countLines(textarea.value);
+                            counter.textContent = (langData.line_counter || 'Строк: {count}').replace('{count}', count);
+                        }
+                    });
+                });
+
+                // List tab switching
+                const listButtons = document.querySelectorAll('.list-btn');
+                const tabContents = document.querySelectorAll('.tab-content');
+
+                listButtons.forEach(button => {
+                    button.addEventListener('click', () => {
+                        listButtons.forEach(btn => btn.classList.remove('active'));
+                        button.classList.add('active');
+                        const targetTabId = button.dataset.tab;
+                        const target = document.getElementById(targetTabId);
+                        tabContents.forEach(content => content.classList.remove('active'));
+                        if (target) {
+                            target.classList.add('active');
+                        }
+                    });
+                });
+
+                // Button visual feedback
+                const allButtons = document.querySelectorAll('.btn, .list-btn');
+                allButtons.forEach(button => {
+                    button.addEventListener('click', () => {
+                        if (button.disabled) return;
+                        button.classList.add('active-feedback');
+                        setTimeout(() => {
+                            button.classList.remove('active-feedback');
+                        }, 300);
+                    });
+                });
+
+                // Clear buttons
+                document.querySelectorAll('.btn-clear').forEach(button => {
+                    button.addEventListener('click', () => {
+                        const targetId = button.dataset.target;
+                        const textarea = document.getElementById(targetId);
+                        if (textarea) {
+                            textarea.value = '';
+                            textarea.dispatchEvent(new Event('input'));
+                        }
+                    });
+                });
+
+                // Page navigation
+                const tabButtons = document.querySelectorAll('.tab-btn');
+                const pages = document.querySelectorAll('.page');
+
+                tabButtons.forEach(button => {
+                    button.addEventListener('click', () => {
+                        tabButtons.forEach(btn => btn.classList.remove('active'));
+                        pages.forEach(page => page.classList.remove('active'));
+
+                        button.classList.add('active');
+                        const targetPageId = button.dataset.page;
+                        const targetPage = document.getElementById(targetPageId);
+                        if (targetPage) {
+                            targetPage.classList.add('active');
+                        }
+                    });
+                });
+
+                // Theme management
+                const applyTheme = (theme) => {
+                    if (theme === 'light') {
+                        document.body.classList.add('light-theme');
+                        toggleTheme.checked = false;
+                    } else {
+                        document.body.classList.remove('light-theme');
+                        toggleTheme.checked = true;
+                    }
+                };
+
+                const savedTheme = localStorage.getItem('zapret_theme') || 'dark';
+                applyTheme(savedTheme);
+
+                toggleTheme.addEventListener('change', () => {
+                    const newTheme = toggleTheme.checked ? 'dark' : 'light';
+                    localStorage.setItem('zapret_theme', newTheme);
+                    applyTheme(newTheme);
+                });
+
+                // Copy log functionality
+                btnCopyLogZapret.addEventListener('click', () => {
+                    if (navigator.clipboard) {
+                        navigator.clipboard.writeText(currentZapretLogText)
+                            .then(() => console.log('Zapret log copied to clipboard'))
+                            .catch(err => console.error('Copy error:', err));
+                    } else {
+                        console.error('Clipboard API not supported');
+                    }
+                });
+
+                btnCopyLogDnscrypt.addEventListener('click', () => {
+                    if (navigator.clipboard) {
+                        navigator.clipboard.writeText(currentDnscryptLogText)
+                            .then(() => console.log('DNSCrypt log copied to clipboard'))
+                            .catch(err => console.error('Copy error:', err));
+                    } else {
+                        console.error('Clipboard API not supported');
+                    }
+                });
+
+                async function fileExists(path) {
+                    try {
+                        const res = await fetch(path, { method: 'HEAD' });
+                        return res.ok;
+                    } catch (e) {
+                        return false;
+                    }
+                }
+                
+                let hasPng = await fileExists('fumo.png');
+                let hasMp3 = await fileExists('fumo.mp3');
+
+                // Fumo Easter Egg
+                sevcatorLink.addEventListener('click', (e) => {
+                    if (!hasPng || !hasMp3) {
+                        return;
+                    }
+                    
+                    e.preventDefault();
+                    
+                    // Create fumo image
+                    const fumo = document.createElement('img');
+                    fumo.src = 'fumo.png';
+                    fumo.className = 'fumo';
+                    
+                    // Random position across entire viewport including toolbars
+                    const randomSize = 50 + Math.random() * 100;
+                    const randomX = Math.random() * (window.innerWidth - randomSize);
+                    const randomY = Math.random() * (window.innerHeight - randomSize);
+                    
+                    fumo.style.left = Math.max(0, randomX) + 'px';
+                    fumo.style.top = Math.max(0, randomY) + 'px';
+                    fumo.style.width = randomSize + 'px';
+                    fumo.style.height = 'auto';
+                    
+                    document.body.appendChild(fumo);
+                    
+                    // Play sound
+                    try {
+                        const audio = new Audio('fumo.mp3');
+                        audio.volume = 0.5;
+                        audio.play().catch(e => console.log('Could not play fumo sound:', e));
+                    } catch (e) {
+                        console.log('Could not create fumo audio:', e);
+                    }
+                    
+                    // Remove after 5 seconds with fade out
+                    setTimeout(() => {
+                        fumo.classList.add('fade-out');
+                        setTimeout(() => {
+                            if (fumo.parentNode) {
+                                fumo.parentNode.removeChild(fumo);
+                            }
+                        }, 1000);
+                    }, 4000);
+                });
+
+                // Language management
+                const savedLang = localStorage.getItem('zapret_lang') || 'ru';
+                languageSelect.value = savedLang;
+                await loadLanguage(savedLang);
+
+                languageSelect.addEventListener('change', async (e) => {
+                    const newLang = e.target.value;
+                    localStorage.setItem('zapret_lang', newLang);
+                    await loadLanguage(newLang);
+                    fetchData();
+                });
+
+                // Initialize application
+                showLoading();
+                await fetchData();
+                hideLoading();
+                setInterval(fetchData, 10000); // Refresh every 10 seconds
+            });
+        }
+  </script>
+</body>
+</html>
