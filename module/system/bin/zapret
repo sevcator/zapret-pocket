@@ -10,50 +10,45 @@ UPDATEONSTART=$(cat "$MODPATH/config/update-on-start" 2>/dev/null || echo "1")
 CUSTOMLINKIPSETV4=$(cat "$MODPATH/config/ipset-v4-link" 2>/dev/null || echo "https://raw.githubusercontent.com/sevcator/zapret-lists/refs/heads/main/ipset-v4.txt")
 CUSTOMLINKIPSETV6=$(cat "$MODPATH/config/ipset-v6-link" 2>/dev/null || echo "https://raw.githubusercontent.com/sevcator/zapret-lists/refs/heads/main/ipset-v6.txt")
 CUSTOMLINKREESTR=$(cat "$MODPATH/config/reestr-link" 2>/dev/null || echo "https://raw.githubusercontent.com/sevcator/zapret-lists/refs/heads/main/reestr_filtered.txt")
+IPV6ENABLE=$(cat "$MODPATH/config/ipv6-enable" 2>/dev/null || echo "0")
+NETWORKTWEAKS=$(cat "$MODPATH/config/network-tweaks" 2>/dev/null || echo "0")
 
 command_info() {
     echo "--- Zapret Module for Magisk ---"
     echo "! Current strategy: $CURRENTSTRATEGY"
-    if [ -f "$MODPATH/config/update-on-start" ]; then
-        if [ "$UPDATEONSTART" = "1" ]; then
-            echo "! Update on start enabled"
-        else
-            echo "! Update on start disabled"
-        fi
+    if [ "$UPDATEONSTART" = "1" ]; then
+        echo "! Update on start enabled"
     else
-        echo "! Update on start is not set up, default value: $UPDATEONSTART"
+        echo "! Update on start disabled"
     fi
-    if [ -f "$MODPATH/config/dnscrypt-cloaking-rules-update" ]; then
-        if [ "$CLOAKINGUPDATE" = "1" ]; then
-            echo "! DNSCrypt cloaking rules auto-update enabled"
-        else
-            echo "! DNSCrypt cloaking rules auto-update disabled"
-        fi
+    if [ "$CLOAKINGUPDATE" = "1" ]; then
+        echo "! DNSCrypt cloaking rules auto-update enabled"
     else
-        echo "! DNSCrypt cloaking rules auto-update is not set up, default value: $CLOAKINGUPDATE"
+        echo "! DNSCrypt cloaking rules auto-update disabled"
     fi
-    if [ -f "$MODPATH/config/dnscrypt-blocked-names-update" ]; then
-        if [ "$BLOCKEDUPDATE" = "1" ]; then
-            echo "! DNSCrypt blocked names auto-update enabled"
-        else
-            echo "! DNSCrypt blocked names auto-update disabled"
-        fi
+    if [ "$IPV6ENABLE" = "1" ]; then
+        echo "! IPv6 enabled"
     else
-        echo "! DNSCrypt blocked names auto-update is not set up, default value: $BLOCKEDUPDATE"
+        echo "! IPv6 disabled"
+    fi
+    if [ "$NETWORKTWEAKS" = "1" ]; then
+        echo "! Network tweaks enabled"
+    else
+        echo "! Network tweaks disabled"
     fi
     echo "------ Available commands ------"
     echo "  * Service control"
-    echo "  zapret start    - Start the zapret service"
-    echo "  zapret stop     - Stop the zapret service"
-    echo "  zapret restart  - Restart the zapret service"
-    echo "  zapret toggle   - Toggle the zapret service"
-    echo "  zapret setup    - Configure the zapret service"
+    echo "  start    - Start the zapret service"
+    echo "  stop     - Stop the zapret service"
+    echo "  restart  - Restart the zapret service"
+    echo "  toggle   - Toggle the zapret service"
+    echo "  setup    - Configure the zapret service"
     echo "  * Hostlists, ipsets and other"
-    echo "  zapret update   - Update the module files"
-    echo "  zapret search   - Search the domain/ip/cidr"
-    echo "  zapret custom   - Add/remove custom list/ipset"
-    echo "  zapret cloaking  - Add/remove custom hosts"
-    echo "  zapret exclude  - Add/remove exclude list/ipset"
+    echo "  update   - Update the module files"
+    echo "  search   - Search the domain/ip/cidr"
+    echo "  custom   - Add/remove custom list/ipset"
+    echo "  cloaking  - Add/remove custom hosts"
+    echo "  exclude  - Add/remove exclude list/ipset"
     return 0
 }
 
@@ -107,6 +102,18 @@ setup() {
         y|yes) echo "- Enabled"; UPDATEONSTART="1" ;;
     esac
 
+    echo -n "- Enable IPv6? "
+    read response
+    case "$(echo "$response" | tr A-Z a-z)" in
+        y|yes) echo "- Enabled"; IPV6ENABLE="1" ;;
+    esac
+    
+    echo -n "- Enable Network Traces? "
+    read response
+    case "$(echo "$response" | tr A-Z a-z)" in
+        y|yes) echo "- Enabled"; NETWORKTWEAKS="1" ;;
+    esac
+    
     echo -n "- Enable DNSCrypt? "
     read response
     case "$(echo "$response" | tr A-Z a-z)" in
@@ -211,7 +218,9 @@ setup() {
     echo "$CUSTOMLINKIPSETV4" > "$MODPATH/config/ipset-v4-link"
     echo "$CUSTOMLINKIPSETV6" > "$MODPATH/config/ipset-v6-link"
     echo "$CUSTOMLINKREESTR" > "$MODPATH/config/reestr-link"
-
+    echo "$IPV6ENABLE" > "$MODPATH/config/ipv6-enable"
+    echo "$NETWORKTWEAKS" > "$MODPATH/config/network-tweaks"
+    
     echo "- Done! Changes will apply on next start"
     return 0
 }
@@ -262,16 +271,15 @@ custom() {
     LIST_CUSTOM="$MODPATH/list/custom.txt"
     IPSET_CUSTOM="$MODPATH/ipset/custom.txt"
 
-    mkdir -p "$(dirname "$LIST_CUSTOM")"
-    touch "$LIST_CUSTOM"
-    mkdir -p "$(dirname "$IPSET_CUSTOM")"
-    touch "$IPSET_CUSTOM"
-    
-    if grep -Fq "$entry" "$LIST_CUSTOM" 2>/dev/null || grep -Fq "$entry" "$IPSET_CUSTOM" 2>/dev/null; then
+    mkdir -p "$(dirname "$LIST_CUSTOM")" "$(dirname "$IPSET_CUSTOM")"
+    touch "$LIST_CUSTOM" "$IPSET_CUSTOM"
+
+    if grep -Fxq "$entry" "$LIST_CUSTOM" 2>/dev/null || grep -Fxq "$entry" "$IPSET_CUSTOM" 2>/dev/null; then
         for file in "$LIST_CUSTOM" "$IPSET_CUSTOM"; do
             [ -f "$file" ] || continue
-            sed -i "s|$entry||g" "$file"
-            sed -i '/^[[:space:]]*$/d' "$file"
+            if grep -Fxq "$entry" "$file" 2>/dev/null; then
+                grep -Fvx "$entry" "$file" > "$file.tmp" && mv "$file.tmp" "$file"
+            fi
         done
         echo "- Removed"
         return 0
@@ -283,9 +291,9 @@ custom() {
     fi
 
     if echo "$entry" | grep -q "/"; then
-        echo "$entry" >> "$IPSET_CUSTOM"
+        printf '%s\n' "$entry" >> "$IPSET_CUSTOM"
     else
-        echo "$entry" >> "$LIST_CUSTOM"
+        printf '%s\n' "$entry" >> "$LIST_CUSTOM"
     fi
 
     echo "- Added"
@@ -299,25 +307,24 @@ exclude() {
     LIST_EXCLUDE="$MODPATH/list/exclude.txt"
     IPSET_EXCLUDE="$MODPATH/ipset/exclude.txt"
 
-    mkdir -p "$(dirname "$LIST_EXCLUDE")"
-    touch "$LIST_EXCLUDE"
-    mkdir -p "$(dirname "$IPSET_EXCLUDE")"
-    touch "$IPSET_EXCLUDE"
+    mkdir -p "$(dirname "$LIST_EXCLUDE")" "$(dirname "$IPSET_EXCLUDE")"
+    touch "$LIST_EXCLUDE" "$IPSET_EXCLUDE"
 
-    if grep -Fq "$entry" "$LIST_EXCLUDE" 2>/dev/null || grep -Fq "$entry" "$IPSET_EXCLUDE" 2>/dev/null; then
+    if grep -Fxq "$entry" "$LIST_EXCLUDE" 2>/dev/null || grep -Fxq "$entry" "$IPSET_EXCLUDE" 2>/dev/null; then
         for file in "$LIST_EXCLUDE" "$IPSET_EXCLUDE"; do
             [ -f "$file" ] || continue
-            sed -i "s|$entry||g" "$file"
-            sed -i '/^[[:space:]]*$/d' "$file"
+            if grep -Fxq "$entry" "$file" 2>/dev/null; then
+                grep -Fvx "$entry" "$file" > "$file.tmp" && mv "$file.tmp" "$file"
+            fi
         done
         echo "- Removed"
         return 0
     fi
 
     if echo "$entry" | grep -q "/"; then
-        echo "$entry" >> "$IPSET_EXCLUDE"
+        printf '%s\n' "$entry" >> "$IPSET_EXCLUDE"
     else
-        echo "$entry" >> "$LIST_EXCLUDE"
+        printf '%s\n' "$entry" >> "$LIST_EXCLUDE"
     fi
 
     echo "- Added"
@@ -332,7 +339,7 @@ cloaking() {
     GLOBAL_CLOAKING_FILE="$MODPATH/dnscrypt/cloaking-rules.txt"
 
     if [ -z "$val1" ]; then
-        echo "! Usage: zapret cloaking <domain> [replacement]"
+        echo "! Usage: cloaking <domain> [replacement]"
         return 1
     fi
 
@@ -340,11 +347,8 @@ cloaking() {
     touch "$CLOAKING_FILE"
 
     if [ -z "$val2" ]; then
-        matched_lines=$(grep -E "^($val1|\S+\.$val1)\s+" "$CLOAKING_FILE")
-        if [ -n "$matched_lines" ]; then
-            echo "$matched_lines" | while read -r line; do
-                sed -i "\|^$line\$|d" "$CLOAKING_FILE"
-            done
+        if grep -E -q "^($val1|\S+\.$val1)\s+" "$CLOAKING_FILE"; then
+            sed -i -E "\|^($val1|\S+\.$val1)\s+.*$|d" "$CLOAKING_FILE"
             echo "- Removed"
         else
             echo "! Nothing to remove"
@@ -355,16 +359,15 @@ cloaking() {
     line="$val1 $val2"
 
     if grep -Fxq "$line" "$CLOAKING_FILE"; then
-        sed -i "\|^$line\$|d" "$CLOAKING_FILE"
+        grep -Fxv "$line" "$CLOAKING_FILE" > "$CLOAKING_FILE.tmp" && mv "$CLOAKING_FILE.tmp" "$CLOAKING_FILE"
         echo "- Removed"
         return 0
     fi
 
-    if grep -Eq "^$val1\s+" "$CLOAKING_FILE"; then
+    if grep -Eq "^$val1\s+" "$CLOAKING_FILE" || grep -Eq "^\S+\.$val1\s+" "$CLOAKING_FILE"; then
         echo "! Already added"
         return 1
     fi
-
     if [ -f "$GLOBAL_CLOAKING_FILE" ]; then
         if grep -Eq "^$val1\s+" "$GLOBAL_CLOAKING_FILE" || grep -Eq "^\S+\.$val1\s+" "$GLOBAL_CLOAKING_FILE"; then
             echo "! Domain or subdomain already exists. Aborted"
@@ -372,7 +375,7 @@ cloaking() {
         fi
     fi
 
-    echo "$line" >> "$CLOAKING_FILE"
+    printf '%s\n' "$line" >> "$CLOAKING_FILE"
     echo "- Added"
     return 0
 }
