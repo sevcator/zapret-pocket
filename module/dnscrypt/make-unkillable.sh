@@ -1,8 +1,6 @@
 #!/system/bin/sh
 sleep 9
-SCRIPT_PIDS=$(pgrep -f "dnscrypt.sh")
-DNSCRYPT_PIDS=$(pgrep dnscrypt-proxy)
-ALL_PIDS="$SCRIPT_PIDS $DNSCRYPT_PIDS"
+ALL_PIDS=$(pgrep -f "dnscrypt")
 if [ -z "$ALL_PIDS" ]; then
     exit
 fi

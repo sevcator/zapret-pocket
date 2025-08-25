@@ -41,3 +41,28 @@
 172.30.*
 172.31.*
 192.168.*
+
+# https://github.com/LeonMskRu/arti_windows/blob/main/TEMP/DHT.txt
+134.195.198.230
+62.210.95.121
+62.210.91.222
+51.159.125.31
+
+# https://github.com/LeonMskRu/arti_windows/blob/main/TEMP/DHT.txt.ipv6
+2000::/3
+
+# https://github.com/LeonMskRu/arti_windows/blob/main/TEMP/tixati.txt
+31.200.225.0/24
+31.200.249.0/24
+31.200.224.0/20
+31.200.248.0/21
+212.127.0.0/19
+100.64.0.0/10
+
+# https://github.com/LeonMskRu/arti_windows/blob/main/TEMP/tixati.txt.ipv6
+2a1:620:15:c::/64
+5ef2::/16
+fc00::/7
+fd00::/8
+fe80::/10
+ff00::/8
