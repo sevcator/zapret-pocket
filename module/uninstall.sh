@@ -26,10 +26,8 @@ for pid in $PIDS_FROM_DIR; do
     fi
 done
 for iface in all default lo; do
-    resetprop net.ipv6.conf.all.disable_ipv6 0
-    resetprop net.ipv6.conf.default.disable_ipv6 0
-    resetprop net.ipv6.conf.all.accept_redirects 1
-    resetprop net.ipv6.conf.default.accept_redirects 1
+    resetprop net.ipv6.conf.$iface.disable_ipv6 0
+    resetprop net.ipv6.conf.$iface.accept_redirects 1
 done
 sysctl net.netfilter.nf_conntrack_tcp_be_liberal=0 > /dev/null 2>&1
 sysctl net.netfilter.nf_conntrack_checksum=1 > /dev/null 2>&1
