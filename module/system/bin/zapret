@@ -15,7 +15,7 @@ NETWORKTWEAKS=$(cat "$MODPATH/config/network-tweaks" 2>/dev/null || echo "0")
 BYPASSCALLS=$(cat "$MODPATH/config/bypass-calls" 2>/dev/null || echo "0")
 
 command_info() {
-    echo "--- Zapret Module for Magisk ---"
+    echo "--- Zapret Pocket ---"
     echo "! Current strategy: $CURRENTSTRATEGY"
     if [ "$UPDATEONSTART" = "1" ]; then
         echo "! Update on start enabled"

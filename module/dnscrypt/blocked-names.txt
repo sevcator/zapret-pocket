@@ -2,7 +2,7 @@
 #        Blocklist        #
 ###########################
 
-# For https://github.com/sevcator/zapret-magisk <3
+# For https://github.com/sevcator/zapret-pocket <3
 
 ## Rules for name-based query blocking, one per line
 ##

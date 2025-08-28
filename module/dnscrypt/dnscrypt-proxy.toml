@@ -1,5 +1,5 @@
 ########################################################
-#         For github.com/sevcator/zapret-magisk        #
+#         For github.com/sevcator/zapret-pocket       #
 ########################################################
 
 listen_addresses = ['127.0.0.1:5253']
