@@ -204,27 +204,27 @@
         .settings {
             display: flex;
             flex-direction: column;
-            gap: 6px;
+            gap: 4px;
         }
         .setting-item {
             display: flex;
-            justify-content: space-between;
             align-items: center;
+            gap: 8px;
             min-height: 36px;
         }
         .setting-item > label {
             flex-shrink: 0;
-            margin-right: 8px;
             font-weight: 500;
         }
         .setting-item.stacked {
             flex-direction: column;
             align-items: stretch;
             justify-content: flex-start;
+            gap: 4px;
         }
         .setting-item.stacked > label {
             margin-right: 0;
-            margin-bottom: 4px;
+            margin-bottom: 0;
         }
         select {
             background-color: var(--bg-input);
