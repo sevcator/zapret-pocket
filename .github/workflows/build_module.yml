@@ -1,4 +1,4 @@
-name: Build Zapret Module
+name: Build Zapret Pocket
 run-name: ${{ startsWith(github.ref, 'refs/tags/') && format('Release {0}', github.ref_name) || null }}
 
 on:
@@ -105,7 +105,7 @@ jobs:
           path: dnscrypt-proxy/dnscrypt-proxy/binaries/*
 
   build-module:
-    name: Magisk Module
+    name: Zapret Pocket Module
     runs-on: ubuntu-latest
     needs: [build-zapret, build-dnscrypt]
     steps:
@@ -158,7 +158,7 @@ jobs:
           name: dnscrypt-proxy
           path: module/dnscrypt
 
-      - name: Build Magisk Module
+      - name: Build Module
         run: |
           version=${{ github.ref_name }}
           version_code=$(echo "${version}" | sed 's/[^0-9]//g')
@@ -188,7 +188,7 @@ jobs:
           echo "updateJson=https://raw.githubusercontent.com/${{ github.repository }}/refs/heads/main/update.json" >> module.prop
 
           cd ..
-          7z a zapret-Magisk.zip ./module/*
+          7z a zapret-pocket.zip ./module/*
 
       - name: Set up Git
         run: |
@@ -200,7 +200,7 @@ jobs:
           echo '{
             "version": "${{ env.version }}",
             "versionCode": "${{ env.versionCode }}",
-            "zipUrl": "https://github.com/${{ github.repository }}/releases/download/${{ env.version }}/zapret-Magisk.zip",
+            "zipUrl": "https://github.com/${{ github.repository }}/releases/download/${{ env.version }}/zapret-pocket.zip",
             "changelog": "https://raw.githubusercontent.com/${{ github.repository }}/main/CHANGELOG.md"
           }' > update.json
           git add update.json
@@ -214,13 +214,13 @@ jobs:
 
       - name: Calculate SHA-256 checksum
         id: sha256
-        run: echo "SHA256=$(sha256sum zapret-Magisk.zip | awk '{ print $1 }')" >> $GITHUB_ENV
+        run: echo "SHA256=$(sha256sum zapret-pocket.zip | awk '{ print $1 }')" >> $GITHUB_ENV
           
       - name: Upload Module Zip
         uses: actions/upload-artifact@v4
         with:
-          name: zapret-Magisk
-          path: zapret-Magisk.zip
+          name: zapret-pocket
+          path: zapret-pocket.zip
           if-no-files-found: error
 
       - name: Upload to Release
@@ -231,12 +231,12 @@ jobs:
           fail_on_unmatched_files: true
           draft: false
           files: |
-            zapret-Magisk.zip
+            zapret-pocket.zip
 
       - name: Send to Telegram
         run: |
           curl -X POST \
-            -F document=@"zapret-Magisk.zip" \
+            -F document=@"zapret-pocket.zip" \
             -F chat_id="${TELEGRAM_CHAT_ID}" \
             -F caption="$(echo -e "🔔 <b>New release:</b> <a href=\"https://github.com/$GITHUB_REPOSITORY/releases/tag/$VERSION\">$VERSION</a>\n🔑 <b>SHA256:</b> $SHA256")" \
             -F parse_mode=HTML \

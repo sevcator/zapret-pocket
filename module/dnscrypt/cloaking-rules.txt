@@ -2,7 +2,7 @@
 #        Cloaking rules        #
 ################################
 
-# For https://github.com/sevcator/zapret-magisk <3
+# For https://github.com/sevcator/zapret-pocket <3
 
 # Multiple IP entries for the same name are supported.
 # In the following example, the same name maps both to IPv4 and IPv6 addresses:

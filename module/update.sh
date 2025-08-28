@@ -16,8 +16,8 @@ CUSTOMLINKREESTR=$(cat "$MODPATH/config/reestr-link" 2>/dev/null || echo "https:
 
 PREDEFINED_LIST_FILES="reestr.txt default.txt google.txt"
 PREDEFINED_IPSET_FILES="ipset-v4.txt ipset-v6.txt"
-ZAPRETLISTSDEFAULTLINK="https://raw.githubusercontent.com/sevcator/zapret-magisk/refs/heads/main/module/list/"
-ZAPRETIPSETSDEFAULTLINK="https://raw.githubusercontent.com/sevcator/zapret-magisk/refs/heads/main/module/ipset/"
+ZAPRETLISTSDEFAULTLINK="https://raw.githubusercontent.com/sevcator/zapret-pocket/refs/heads/main/module/list/"
+ZAPRETIPSETSDEFAULTLINK="https://raw.githubusercontent.com/sevcator/zapret-pocket/refs/heads/main/module/ipset/"
 IGNORE_FILES="custom.txt exclude.txt"
 get_overwrite_url() {
     file="$1"
