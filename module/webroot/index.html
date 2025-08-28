@@ -806,6 +806,11 @@
     bottom: 0;
     background: rgba(255, 0, 0, 0.4);
     z-index: 10001;
+    opacity: 0;
+    transition: opacity 1s ease;
+}
+#error-overlay.visible {
+    opacity: 1;
 }
 #error-overlay.hidden {
     display: none;
@@ -1056,16 +1061,16 @@
       </h2>
 <div class="settings">
 <div class="setting-item">
-<button class="btn btn-full" id="btn-import-strategy" data-i18n="import_strategy">
-         Импорт стратегии
-        </button>
-</div>
-<div class="setting-item">
 <label data-i18n="active_strategy">
          Активная стратегия
         </label>
 <select id="strategy-select">
 </select>
+</div>
+<div class="setting-item">
+<button class="btn btn-full" id="btn-import-strategy" data-i18n="import_strategy">
+         Импорт стратегии
+        </button>
 </div>
 <div class="setting-item">
 <label data-i18n="bypass_calls">
@@ -1806,7 +1811,11 @@ btnPrimary.addEventListener('click', async () => {
 
                 const flashError = () => {
                     errorOverlay.classList.remove('hidden');
-                    setTimeout(() => errorOverlay.classList.add('hidden'), 1000);
+                    errorOverlay.classList.add('visible');
+                    setTimeout(() => {
+                        errorOverlay.classList.remove('visible');
+                        setTimeout(() => errorOverlay.classList.add('hidden'), 1000);
+                    }, 50);
                 };
 
                 btnImportStrategy.addEventListener('click', () => {
