@@ -4,9 +4,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
-<title>
-   zapret
-  </title>
+<title>zapret</title>
 <style>
    :root {
 
@@ -718,12 +716,6 @@
                 grid-template-columns: 1fr;
             }
 
-            .setting-item {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 8px;
-                min-height: auto;
-            }
 
             .setting-item select,
             .setting-item .text-input {
@@ -731,10 +723,6 @@
                 width: 100%;
             }
 
-            .setting-item label.switch {
-                align-self: flex-start;
-                margin-top: 0;
-            }
         }
 
 
@@ -864,9 +852,7 @@ body.light-theme #error-overlay {
 <div class="container">
 <section class="page active" id="page-home">
 <header>
-<h1 data-i18n="home_title">
-      zapret
-     </h1>
+<h1 data-i18n="home_title">zapret</h1>
 <div class="version-info">
 <span id="module-version">
        v...
@@ -875,9 +861,7 @@ body.light-theme #error-overlay {
 </header>
 <main>
 <div class="card">
-<h2 class="card-title" data-i18n="status_card_title">
-       Статус
-      </h2>
+<h2 class="card-title" data-i18n="status_card_title">Статус</h2>
 <div class="status-list">
 <div class="status-item">
 <span data-i18n="status_zapret">
@@ -906,9 +890,7 @@ body.light-theme #error-overlay {
 </div>
 </div>
 <div class="card">
-<h2 class="card-title" data-i18n="controls_card_title">
-       Управление
-      </h2>
+<h2 class="card-title" data-i18n="controls_card_title">Управление</h2>
 <div class="controls">
 <button class="btn" id="btn-primary">
 <svg fill="currentColor" id="btn-primary-icon" viewbox="0 0 24 24">
@@ -938,28 +920,16 @@ body.light-theme #error-overlay {
 </section>
 <section class="page" id="page-editor">
 <header>
-<h1 data-i18n="editor_title">
-      Редактор списков
-     </h1>
+<h1 data-i18n="editor_title">Редактор списков</h1>
 </header>
 <main>
 <div class="card">
 <div class="list-selector">
-<button class="list-btn active" data-i18n="list_custom" data-tab="tab-list-custom">
-        List Custom
-       </button>
-<button class="list-btn" data-i18n="list_exclude" data-tab="tab-list-exclude">
-        List Exclude
-       </button>
-<button class="list-btn" data-i18n="ipset_custom" data-tab="tab-ipset-custom">
-        IPSet Custom
-       </button>
-<button class="list-btn" data-i18n="ipset_exclude" data-tab="tab-ipset-exclude">
-        IPSet Exclude
-       </button>
-<button class="list-btn" data-i18n="dnscrypt_custom" data-tab="tab-dnscrypt-custom">
-        DNSCrypt Custom
-       </button>
+<button class="list-btn active" data-i18n="list_custom" data-tab="tab-list-custom">List Custom</button>
+<button class="list-btn" data-i18n="list_exclude" data-tab="tab-list-exclude">List Exclude</button>
+<button class="list-btn" data-i18n="ipset_custom" data-tab="tab-ipset-custom">IPSet Custom</button>
+<button class="list-btn" data-i18n="ipset_exclude" data-tab="tab-ipset-exclude">IPSet Exclude</button>
+<button class="list-btn" data-i18n="dnscrypt_custom" data-tab="tab-dnscrypt-custom">DNSCrypt Custom</button>
 </div>
 <div class="tab-content-wrapper">
 <div class="tab-content active" id="tab-list-custom">
@@ -974,9 +944,7 @@ body.light-theme #error-overlay {
 </path>
 </svg>
 </button>
-<button class="btn btn-save" data-i18n="btn_save" data-path="list/custom.txt">
-          Сохранить
-         </button>
+<button class="btn btn-save" data-i18n="btn_save" data-path="list/custom.txt">Сохранить</button>
 </div>
 </div>
 <div class="tab-content" id="tab-list-exclude">
@@ -991,9 +959,7 @@ body.light-theme #error-overlay {
 </path>
 </svg>
 </button>
-<button class="btn btn-save" data-i18n="btn_save" data-path="list/exclude.txt">
-          Сохранить
-         </button>
+<button class="btn btn-save" data-i18n="btn_save" data-path="list/exclude.txt">Сохранить</button>
 </div>
 </div>
 <div class="tab-content" id="tab-ipset-custom">
@@ -1008,9 +974,7 @@ body.light-theme #error-overlay {
 </path>
 </svg>
 </button>
-<button class="btn btn-save" data-i18n="btn_save" data-path="ipset/custom.txt">
-          Сохранить
-         </button>
+<button class="btn btn-save" data-i18n="btn_save" data-path="ipset/custom.txt">Сохранить</button>
 </div>
 </div>
 <div class="tab-content" id="tab-ipset-exclude">
@@ -1025,9 +989,7 @@ body.light-theme #error-overlay {
 </path>
 </svg>
 </button>
-<button class="btn btn-save" data-i18n="btn_save" data-path="ipset/exclude.txt">
-          Сохранить
-         </button>
+<button class="btn btn-save" data-i18n="btn_save" data-path="ipset/exclude.txt">Сохранить</button>
 </div>
 </div>
 <div class="tab-content" id="tab-dnscrypt-custom">
@@ -1042,9 +1004,7 @@ body.light-theme #error-overlay {
 </path>
 </svg>
 </button>
-<button class="btn btn-save" data-i18n="btn_save" data-path="dnscrypt/custom-cloaking-rules.txt">
-          Сохранить
-         </button>
+<button class="btn btn-save" data-i18n="btn_save" data-path="dnscrypt/custom-cloaking-rules.txt">Сохранить</button>
 </div>
 </div>
 </div>
@@ -1053,22 +1013,18 @@ body.light-theme #error-overlay {
 </section>
 <section class="page" id="page-settings">
 <header>
-<h1 data-i18n="settings_title">
-      Настройки
-     </h1>
+<h1 data-i18n="settings_title">Настройки</h1>
 </header>
 <main>
 <div class="card">
-<h2 class="card-title" data-i18n="module_settings_title">
-       Параметры модуля
-      </h2>
+<h2 class="card-title" data-i18n="module_settings_title">Параметры модуля</h2>
 <div class="settings">
+<div class="setting-item">
+<button class="btn btn-full" id="btn-import-strategy" data-i18n="import_strategy">Импорт стратегии</button>
+</div>
 <div class="setting-item">
 <label data-i18n="active_strategy">Активная стратегия</label>
 <select id="strategy-select"></select>
-</div>
-<div class="setting-item">
-<button class="btn btn-full" id="btn-import-strategy" data-i18n="import_strategy">Импорт стратегии</button>
 </div>
 <div class="setting-item">
 <label data-i18n="bypass_calls">Включить обход звонков</label>
@@ -1079,9 +1035,7 @@ body.light-theme #error-overlay {
 </label>
 </div>
 <div class="setting-item">
-<label data-i18n="ipv6_enable">
-         Включить IPv6
-        </label>
+<label data-i18n="ipv6_enable">Включить IPv6</label>
 <label class="switch">
 <input id="toggle-ipv6" type="checkbox"/>
 <span class="slider">
@@ -1089,9 +1043,7 @@ body.light-theme #error-overlay {
 </label>
 </div>
 <div class="setting-item">
-<label data-i18n="network_tweaks">
-         Сетевые оптимизации
-        </label>
+<label data-i18n="network_tweaks">Сетевые оптимизации</label>
 <label class="switch">
 <input id="toggle-network-tweaks" type="checkbox"/>
 <span class="slider">
@@ -1099,9 +1051,7 @@ body.light-theme #error-overlay {
 </label>
 </div>
 <div class="setting-item dnscrypt-related">
-<label data-i18n="dnscrypt_proxy">
-         DNSCrypt Proxy
-        </label>
+<label data-i18n="dnscrypt_proxy">DNSCrypt Proxy</label>
 <label class="switch">
 <input id="toggle-dnscrypt" type="checkbox"/>
 <span class="slider">
@@ -1109,9 +1059,7 @@ body.light-theme #error-overlay {
 </label>
 </div>
 <div class="setting-item dnscrypt-related dnscrypt-dependent">
-<label data-i18n="dnscrypt_rules_refresh">
-         Обновление правил
-        </label>
+<label data-i18n="dnscrypt_rules_refresh">Обновление правил</label>
 <label class="switch">
 <input id="toggle-rules-recheck" type="checkbox"/>
 <span class="slider">
@@ -1119,9 +1067,7 @@ body.light-theme #error-overlay {
 </label>
 </div>
 <div class="setting-item">
-<label data-i18n="update_on_start">
-         Обновление при запуске
-        </label>
+<label data-i18n="update_on_start">Обновление при запуске</label>
 <label class="switch">
 <input id="toggle-update-on-start" type="checkbox"/>
 <span class="slider">
@@ -1129,9 +1075,7 @@ body.light-theme #error-overlay {
 </label>
 </div>
 <div class="setting-item dnscrypt-related dnscrypt-dependent">
-<label data-i18n="update_cloaking">
-         Обновление Cloaking Rules
-        </label>
+<label data-i18n="update_cloaking">Обновление Cloaking Rules</label>
 <label class="switch">
 <input id="toggle-cloaking-update" type="checkbox"/>
 <span class="slider">
@@ -1139,9 +1083,7 @@ body.light-theme #error-overlay {
 </label>
 </div>
 <div class="setting-item dnscrypt-related dnscrypt-dependent">
-<label data-i18n="update_blocked_names">
-         Обновление доменов для блокировки
-        </label>
+<label data-i18n="update_blocked_names">Обновление доменов для блокировки</label>
 <label class="switch">
 <input id="toggle-blocked-names-update" type="checkbox"/>
 <span class="slider">
@@ -1149,54 +1091,36 @@ body.light-theme #error-overlay {
 </label>
 </div>
 </div>
-<h3 class="subsection-title" data-i18n="custom_links_title">
-       Свои ссылки
-      </h3>
+<h3 class="subsection-title" data-i18n="custom_links_title">Свои ссылки</h3>
 <div class="settings">
 <div class="setting-item">
-<label data-i18n="ipv4_ranges_link">
-         Ссылка на IPv4 диапазоны
-        </label>
+<label data-i18n="ipv4_ranges_link">Ссылка на IPv4 диапазоны</label>
 <input class="text-input" id="input-ipv4-ranges" placeholder="https://example.github.io/ipset-v4.txt" type="text"/>
 </div>
 <div class="setting-item">
-<label data-i18n="ipv6_ranges_link">
-         Ссылка на IPv6 диапазоны
-        </label>
+<label data-i18n="ipv6_ranges_link">Ссылка на IPv6 диапазоны</label>
 <input class="text-input" id="input-ipv6-ranges" placeholder="https://example.github.io/ipset-v6.txt" type="text"/>
 </div>
 <div class="setting-item">
-<label data-i18n="registry_link">
-         Ссылка на реестр
-        </label>
+<label data-i18n="registry_link">Ссылка на реестр</label>
 <input class="text-input" id="input-rkn-registry" placeholder="https://example.github.io/reestr.txt" type="text"/>
 </div>
 <div class="setting-item dnscrypt-related dnscrypt-dependent">
-<label data-i18n="cloaking_rules_link">
-         Ссылка на Cloaking Rules
-        </label>
+<label data-i18n="cloaking_rules_link">Ссылка на Cloaking Rules</label>
 <input class="text-input" id="input-cloaking-rules" placeholder="https://example.github.io/cloaking-rules.txt" type="text"/>
 </div>
 <div class="setting-item dnscrypt-related dnscrypt-dependent">
-<label data-i18n="blocked_names_link">
-         Ссылка на Blocked Names
-        </label>
+<label data-i18n="blocked_names_link">Ссылка на Blocked Names</label>
 <input class="text-input" id="input-blocked-names" placeholder="https://example.github.io/blocked-names.txt" type="text"/>
 </div>
 </div>
-<p class="note" data-i18n="note_restart">
-       После изменения настроек не забудьте перезапустить службу.
-      </p>
+<p class="note" data-i18n="note_restart">После изменения настроек не забудьте перезапустить службу.</p>
 </div>
 <div class="card">
-<h2 class="card-title" data-i18n="interface_settings_title">
-       Интерфейс
-      </h2>
+<h2 class="card-title" data-i18n="interface_settings_title">Интерфейс</h2>
 <div class="settings">
 <div class="setting-item">
-<label data-i18n="dark_theme">
-         Темная тема
-        </label>
+<label data-i18n="dark_theme">Темная тема</label>
 <label class="switch">
 <input id="toggle-theme" type="checkbox"/>
 <span class="slider">
@@ -1204,16 +1128,10 @@ body.light-theme #error-overlay {
 </label>
 </div>
 <div class="setting-item">
-<label data-i18n="language">
-         Язык
-        </label>
+<label data-i18n="language">Язык</label>
 <select id="language-select">
-<option value="ru">
-          Русский
-         </option>
-<option value="en">
-          English
-         </option>
+<option value="ru">Русский</option>
+<option value="en">English</option>
 </select>
 </div>
 </div>
@@ -1222,16 +1140,12 @@ body.light-theme #error-overlay {
 </section>
 <section class="page" id="page-logs">
 <header>
-<h1 data-i18n="logs_title">
-      Логи
-     </h1>
+<h1 data-i18n="logs_title">Логи</h1>
 </header>
 <main>
 <div class="card">
 <div class="log-header">
-<h2 class="card-title" data-i18n="status_zapret">
-        Zapret
-       </h2>
+<h2 class="card-title" data-i18n="status_zapret">Zapret</h2>
 <button class="btn btn-icon" data-i18n-title="copy_log_title" id="btn-copy-log-zapret">
 <svg viewbox="0 0 24 24">
 <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z">
@@ -1247,9 +1161,7 @@ body.light-theme #error-overlay {
 </div>
 <div class="card">
 <div class="log-header">
-<h2 class="card-title" data-i18n="status_dnscrypt">
-        DNSCrypt Proxy
-       </h2>
+<h2 class="card-title" data-i18n="status_dnscrypt">DNSCrypt Proxy</h2>
 <button class="btn btn-icon" data-i18n-title="copy_log_title" id="btn-copy-log-dnscrypt">
 <svg viewbox="0 0 24 24">
 <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z">
