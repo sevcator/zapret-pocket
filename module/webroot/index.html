@@ -1172,7 +1172,7 @@
 </button>
 </div>
 <div class="logs">
-<div id="logs-content-zapret">
+<div data-i18n="loading" id="logs-content-zapret">
         Загрузка...
        </div>
 </div>
@@ -1190,7 +1190,7 @@
 </button>
 </div>
 <div class="logs">
-<div id="logs-content-dnscrypt">
+<div data-i18n="loading" id="logs-content-dnscrypt">
         Загрузка...
        </div>
 </div>
@@ -1280,6 +1280,7 @@
                 "copy_log_title": "Копировать лог",
                 "logs_empty": "Пусто",
                 "logs_disabled": "Отключен",
+                "loading": "Загрузка...",
                 "tab_home": "Главная",
                 "tab_editor": "Редактор",
                 "tab_settings": "Настройки",
@@ -1327,6 +1328,7 @@
                 "copy_log_title": "Copy Log",
                 "logs_empty": "Empty",
                 "logs_disabled": "Disabled",
+                "loading": "Loading...",
                 "tab_home": "Home",
                 "tab_editor": "Editor",
                 "tab_settings": "Settings",
@@ -1624,13 +1626,7 @@ async function waitForPidChange(oldPid, timeout = 5000) {
                         let isDnscryptChecked = dnscryptEnabled === '1';
                         const isIpv6Checked = ipv6Enable === '1';
                         toggleIpv6.checked = isIpv6Checked;
-                        if (isIpv6Checked && isDnscryptChecked) {
-                            isDnscryptChecked = false;
-                            toggleDnscrypt.checked = false;
-                            await run(`echo '0' > ${MODPATH}/config/dnscrypt-enable`);
-                        } else {
-                            toggleDnscrypt.checked = isDnscryptChecked;
-                        }
+                        toggleDnscrypt.checked = isDnscryptChecked;
                         toggleRulesRecheck.checked = rulesRecheck === '1';
                         toggleUpdateOnStart.checked = updateOnStart === '1' || updateOnStart === '';
                         toggleCloakingUpdate.checked = cloakingUpdate === '1';
@@ -1738,10 +1734,6 @@ btnPrimary.addEventListener('click', async () => {
                 setupToggle(document.getElementById('toggle-bypass-calls'), 'bypass-calls');
                 setupToggle(toggleIpv6, 'ipv6-enable', async () => {
                     const ipv6Enabled = toggleIpv6.checked;
-                    if (ipv6Enabled && toggleDnscrypt.checked) {
-                        toggleDnscrypt.checked = false;
-                        await run(`echo '0' > ${MODPATH}/config/dnscrypt-enable`);
-                    }
                     updateDnscryptDependentFields(toggleDnscrypt.checked, ipv6Enabled);
                 });
                 setupToggle(document.getElementById('toggle-network-tweaks'), 'network-tweaks');
