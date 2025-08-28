@@ -53,6 +53,7 @@ command_info() {
     echo "  update   - Update the module files"
     echo "  search   - Search the domain/ip/cidr"
     echo "  custom   - Add/remove custom list/ipset"
+    echo "  import-strategy - Import strategy from URL"
     echo "  cloaking  - Add/remove custom hosts"
     echo "  exclude  - Add/remove exclude list/ipset"
     return 0
@@ -280,6 +281,31 @@ search() {
     fi
 }
 
+import_strategy() {
+    url="$1"
+    [ -z "$url" ] && echo "! No URL provided" && return 1
+
+    mkdir -p "$MODPATH/strategy"
+
+    file_part="${url##*/}"
+    file_part="${file_part%%\?*}"
+    if [ "${file_part##*.}" = "sh" ] && [ -n "$file_part" ]; then
+        filename="$file_part"
+    else
+        filename="downloaded-$(date +%Y%m%d%H%M%S).sh"
+    fi
+
+    wget_cmd="${WGETPATH:-wget}"
+    if "$wget_cmd" -q -O "$MODPATH/strategy/$filename" "$url"; then
+        chmod +x "$MODPATH/strategy/$filename"
+        echo "- Saved as $filename"
+        return 0
+    else
+        echo "! Download failed"
+        return 1
+    fi
+}
+
 custom() {
     entry="$1"
     [ -z "$entry" ] && echo "! No domain/IP/CIDR provided" && return 1
@@ -411,6 +437,7 @@ case "$1" in
     update)     update ;;
     search)     search "$2" ;;
     custom)     custom "$2" ;;
+    import-strategy) import_strategy "$2" ;;
     exclude)    exclude "$2" ;;
     cloaking)   cloaking "$2" "$3" ;;
     *)          unknown_command "$1" ;;
