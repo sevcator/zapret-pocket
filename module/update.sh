@@ -1,8 +1,7 @@
 #!/bin/sh
 set +e
 
-MODPATH="${MODPATH:-$(cd "$(dirname "$0")" && pwd)}"
-
+MODPATH="/data/adb/modules/zapret"
 WGETCMD=$(cat "$MODPATH/wgetpath" 2>/dev/null || echo "wget")
 if ! command -v "${WGETCMD%% *}" >/dev/null 2>&1; then
     echo "wget command not found: $WGETCMD" >&2
