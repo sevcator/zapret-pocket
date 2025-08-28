@@ -283,23 +283,17 @@ search() {
 
 import_strategy() {
     url="$1"
-    [ -z "$url" ] && echo "! No URL provided" && return 1
+    [ -n "$url" ] || { echo "! No URL provided"; return 1; }
 
     mkdir -p "$MODPATH/strategy"
 
-    file_part="${url##*/}"
-    file_part="${file_part%%\?*}"
-    if [ "${file_part##*.}" = "sh" ] && [ -n "$file_part" ]; then
-        filename="$file_part"
-    else
-        filename="downloaded-$(date +%Y%m%d%H%M%S).sh"
-    fi
+    filename="${url%%\?*}"
+    filename="${filename##*/}"
+    [ "${filename##*.}" = "sh" ] || filename="downloaded-$(date +%Y%m%d%H%M%S).sh"
 
-    wget_cmd="${WGETPATH:-wget}"
-    if "$wget_cmd" -q -O "$MODPATH/strategy/$filename" "$url"; then
+    if "$WGETPATH" -q -O "$MODPATH/strategy/$filename" "$url"; then
         chmod +x "$MODPATH/strategy/$filename"
         echo "- Saved as $filename"
-        return 0
     else
         echo "! Download failed"
         return 1
