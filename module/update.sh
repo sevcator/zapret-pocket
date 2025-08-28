@@ -39,24 +39,18 @@ update_file() {
     url="$2"
     name=$(basename "$file")
 
-    remote_size=$($WGETCMD --spider -S "$url" 2>&1 | awk 'BEGIN{IGNORECASE=1}/Content-Length:/ {print $2}' | tr -d '\r')
-    if [ -z "$remote_size" ] || [ "$remote_size" = "0" ]; then
-        return 0
-    fi
-
-    local_size=0
-    if [ -f "$file" ]; then
-        local_size=$(stat -c%s "$file" 2>/dev/null || echo 0)
-    fi
-
-    diff=$(( remote_size - local_size ))
-    [ "$diff" -lt 0 ] && diff=$(( -diff ))
-
-    if [ "$diff" -gt 2 ]; then
-        echo "[ $local_size/$remote_size; $name ] Downloading"
-        $WGETCMD -q -O "$file" "$url"
+    tmp_file="${file}.tmp"
+    if $WGETCMD -q -O "$tmp_file" "$url" >/dev/null 2>&1; then
+        if [ ! -f "$file" ] || ! cmp -s "$tmp_file" "$file"; then
+            mv "$tmp_file" "$file"
+            echo "[ $name ] Downloaded"
+        else
+            rm -f "$tmp_file"
+            echo "[ $name ] Unchanged"
+        fi
     else
-        echo "[ $local_size/$remote_size; $name ] Keeping"
+        rm -f "$tmp_file"
+        echo "[ $name ] Failed"
     fi
 }
 
