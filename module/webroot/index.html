@@ -31,8 +31,8 @@
             background-color: var(--bg-main);
             color: var(--text-primary);
             margin: 0;
-            padding: 30px 30px var(--tab-bar-height) 30px;
-            padding-top: calc(16px + env(safe-area-inset-top));
+            padding: 20px 20px var(--tab-bar-height) 20px;
+            padding-top: calc(12px + env(safe-area-inset-top));
             -webkit-font-smoothing: antialiased;
         }
         .container {
@@ -40,14 +40,14 @@
             margin: 0 auto;
             display: flex;
             flex-direction: column;
-            gap: 25px;
+            gap: 15px;
             position: relative;
             min-height: calc(100vh - var(--tab-bar-height) - 60px);
         }
         header {
             text-align: center;
-            margin-top: 30px;
-            margin-bottom: 30px;
+            margin-top: 20px;
+            margin-bottom: 20px;
         }
         header h1 {
             margin: 0;
@@ -71,10 +71,10 @@
         .card {
             background-color: var(--bg-card);
             border-radius: 12px;
-            padding: 16px 20px;
+            padding: 12px 16px;
             border: 1px solid var(--border-color);
             transition: all 0.3s ease-in-out;
-            margin-bottom: 16px;
+            margin-bottom: 12px;
             display: flex;
             flex-direction: column;
         }
@@ -87,7 +87,7 @@
             transition: color 0.3s ease-in-out;
         }
         .subsection-title {
-            margin: 30px 0 15px 0;
+            margin: 20px 0 12px 0;
             font-weight: 500;
             font-size: 1.1rem;
             color: var(--text-primary);
@@ -110,13 +110,13 @@
         .page > main {
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 8px;
             min-height: auto;
         }
         .status-list {
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 8px;
         }
         .status-item {
             display: flex;
@@ -126,7 +126,7 @@
         .status-indicator {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
             font-weight: 500;
         }
         .status-indicator .dot {
@@ -150,7 +150,7 @@
         .controls {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-            gap: 8px;
+            gap: 6px;
         }
         .btn {
             display: flex;
@@ -204,7 +204,7 @@
         .settings {
             display: flex;
             flex-direction: column;
-            gap: 6px;
+            gap: 4px;
         }
         .setting-item {
             display: flex;
@@ -580,11 +580,11 @@
         }
         @media (max-width: 480px) {
             body {
-                padding: 20px 20px var(--tab-bar-height) 20px;
-                padding-top: calc(8px + env(safe-area-inset-top));
+                padding: 15px 15px var(--tab-bar-height) 15px;
+                padding-top: calc(6px + env(safe-area-inset-top));
             }
             .card {
-                padding: 16px;
+                padding: 12px;
             }
             header h1 {
                 font-size: 2rem;
