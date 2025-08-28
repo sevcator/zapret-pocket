@@ -23,6 +23,9 @@ timeout = 8000
 keepalive = 60
 
 use_syslog = false
+log_level = 2
+log_file = 'latest.log'
+log_file_latest = true
 
 cert_refresh_delay = 240
 bootstrap_resolvers = ['8.8.8.8:53', '8.8.4.4:53']
@@ -59,3 +62,4 @@ skip_incompatible = true
 [static]
 [static.'google']
 stamp = 'sdns://AgUAAAAAAAAABzguOC44LjggsKKKE4EwvtIbNjGjagI2607EdKSVHowYZtyvD9iPrkkHOC44LjguOAovZG5zLXF1ZXJ5'
+
