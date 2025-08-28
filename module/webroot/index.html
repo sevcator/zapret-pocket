@@ -4,12 +4,10 @@
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
-<title>
-   zapret
-  </title>
+<title>zapret</title>
 <style>
    :root {
-            
+
             --bg-main: #121212;
             --bg-card: #1E1E1E;
             --bg-input: #2C2C2C;
@@ -18,17 +16,17 @@
             --text-secondary: #A0A0A0;
             --accent-color: #FFFFFF;
             --disabled-color: #555555;
-            
-            
+
+
             --tab-bar-height: 60px;
-            
-            
+
+
             --shadow-color-feedback: rgba(255, 255, 255, 0.15);
             --btn-hover-bg: #383838;
             --btn-hover-border: #454545;
         }
 
-        
+
         * {
             box-sizing: border-box;
         }
@@ -43,12 +41,12 @@
             background-color: var(--bg-main);
             color: var(--text-primary);
             margin: 0;
-            padding: 30px 30px var(--tab-bar-height) 30px; 
+            padding: 30px 30px var(--tab-bar-height) 30px;
             padding-top: calc(16px + env(safe-area-inset-top));
             -webkit-font-smoothing: antialiased;
         }
 
-        
+
         .container {
             max-width: 900px;
             margin: 0 auto;
@@ -72,8 +70,8 @@
             letter-spacing: -1px;
         }
 
-        section > header h1 { 
-            font-size: 2rem; 
+        section > header h1 {
+            font-size: 2rem;
         }
 
         header p {
@@ -88,24 +86,24 @@
             opacity: 0.7;
         }
 
-        
+
         .card {
             background-color: var(--bg-card);
             border-radius: 12px;
-            padding: 20px 24px;
+            padding: 16px 20px;
             border: 1px solid var(--border-color);
             transition: all 0.3s ease-in-out;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
             display: flex;
             flex-direction: column;
         }
 
         .card-title {
-            margin: 0 0 20px 0;
+            margin: 0 0 12px 0;
             font-weight: 500;
             font-size: 1.25rem;
             border-bottom: 1px solid var(--border-color);
-            padding-bottom: 12px;
+            padding-bottom: 8px;
             transition: color 0.3s ease-in-out;
         }
 
@@ -127,7 +125,7 @@
             color: var(--accent-color);
         }
 
-        
+
         .page {
             display: none;
         }
@@ -139,15 +137,15 @@
         .page > main {
             display: flex;
             flex-direction: column;
-            gap: 16px;
+            gap: 12px;
             min-height: auto;
         }
 
-        
+
         .status-list {
             display: flex;
             flex-direction: column;
-            gap: 16px;
+            gap: 12px;
         }
 
         .status-item {
@@ -185,11 +183,11 @@
             color: var(--text-secondary);
         }
 
-        
+
         .controls {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-            gap: 12px;
+            gap: 8px;
         }
 
         .btn {
@@ -227,6 +225,10 @@
             flex-grow: 1;
         }
 
+        .btn-full {
+            width: 100%;
+        }
+
         .btn-icon {
             padding: 8px;
             width: 40px;
@@ -241,32 +243,42 @@
         }
 
         .active-feedback {
-            border-color: var(--accent-color) !important; 
+            border-color: var(--accent-color) !important;
             box-shadow: 0 0 10px var(--shadow-color-feedback) !important;
             transform: scale(0.98);
         }
 
-        
+
         .settings {
             display: flex;
             flex-direction: column;
-            gap: 18px;
+            gap: 6px;
         }
 
         .setting-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            min-height: 40px;
+            min-height: 36px;
         }
 
         .setting-item > label {
             flex-shrink: 0;
-            margin-right: 16px;
+            margin-right: 8px;
             font-weight: 500;
         }
 
-        
+        .setting-item.stacked {
+            flex-direction: column;
+            align-items: stretch;
+            justify-content: flex-start;
+        }
+
+        .setting-item.stacked > label {
+            margin-right: 0;
+            margin-bottom: 4px;
+        }
+
         select {
             background-color: var(--bg-input);
             color: var(--text-primary);
@@ -275,10 +287,9 @@
             padding: 10px;
             font-size: 1em;
             width: 100%;
-            max-width: 250px;
         }
 
-        
+
         .text-input {
             background-color: var(--bg-input);
             color: var(--text-primary);
@@ -287,7 +298,6 @@
             padding: 10px;
             font-size: 1em;
             width: 100%;
-            max-width: 350px;
             transition: border-color 0.2s ease;
         }
 
@@ -300,7 +310,7 @@
             cursor: not-allowed;
         }
 
-        
+
         .dnscrypt-related {
             transition: opacity 0.3s ease;
         }
@@ -324,7 +334,7 @@
             opacity: 0.5;
         }
 
-        
+
         .switch {
             position: relative;
             display: inline-block;
@@ -372,7 +382,7 @@
             transform: translateX(20px);
         }
 
-        
+
         .tab-content {
             display: none;
             flex-direction: column;
@@ -442,7 +452,7 @@
             margin-right: auto;
         }
 
-        
+
         .logs {
             background-color: var(--bg-main);
             border-radius: 8px;
@@ -511,7 +521,7 @@
             margin-left: 10px;
         }
 
-        
+
         .log-header {
             display: flex;
             justify-content: space-between;
@@ -527,7 +537,7 @@
             padding: 0;
         }
 
-        
+
         .tab-bar {
             position: fixed;
             bottom: 0;
@@ -576,7 +586,7 @@
             transform: scale(0.9);
         }
 
-        
+
         .credits-section {
             margin-top: 20px;
         }
@@ -605,7 +615,7 @@
             cursor: default;
         }
 
-        
+
         .note {
             font-size: 0.9em;
             color: var(--text-secondary);
@@ -614,7 +624,7 @@
             text-align: center;
         }
 
-        
+
         body.light-theme {
             --bg-main: #F5F5F5;
             --bg-card: #FFFFFF;
@@ -656,21 +666,21 @@
             box-shadow: none;
         }
 
-        .light-theme .log-line .log-info { 
-            color: #00529B; 
+        .light-theme .log-line .log-info {
+            color: #00529B;
         }
 
-        .light-theme .log-line .log-warn { 
-            color: #9F6000; 
+        .light-theme .log-line .log-warn {
+            color: #9F6000;
         }
 
-        .light-theme .log-line .log-error { 
-            color: #D8000C; 
+        .light-theme .log-line .log-error {
+            color: #D8000C;
         }
 
-        .light-theme .log-line .log-debug { 
-            color: var(--text-secondary); 
-            opacity: 0.8; 
+        .light-theme .log-line .log-debug {
+            color: var(--text-secondary);
+            opacity: 0.8;
         }
 
         .light-theme .credits-text a,
@@ -682,7 +692,7 @@
             cursor: default;
         }
 
-        
+
         .fumo {
             position: fixed;
             z-index: 9999;
@@ -695,7 +705,7 @@
             opacity: 0;
         }
 
-        
+
         @media (max-width: 480px) {
             body {
                 padding: 20px 20px var(--tab-bar-height) 20px;
@@ -714,12 +724,6 @@
                 grid-template-columns: 1fr;
             }
 
-            .setting-item {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 8px;
-                min-height: auto;
-            }
 
             .setting-item select,
             .setting-item .text-input {
@@ -727,12 +731,8 @@
                 width: 100%;
             }
 
-            .setting-item label.switch {
-                align-self: flex-end;
-                margin-top: -30px;
-            }
         }
-    
+
 
 #loading-overlay {
     position: fixed;
@@ -759,6 +759,61 @@
     border-radius: 50%;
     animation: spin 1s linear infinite;
 }
+
+#import-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+}
+#import-modal-overlay.hidden {
+    display: none;
+}
+#import-modal {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 16px;
+    width: 90%;
+    max-width: 400px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+#import-modal .text-input {
+    max-width: 100%;
+}
+#import-modal .modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+}
+#error-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.4);
+    z-index: 10001;
+    opacity: 0;
+    transition: opacity 2s ease;
+}
+body.light-theme #error-overlay {
+    background: rgba(0, 0, 255, 0.4);
+}
+#error-overlay.visible {
+    opacity: 1;
+}
+#error-overlay.hidden {
+    display: none;
+}
 @keyframes gradientShift {
     0% { background-position: 0% 0%; }
     100% { background-position: 100% 100%; }
@@ -766,7 +821,7 @@
 @keyframes spin {
     to { transform: rotate(360deg); }
 }
-  
+
 @keyframes bgChange {
     0.0% { background-color: #888888; }
     7.14% { background-color: #7e7e7e; }
@@ -791,12 +846,21 @@
 <div class="loader">
 </div>
 </div>
+<div class="hidden" id="import-modal-overlay">
+<div id="import-modal">
+<h3 data-i18n="import_strategy"></h3>
+<input class="text-input" data-i18n-placeholder="import_strategy_placeholder" id="import-url-input" type="text"/>
+<div class="modal-actions">
+<button class="btn" data-i18n="btn_cancel" id="import-cancel">Cancel</button>
+<button class="btn" data-i18n="import_strategy_confirm" id="import-confirm">Import</button>
+</div>
+</div>
+</div>
+<div class="hidden" id="error-overlay"></div>
 <div class="container">
 <section class="page active" id="page-home">
 <header>
-<h1 data-i18n="home_title">
-      zapret
-     </h1>
+<h1 data-i18n="home_title">zapret</h1>
 <div class="version-info">
 <span id="module-version">
        v...
@@ -805,9 +869,7 @@
 </header>
 <main>
 <div class="card">
-<h2 class="card-title" data-i18n="status_card_title">
-       Статус
-      </h2>
+<h2 class="card-title" data-i18n="status_card_title">Статус</h2>
 <div class="status-list">
 <div class="status-item">
 <span data-i18n="status_zapret">
@@ -836,9 +898,7 @@
 </div>
 </div>
 <div class="card">
-<h2 class="card-title" data-i18n="controls_card_title">
-       Управление
-      </h2>
+<h2 class="card-title" data-i18n="controls_card_title">Управление</h2>
 <div class="controls">
 <button class="btn" id="btn-primary">
 <svg fill="currentColor" id="btn-primary-icon" viewbox="0 0 24 24">
@@ -868,28 +928,16 @@
 </section>
 <section class="page" id="page-editor">
 <header>
-<h1 data-i18n="editor_title">
-      Редактор списков
-     </h1>
+<h1 data-i18n="editor_title">Редактор списков</h1>
 </header>
 <main>
 <div class="card">
 <div class="list-selector">
-<button class="list-btn active" data-i18n="list_custom" data-tab="tab-list-custom">
-        List Custom
-       </button>
-<button class="list-btn" data-i18n="list_exclude" data-tab="tab-list-exclude">
-        List Exclude
-       </button>
-<button class="list-btn" data-i18n="ipset_custom" data-tab="tab-ipset-custom">
-        IPSet Custom
-       </button>
-<button class="list-btn" data-i18n="ipset_exclude" data-tab="tab-ipset-exclude">
-        IPSet Exclude
-       </button>
-<button class="list-btn" data-i18n="dnscrypt_custom" data-tab="tab-dnscrypt-custom">
-        DNSCrypt Custom
-       </button>
+<button class="list-btn active" data-i18n="list_custom" data-tab="tab-list-custom">List Custom</button>
+<button class="list-btn" data-i18n="list_exclude" data-tab="tab-list-exclude">List Exclude</button>
+<button class="list-btn" data-i18n="ipset_custom" data-tab="tab-ipset-custom">IPSet Custom</button>
+<button class="list-btn" data-i18n="ipset_exclude" data-tab="tab-ipset-exclude">IPSet Exclude</button>
+<button class="list-btn" data-i18n="dnscrypt_custom" data-tab="tab-dnscrypt-custom">DNSCrypt Custom</button>
 </div>
 <div class="tab-content-wrapper">
 <div class="tab-content active" id="tab-list-custom">
@@ -904,9 +952,7 @@
 </path>
 </svg>
 </button>
-<button class="btn btn-save" data-i18n="btn_save" data-path="list/custom.txt">
-          Сохранить
-         </button>
+<button class="btn btn-save" data-i18n="btn_save" data-path="list/custom.txt">Сохранить</button>
 </div>
 </div>
 <div class="tab-content" id="tab-list-exclude">
@@ -921,9 +967,7 @@
 </path>
 </svg>
 </button>
-<button class="btn btn-save" data-i18n="btn_save" data-path="list/exclude.txt">
-          Сохранить
-         </button>
+<button class="btn btn-save" data-i18n="btn_save" data-path="list/exclude.txt">Сохранить</button>
 </div>
 </div>
 <div class="tab-content" id="tab-ipset-custom">
@@ -938,9 +982,7 @@
 </path>
 </svg>
 </button>
-<button class="btn btn-save" data-i18n="btn_save" data-path="ipset/custom.txt">
-          Сохранить
-         </button>
+<button class="btn btn-save" data-i18n="btn_save" data-path="ipset/custom.txt">Сохранить</button>
 </div>
 </div>
 <div class="tab-content" id="tab-ipset-exclude">
@@ -955,9 +997,7 @@
 </path>
 </svg>
 </button>
-<button class="btn btn-save" data-i18n="btn_save" data-path="ipset/exclude.txt">
-          Сохранить
-         </button>
+<button class="btn btn-save" data-i18n="btn_save" data-path="ipset/exclude.txt">Сохранить</button>
 </div>
 </div>
 <div class="tab-content" id="tab-dnscrypt-custom">
@@ -972,9 +1012,7 @@
 </path>
 </svg>
 </button>
-<button class="btn btn-save" data-i18n="btn_save" data-path="dnscrypt/custom-cloaking-rules.txt">
-          Сохранить
-         </button>
+<button class="btn btn-save" data-i18n="btn_save" data-path="dnscrypt/custom-cloaking-rules.txt">Сохранить</button>
 </div>
 </div>
 </div>
@@ -983,27 +1021,21 @@
 </section>
 <section class="page" id="page-settings">
 <header>
-<h1 data-i18n="settings_title">
-      Настройки
-     </h1>
+<h1 data-i18n="settings_title">Настройки</h1>
 </header>
 <main>
 <div class="card">
-<h2 class="card-title" data-i18n="module_settings_title">
-       Параметры модуля
-      </h2>
+<h2 class="card-title" data-i18n="module_settings_title">Параметры модуля</h2>
 <div class="settings">
 <div class="setting-item">
-<label data-i18n="active_strategy">
-         Активная стратегия
-        </label>
-<select id="strategy-select">
-</select>
+<button class="btn btn-full" id="btn-import-strategy" data-i18n="import_strategy">Импорт стратегии</button>
+</div>
+<div class="setting-item stacked">
+<label data-i18n="active_strategy">Активная стратегия</label>
+<select id="strategy-select"></select>
 </div>
 <div class="setting-item">
-<label data-i18n="bypass_calls">
-         Включить обход звонков
-        </label>
+<label data-i18n="bypass_calls">Включить обход звонков</label>
 <label class="switch">
 <input id="toggle-bypass-calls" type="checkbox"/>
 <span class="slider">
@@ -1011,9 +1043,7 @@
 </label>
 </div>
 <div class="setting-item">
-<label data-i18n="ipv6_enable">
-         Включить IPv6
-        </label>
+<label data-i18n="ipv6_enable">Включить IPv6</label>
 <label class="switch">
 <input id="toggle-ipv6" type="checkbox"/>
 <span class="slider">
@@ -1021,9 +1051,7 @@
 </label>
 </div>
 <div class="setting-item">
-<label data-i18n="network_tweaks">
-         Сетевые оптимизации
-        </label>
+<label data-i18n="network_tweaks">Сетевые оптимизации</label>
 <label class="switch">
 <input id="toggle-network-tweaks" type="checkbox"/>
 <span class="slider">
@@ -1031,9 +1059,7 @@
 </label>
 </div>
 <div class="setting-item dnscrypt-related">
-<label data-i18n="dnscrypt_proxy">
-         DNSCrypt Proxy
-        </label>
+<label data-i18n="dnscrypt_proxy">DNSCrypt Proxy</label>
 <label class="switch">
 <input id="toggle-dnscrypt" type="checkbox"/>
 <span class="slider">
@@ -1041,9 +1067,7 @@
 </label>
 </div>
 <div class="setting-item dnscrypt-related dnscrypt-dependent">
-<label data-i18n="dnscrypt_rules_refresh">
-         Обновление правил
-        </label>
+<label data-i18n="dnscrypt_rules_refresh">Обновление правил</label>
 <label class="switch">
 <input id="toggle-rules-recheck" type="checkbox"/>
 <span class="slider">
@@ -1051,9 +1075,7 @@
 </label>
 </div>
 <div class="setting-item">
-<label data-i18n="update_on_start">
-         Обновление при запуске
-        </label>
+<label data-i18n="update_on_start">Обновление при запуске</label>
 <label class="switch">
 <input id="toggle-update-on-start" type="checkbox"/>
 <span class="slider">
@@ -1061,9 +1083,7 @@
 </label>
 </div>
 <div class="setting-item dnscrypt-related dnscrypt-dependent">
-<label data-i18n="update_cloaking">
-         Обновление Cloaking Rules
-        </label>
+<label data-i18n="update_cloaking">Обновление Cloaking Rules</label>
 <label class="switch">
 <input id="toggle-cloaking-update" type="checkbox"/>
 <span class="slider">
@@ -1071,9 +1091,7 @@
 </label>
 </div>
 <div class="setting-item dnscrypt-related dnscrypt-dependent">
-<label data-i18n="update_blocked_names">
-         Обновление доменов для блокировки
-        </label>
+<label data-i18n="update_blocked_names">Обновление доменов для блокировки</label>
 <label class="switch">
 <input id="toggle-blocked-names-update" type="checkbox"/>
 <span class="slider">
@@ -1081,71 +1099,47 @@
 </label>
 </div>
 </div>
-<h3 class="subsection-title" data-i18n="custom_links_title">
-       Свои ссылки
-      </h3>
+<h3 class="subsection-title" data-i18n="custom_links_title">Свои ссылки</h3>
 <div class="settings">
-<div class="setting-item">
-<label data-i18n="ipv4_ranges_link">
-         Ссылка на IPv4 диапазоны
-        </label>
+<div class="setting-item stacked">
+<label data-i18n="ipv4_ranges_link">Ссылка на IPv4 диапазоны</label>
 <input class="text-input" id="input-ipv4-ranges" placeholder="https://example.github.io/ipset-v4.txt" type="text"/>
 </div>
-<div class="setting-item">
-<label data-i18n="ipv6_ranges_link">
-         Ссылка на IPv6 диапазоны
-        </label>
+<div class="setting-item stacked">
+<label data-i18n="ipv6_ranges_link">Ссылка на IPv6 диапазоны</label>
 <input class="text-input" id="input-ipv6-ranges" placeholder="https://example.github.io/ipset-v6.txt" type="text"/>
 </div>
-<div class="setting-item">
-<label data-i18n="registry_link">
-         Ссылка на реестр
-        </label>
+<div class="setting-item stacked">
+<label data-i18n="registry_link">Ссылка на реестр</label>
 <input class="text-input" id="input-rkn-registry" placeholder="https://example.github.io/reestr.txt" type="text"/>
 </div>
-<div class="setting-item dnscrypt-related dnscrypt-dependent">
-<label data-i18n="cloaking_rules_link">
-         Ссылка на Cloaking Rules
-        </label>
+<div class="setting-item dnscrypt-related dnscrypt-dependent stacked">
+<label data-i18n="cloaking_rules_link">Ссылка на Cloaking Rules</label>
 <input class="text-input" id="input-cloaking-rules" placeholder="https://example.github.io/cloaking-rules.txt" type="text"/>
 </div>
-<div class="setting-item dnscrypt-related dnscrypt-dependent">
-<label data-i18n="blocked_names_link">
-         Ссылка на Blocked Names
-        </label>
+<div class="setting-item dnscrypt-related dnscrypt-dependent stacked">
+<label data-i18n="blocked_names_link">Ссылка на Blocked Names</label>
 <input class="text-input" id="input-blocked-names" placeholder="https://example.github.io/blocked-names.txt" type="text"/>
 </div>
 </div>
-<p class="note" data-i18n="note_restart">
-       После изменения настроек не забудьте перезапустить службу.
-      </p>
+<p class="note" data-i18n="note_restart">После изменения настроек не забудьте перезапустить службу.</p>
 </div>
 <div class="card">
-<h2 class="card-title" data-i18n="interface_settings_title">
-       Интерфейс
-      </h2>
+<h2 class="card-title" data-i18n="interface_settings_title">Интерфейс</h2>
 <div class="settings">
 <div class="setting-item">
-<label data-i18n="dark_theme">
-         Темная тема
-        </label>
+<label data-i18n="dark_theme">Темная тема</label>
 <label class="switch">
 <input id="toggle-theme" type="checkbox"/>
 <span class="slider">
 </span>
 </label>
 </div>
-<div class="setting-item">
-<label data-i18n="language">
-         Язык
-        </label>
+<div class="setting-item stacked">
+<label data-i18n="language">Язык</label>
 <select id="language-select">
-<option value="ru">
-          Русский
-         </option>
-<option value="en">
-          English
-         </option>
+<option value="ru">Русский</option>
+<option value="en">English</option>
 </select>
 </div>
 </div>
@@ -1154,16 +1148,12 @@
 </section>
 <section class="page" id="page-logs">
 <header>
-<h1 data-i18n="logs_title">
-      Логи
-     </h1>
+<h1 data-i18n="logs_title">Логи</h1>
 </header>
 <main>
 <div class="card">
 <div class="log-header">
-<h2 class="card-title" data-i18n="status_zapret">
-        Zapret
-       </h2>
+<h2 class="card-title" data-i18n="status_zapret">Zapret</h2>
 <button class="btn btn-icon" data-i18n-title="copy_log_title" id="btn-copy-log-zapret">
 <svg viewbox="0 0 24 24">
 <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z">
@@ -1179,9 +1169,7 @@
 </div>
 <div class="card">
 <div class="log-header">
-<h2 class="card-title" data-i18n="status_dnscrypt">
-        DNSCrypt Proxy
-       </h2>
+<h2 class="card-title" data-i18n="status_dnscrypt">DNSCrypt Proxy</h2>
 <button class="btn btn-icon" data-i18n-title="copy_log_title" id="btn-copy-log-dnscrypt">
 <svg viewbox="0 0 24 24">
 <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z">
@@ -1258,6 +1246,10 @@
                 "settings_title": "Настройки",
                 "module_settings_title": "Параметры модуля",
                 "bypass_calls": "Включить обход звонков",
+                "import_strategy": "Импорт стратегии",
+                "import_strategy_placeholder": "Вставьте ссылку",
+                "import_strategy_confirm": "Импорт",
+                "btn_cancel": "Отмена",
                 "active_strategy": "Стратегия",
                 "dnscrypt_proxy": "DNSCrypt Proxy",
                 "dnscrypt_rules_refresh": "Обновление правил",
@@ -1306,9 +1298,13 @@
                 "settings_title": "Settings",
                 "module_settings_title": "Module Parameters",
                 "bypass_calls": "Enable bypass calls",
+                "import_strategy": "Import strategy",
+                "import_strategy_placeholder": "Paste link",
+                "import_strategy_confirm": "Import",
+                "btn_cancel": "Cancel",
                 "active_strategy": "Strategy",
                 "dnscrypt_proxy": "DNSCrypt Proxy",
-                "dnscrypt_rules_refresh": "Refresh rules",  
+                "dnscrypt_rules_refresh": "Refresh rules",
                 "update_on_start": "Update on startup",
                 "update_cloaking": "Update Cloaking Rules",
                 "update_blocked_names": "Update Blocked Names",
@@ -1395,6 +1391,12 @@
                             el.title = langData[key];
                         }
                     });
+                    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                        const key = el.getAttribute('data-i18n-placeholder');
+                        if (langData[key]) {
+                            el.placeholder = langData[key];
+                        }
+                    });
                 };
 
                 const loadLanguage = async (lang) => {
@@ -1408,7 +1410,7 @@
                     }
                 };
 
-                
+
 const loadingOverlay = document.getElementById('loading-overlay');
 function showLoading() {
     btnPrimary.disabled = true;
@@ -1436,6 +1438,7 @@ async function waitForPidChange(oldPid, timeout = 5000) {
                 const btnPrimaryIcon = document.getElementById('btn-primary-icon');
                 const btnPrimaryText = document.getElementById('btn-primary-text');
                 const strategySelect = document.getElementById('strategy-select');
+                const btnImportStrategy = document.getElementById('btn-import-strategy');
                 const toggleDnscrypt = document.getElementById('toggle-dnscrypt');
                 const toggleRulesRecheck = document.getElementById('toggle-rules-recheck');
                 const toggleUpdateOnStart = document.getElementById('toggle-update-on-start');
@@ -1450,16 +1453,21 @@ async function waitForPidChange(oldPid, timeout = 5000) {
                 const languageSelect = document.getElementById('language-select');
                 const moduleVersionEl = document.getElementById('module-version');
                 const sevcatorLink = document.getElementById('sevcator-link');
-                
+                const importModalOverlay = document.getElementById('import-modal-overlay');
+                const importUrlInput = document.getElementById('import-url-input');
+                const importConfirm = document.getElementById('import-confirm');
+                const importCancel = document.getElementById('import-cancel');
+                const errorOverlay = document.getElementById('error-overlay');
+
                 const inputIpv4Ranges = document.getElementById('input-ipv4-ranges');
                 const inputIpv6Ranges = document.getElementById('input-ipv6-ranges');
                 const inputRknRegistry = document.getElementById('input-rkn-registry');
                 const inputCloakingRules = document.getElementById('input-cloaking-rules');
                 const inputBlockedNames = document.getElementById('input-blocked-names');
-                
+
                 let currentZapretLogText = '';
                 let currentDnscryptLogText = '';
-                
+
                 const fileContents = {
                     'list/custom.txt': document.getElementById('file-list-custom'),
                     'list/exclude.txt': document.getElementById('file-list-exclude'),
@@ -1535,7 +1543,7 @@ async function waitForPidChange(oldPid, timeout = 5000) {
                 };
 
                 const renderDnscryptLogs = (logText, dnscryptEnabled, dnscryptRunning) => {
-                    if (!dnscryptEnabled) {
+                    if (!dnscryptEnabled && !dnscryptRunning) {
                         logsContentDnscrypt.innerHTML = `<div class="logs-disabled">${langData.logs_disabled || 'Отключен'}</div>`;
                         return;
                     }
@@ -1567,10 +1575,10 @@ async function waitForPidChange(oldPid, timeout = 5000) {
                     try {
                         const nfqwsStatus = await run('pgrep -f "nfqws" >/dev/null 2>&1 && echo "Running" || echo "Stopped"');
                         const dnscryptStatus = await run('pgrep -f "dnscrypt-proxy" >/dev/null 2>&1 && echo "Running" || echo "Stopped"');
-                        
+
                         const strategiesRaw = await run(`ls ${MODPATH}/strategy | sed 's/\\.sh$//'`);
                         const currentStrategy = await run(`cat ${MODPATH}/config/current-strategy 2>/dev/null || true`);
-                        
+
                         const dnscryptEnabled = await run(`cat ${MODPATH}/config/dnscrypt-enable 2>/dev/null || true`);
                         const rulesRecheck = await run(`cat ${MODPATH}/config/dnscrypt-rules-fix 2>/dev/null || true`);
                         const updateOnStart = await run(`cat ${MODPATH}/config/update-on-start 2>/dev/null || true`);
@@ -1579,19 +1587,19 @@ async function waitForPidChange(oldPid, timeout = 5000) {
                         const bypassCalls = await run(`cat ${MODPATH}/config/bypass-calls 2>/dev/null || true`);
                         const ipv6Enable = await run(`cat ${MODPATH}/config/ipv6-enable 2>/dev/null || true`);
                         const networkTweaks = await run(`cat ${MODPATH}/config/network-tweaks 2>/dev/null || true`);
-                        
+
                         const ipv4RangesLink = await run(`cat ${MODPATH}/config/ipset-v4-link 2>/dev/null || true`);
                         const ipv6RangesLink = await run(`cat ${MODPATH}/config/ipset-v6-link 2>/dev/null || true`);
                         const rknRegistryLink = await run(`cat ${MODPATH}/config/reestr-link 2>/dev/null || true`);
                         const cloakingRulesLink = await run(`cat ${MODPATH}/config/dnscrypt-cloaking-rules-link 2>/dev/null || true`);
                         const blockedNamesLink = await run(`cat ${MODPATH}/config/dnscrypt-blocked-names-link 2>/dev/null || true`);
-                        
+
                         const listCustom = await run(`cat ${MODPATH}/list/custom.txt 2>/dev/null || true`);
                         const listExclude = await run(`cat ${MODPATH}/list/exclude.txt 2>/dev/null || true`);
                         const ipsetCustom = await run(`cat ${MODPATH}/ipset/custom.txt 2>/dev/null || true`);
                         const ipsetExclude = await run(`cat ${MODPATH}/ipset/exclude.txt 2>/dev/null || true`);
                         const dnscryptCustom = await run(`cat ${MODPATH}/dnscrypt/custom-cloaking-rules.txt 2>/dev/null || true`);
-                        
+
                         const zapretLogs = await run(`cat ${MODPATH}/zapret/latest.log 2>/dev/null || true`);
                         const dnscryptLogs = await run(`cat ${MODPATH}/dnscrypt/latest.log 2>/dev/null || true`);
                         currentZapretLogText = zapretLogs;
@@ -1601,7 +1609,7 @@ async function waitForPidChange(oldPid, timeout = 5000) {
                         const isRunning = nfqwsStatus === 'Running';
                         updateStatusIndicator(statusNfqws, nfqwsStatus);
                         updateStatusIndicator(statusDnscrypt, dnscryptStatus);
-                        
+
                         if (isRunning) {
                             btnPrimaryIcon.innerHTML = '<path d="M6 6h12v12H6z"></path>';
                             btnPrimaryText.textContent = langData.btn_stop || 'Остановить';
@@ -1622,7 +1630,7 @@ async function waitForPidChange(oldPid, timeout = 5000) {
                                 strategySelect.appendChild(option);
                             }
                         });
-                        
+
                         let isDnscryptChecked = dnscryptEnabled === '1';
                         const isIpv6Checked = ipv6Enable === '1';
                         toggleIpv6.checked = isIpv6Checked;
@@ -1633,13 +1641,13 @@ async function waitForPidChange(oldPid, timeout = 5000) {
                         toggleBlockedNamesUpdate.checked = blockedNamesUpdate === '1';
                         document.getElementById('toggle-bypass-calls').checked = bypassCalls === '1';
                         document.getElementById('toggle-network-tweaks').checked = networkTweaks === '1';
-                        
+
                         inputIpv4Ranges.value = ipv4RangesLink;
                         inputIpv6Ranges.value = ipv6RangesLink;
                         inputRknRegistry.value = rknRegistryLink;
                         inputCloakingRules.value = cloakingRulesLink;
                         inputBlockedNames.value = blockedNamesLink;
-                        
+
                         updateDnscryptDependentFields(isDnscryptChecked, isIpv6Checked);
 
                         Object.keys(fileContents).forEach(path => {
@@ -1690,7 +1698,7 @@ async function waitForPidChange(oldPid, timeout = 5000) {
                     }
                 };
 
-                
+
 btnPrimary.addEventListener('click', async () => {
     showLoading();
     try {
@@ -1717,6 +1725,53 @@ btnPrimary.addEventListener('click', async () => {
                     await run(`echo '${e.target.value}' > ${MODPATH}/config/current-strategy`);
                 });
 
+                const flashError = () => {
+                    errorOverlay.classList.remove('hidden');
+                    errorOverlay.classList.add('visible');
+                    setTimeout(() => {
+                        errorOverlay.classList.remove('visible');
+                        setTimeout(() => errorOverlay.classList.add('hidden'), 2000);
+                    }, 50);
+                };
+
+                btnImportStrategy.addEventListener('click', () => {
+                    importUrlInput.value = '';
+                    importModalOverlay.classList.remove('hidden');
+                    importUrlInput.focus();
+                });
+
+                importCancel.addEventListener('click', () => {
+                    importModalOverlay.classList.add('hidden');
+                });
+
+                importConfirm.addEventListener('click', async () => {
+                    const url = importUrlInput.value.trim();
+                    if (!url) {
+                        importModalOverlay.classList.add('hidden');
+                        return;
+                    }
+                    importModalOverlay.classList.add('hidden');
+                    showLoading();
+                    try {
+                        const filePart = url.split('/').pop().split('?')[0];
+                        const isSh = filePart.endsWith('.sh');
+                        const now = new Date();
+                        const pad = n => n.toString().padStart(2, '0');
+                        const stamp = `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+                        const filename = (isSh && filePart) ? filePart : `downloaded-${stamp}.sh`;
+                        const safeUrl = url.replace(/'/g, "'\\''");
+                        const wgetCmd = await run(`cat ${MODPATH}/wgetpath 2>/dev/null || echo wget`);
+                        await run(`${wgetCmd} -q -O ${MODPATH}/strategy/${filename} '${safeUrl}'`);
+                        await run(`chmod +x ${MODPATH}/strategy/${filename}`);
+                        await fetchData();
+                    } catch (e) {
+                        flashError();
+                        console.error(e);
+                    } finally {
+                        hideLoading();
+                    }
+                });
+
                 const setupToggle = (element, configName, callback) => {
                     element.addEventListener('change', async () => {
                         const value = element.checked ? '1' : '0';
@@ -1724,7 +1779,7 @@ btnPrimary.addEventListener('click', async () => {
                         if (callback) await callback();
                     });
                 };
-                
+
                 setupToggle(toggleDnscrypt, 'dnscrypt-enable', () => {
                     updateDnscryptDependentFields(toggleDnscrypt.checked, toggleIpv6.checked);
                 });
@@ -1879,7 +1934,7 @@ btnPrimary.addEventListener('click', async () => {
                         return false;
                     }
                 }
-                
+
                 let hasPng = await fileExists('fumo.png');
                 let hasMp3 = await fileExists('fumo.mp3');
 
@@ -1887,24 +1942,24 @@ btnPrimary.addEventListener('click', async () => {
                     if (!hasPng || !hasMp3) {
                         return;
                     }
-                    
+
                     e.preventDefault();
-                    
+
                     const fumo = document.createElement('img');
                     fumo.src = 'fumo.png';
                     fumo.className = 'fumo';
-                    
+
                     const randomSize = 50 + Math.random() * 100;
                     const randomX = Math.random() * (window.innerWidth - randomSize);
                     const randomY = Math.random() * (window.innerHeight - randomSize);
-                    
+
                     fumo.style.left = Math.max(0, randomX) + 'px';
                     fumo.style.top = Math.max(0, randomY) + 'px';
                     fumo.style.width = randomSize + 'px';
                     fumo.style.height = 'auto';
-                    
+
                     document.body.appendChild(fumo);
-                    
+
                     try {
                         const audio = new Audio('fumo.mp3');
                         audio.volume = 0.5;
@@ -1912,7 +1967,7 @@ btnPrimary.addEventListener('click', async () => {
                     } catch (e) {
                         console.log('Could not create fumo audio:', e);
                     }
-                    
+
                     setTimeout(() => {
                         fumo.classList.add('fade-out');
                         setTimeout(() => {
@@ -1937,7 +1992,7 @@ btnPrimary.addEventListener('click', async () => {
                 showLoading();
                 await fetchData();
                 hideLoading();
-                setInterval(fetchData, 10000); 
+                setInterval(fetchData, 10000);
             });
         }
   </script>
