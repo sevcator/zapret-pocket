@@ -8,7 +8,7 @@
        height="128">
 </p>
 
-<h1 align="center">Zapret Pocket</h1>
+<h1 align="center">zapret Pocket</h1>
 
 <div align="center">
   <a href="https://t.me/sevcator/921">📢 Telegram Channel</a> | 
