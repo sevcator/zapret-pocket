@@ -9,7 +9,7 @@
   </title>
 <style>
    :root {
-            
+
             --bg-main: #121212;
             --bg-card: #1E1E1E;
             --bg-input: #2C2C2C;
@@ -18,17 +18,17 @@
             --text-secondary: #A0A0A0;
             --accent-color: #FFFFFF;
             --disabled-color: #555555;
-            
-            
+
+
             --tab-bar-height: 60px;
-            
-            
+
+
             --shadow-color-feedback: rgba(255, 255, 255, 0.15);
             --btn-hover-bg: #383838;
             --btn-hover-border: #454545;
         }
 
-        
+
         * {
             box-sizing: border-box;
         }
@@ -43,12 +43,12 @@
             background-color: var(--bg-main);
             color: var(--text-primary);
             margin: 0;
-            padding: 30px 30px var(--tab-bar-height) 30px; 
+            padding: 30px 30px var(--tab-bar-height) 30px;
             padding-top: calc(16px + env(safe-area-inset-top));
             -webkit-font-smoothing: antialiased;
         }
 
-        
+
         .container {
             max-width: 900px;
             margin: 0 auto;
@@ -72,8 +72,8 @@
             letter-spacing: -1px;
         }
 
-        section > header h1 { 
-            font-size: 2rem; 
+        section > header h1 {
+            font-size: 2rem;
         }
 
         header p {
@@ -88,7 +88,7 @@
             opacity: 0.7;
         }
 
-        
+
         .card {
             background-color: var(--bg-card);
             border-radius: 12px;
@@ -127,7 +127,7 @@
             color: var(--accent-color);
         }
 
-        
+
         .page {
             display: none;
         }
@@ -143,7 +143,7 @@
             min-height: auto;
         }
 
-        
+
         .status-list {
             display: flex;
             flex-direction: column;
@@ -185,7 +185,7 @@
             color: var(--text-secondary);
         }
 
-        
+
         .controls {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
@@ -245,12 +245,12 @@
         }
 
         .active-feedback {
-            border-color: var(--accent-color) !important; 
+            border-color: var(--accent-color) !important;
             box-shadow: 0 0 10px var(--shadow-color-feedback) !important;
             transform: scale(0.98);
         }
 
-        
+
         .settings {
             display: flex;
             flex-direction: column;
@@ -270,7 +270,7 @@
             font-weight: 500;
         }
 
-        
+
         select {
             background-color: var(--bg-input);
             color: var(--text-primary);
@@ -282,7 +282,7 @@
             max-width: 250px;
         }
 
-        
+
         .text-input {
             background-color: var(--bg-input);
             color: var(--text-primary);
@@ -304,7 +304,7 @@
             cursor: not-allowed;
         }
 
-        
+
         .dnscrypt-related {
             transition: opacity 0.3s ease;
         }
@@ -328,7 +328,7 @@
             opacity: 0.5;
         }
 
-        
+
         .switch {
             position: relative;
             display: inline-block;
@@ -376,7 +376,7 @@
             transform: translateX(20px);
         }
 
-        
+
         .tab-content {
             display: none;
             flex-direction: column;
@@ -446,7 +446,7 @@
             margin-right: auto;
         }
 
-        
+
         .logs {
             background-color: var(--bg-main);
             border-radius: 8px;
@@ -515,7 +515,7 @@
             margin-left: 10px;
         }
 
-        
+
         .log-header {
             display: flex;
             justify-content: space-between;
@@ -531,7 +531,7 @@
             padding: 0;
         }
 
-        
+
         .tab-bar {
             position: fixed;
             bottom: 0;
@@ -580,7 +580,7 @@
             transform: scale(0.9);
         }
 
-        
+
         .credits-section {
             margin-top: 20px;
         }
@@ -609,7 +609,7 @@
             cursor: default;
         }
 
-        
+
         .note {
             font-size: 0.9em;
             color: var(--text-secondary);
@@ -618,7 +618,7 @@
             text-align: center;
         }
 
-        
+
         body.light-theme {
             --bg-main: #F5F5F5;
             --bg-card: #FFFFFF;
@@ -660,21 +660,21 @@
             box-shadow: none;
         }
 
-        .light-theme .log-line .log-info { 
-            color: #00529B; 
+        .light-theme .log-line .log-info {
+            color: #00529B;
         }
 
-        .light-theme .log-line .log-warn { 
-            color: #9F6000; 
+        .light-theme .log-line .log-warn {
+            color: #9F6000;
         }
 
-        .light-theme .log-line .log-error { 
-            color: #D8000C; 
+        .light-theme .log-line .log-error {
+            color: #D8000C;
         }
 
-        .light-theme .log-line .log-debug { 
-            color: var(--text-secondary); 
-            opacity: 0.8; 
+        .light-theme .log-line .log-debug {
+            color: var(--text-secondary);
+            opacity: 0.8;
         }
 
         .light-theme .credits-text a,
@@ -686,7 +686,7 @@
             cursor: default;
         }
 
-        
+
         .fumo {
             position: fixed;
             z-index: 9999;
@@ -699,7 +699,7 @@
             opacity: 0;
         }
 
-        
+
         @media (max-width: 480px) {
             body {
                 padding: 20px 20px var(--tab-bar-height) 20px;
@@ -732,11 +732,11 @@
             }
 
             .setting-item label.switch {
-                align-self: flex-end;
-                margin-top: -30px;
+                align-self: flex-start;
+                margin-top: 0;
             }
         }
-    
+
 
 #loading-overlay {
     position: fixed;
@@ -804,10 +804,13 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(255, 0, 0, 0.4);
+    background: rgba(255, 255, 255, 0.4);
     z-index: 10001;
     opacity: 0;
     transition: opacity 2s ease;
+}
+body.light-theme #error-overlay {
+    background: rgba(0, 0, 255, 0.4);
 }
 #error-overlay.visible {
     opacity: 1;
@@ -822,7 +825,7 @@
 @keyframes spin {
     to { transform: rotate(360deg); }
 }
-  
+
 @keyframes bgChange {
     0.0% { background-color: #888888; }
     7.14% { background-color: #7e7e7e; }
@@ -1061,21 +1064,14 @@
       </h2>
 <div class="settings">
 <div class="setting-item">
-<button class="btn btn-full" id="btn-import-strategy" data-i18n="import_strategy">
-         Импорт стратегии
-        </button>
+<label data-i18n="active_strategy">Активная стратегия</label>
+<select id="strategy-select"></select>
 </div>
 <div class="setting-item">
-<label data-i18n="active_strategy">
-         Активная стратегия
-        </label>
-<select id="strategy-select">
-</select>
+<button class="btn btn-full" id="btn-import-strategy" data-i18n="import_strategy">Импорт стратегии</button>
 </div>
 <div class="setting-item">
-<label data-i18n="bypass_calls">
-         Включить обход звонков
-        </label>
+<label data-i18n="bypass_calls">Включить обход звонков</label>
 <label class="switch">
 <input id="toggle-bypass-calls" type="checkbox"/>
 <span class="slider">
@@ -1388,7 +1384,7 @@
                 "btn_cancel": "Cancel",
                 "active_strategy": "Strategy",
                 "dnscrypt_proxy": "DNSCrypt Proxy",
-                "dnscrypt_rules_refresh": "Refresh rules",  
+                "dnscrypt_rules_refresh": "Refresh rules",
                 "update_on_start": "Update on startup",
                 "update_cloaking": "Update Cloaking Rules",
                 "update_blocked_names": "Update Blocked Names",
@@ -1494,7 +1490,7 @@
                     }
                 };
 
-                
+
 const loadingOverlay = document.getElementById('loading-overlay');
 function showLoading() {
     btnPrimary.disabled = true;
@@ -1542,16 +1538,16 @@ async function waitForPidChange(oldPid, timeout = 5000) {
                 const importConfirm = document.getElementById('import-confirm');
                 const importCancel = document.getElementById('import-cancel');
                 const errorOverlay = document.getElementById('error-overlay');
-                
+
                 const inputIpv4Ranges = document.getElementById('input-ipv4-ranges');
                 const inputIpv6Ranges = document.getElementById('input-ipv6-ranges');
                 const inputRknRegistry = document.getElementById('input-rkn-registry');
                 const inputCloakingRules = document.getElementById('input-cloaking-rules');
                 const inputBlockedNames = document.getElementById('input-blocked-names');
-                
+
                 let currentZapretLogText = '';
                 let currentDnscryptLogText = '';
-                
+
                 const fileContents = {
                     'list/custom.txt': document.getElementById('file-list-custom'),
                     'list/exclude.txt': document.getElementById('file-list-exclude'),
@@ -1659,10 +1655,10 @@ async function waitForPidChange(oldPid, timeout = 5000) {
                     try {
                         const nfqwsStatus = await run('pgrep -f "nfqws" >/dev/null 2>&1 && echo "Running" || echo "Stopped"');
                         const dnscryptStatus = await run('pgrep -f "dnscrypt-proxy" >/dev/null 2>&1 && echo "Running" || echo "Stopped"');
-                        
+
                         const strategiesRaw = await run(`ls ${MODPATH}/strategy | sed 's/\\.sh$//'`);
                         const currentStrategy = await run(`cat ${MODPATH}/config/current-strategy 2>/dev/null || true`);
-                        
+
                         const dnscryptEnabled = await run(`cat ${MODPATH}/config/dnscrypt-enable 2>/dev/null || true`);
                         const rulesRecheck = await run(`cat ${MODPATH}/config/dnscrypt-rules-fix 2>/dev/null || true`);
                         const updateOnStart = await run(`cat ${MODPATH}/config/update-on-start 2>/dev/null || true`);
@@ -1671,19 +1667,19 @@ async function waitForPidChange(oldPid, timeout = 5000) {
                         const bypassCalls = await run(`cat ${MODPATH}/config/bypass-calls 2>/dev/null || true`);
                         const ipv6Enable = await run(`cat ${MODPATH}/config/ipv6-enable 2>/dev/null || true`);
                         const networkTweaks = await run(`cat ${MODPATH}/config/network-tweaks 2>/dev/null || true`);
-                        
+
                         const ipv4RangesLink = await run(`cat ${MODPATH}/config/ipset-v4-link 2>/dev/null || true`);
                         const ipv6RangesLink = await run(`cat ${MODPATH}/config/ipset-v6-link 2>/dev/null || true`);
                         const rknRegistryLink = await run(`cat ${MODPATH}/config/reestr-link 2>/dev/null || true`);
                         const cloakingRulesLink = await run(`cat ${MODPATH}/config/dnscrypt-cloaking-rules-link 2>/dev/null || true`);
                         const blockedNamesLink = await run(`cat ${MODPATH}/config/dnscrypt-blocked-names-link 2>/dev/null || true`);
-                        
+
                         const listCustom = await run(`cat ${MODPATH}/list/custom.txt 2>/dev/null || true`);
                         const listExclude = await run(`cat ${MODPATH}/list/exclude.txt 2>/dev/null || true`);
                         const ipsetCustom = await run(`cat ${MODPATH}/ipset/custom.txt 2>/dev/null || true`);
                         const ipsetExclude = await run(`cat ${MODPATH}/ipset/exclude.txt 2>/dev/null || true`);
                         const dnscryptCustom = await run(`cat ${MODPATH}/dnscrypt/custom-cloaking-rules.txt 2>/dev/null || true`);
-                        
+
                         const zapretLogs = await run(`cat ${MODPATH}/zapret/latest.log 2>/dev/null || true`);
                         const dnscryptLogs = await run(`cat ${MODPATH}/dnscrypt/latest.log 2>/dev/null || true`);
                         currentZapretLogText = zapretLogs;
@@ -1693,7 +1689,7 @@ async function waitForPidChange(oldPid, timeout = 5000) {
                         const isRunning = nfqwsStatus === 'Running';
                         updateStatusIndicator(statusNfqws, nfqwsStatus);
                         updateStatusIndicator(statusDnscrypt, dnscryptStatus);
-                        
+
                         if (isRunning) {
                             btnPrimaryIcon.innerHTML = '<path d="M6 6h12v12H6z"></path>';
                             btnPrimaryText.textContent = langData.btn_stop || 'Остановить';
@@ -1714,7 +1710,7 @@ async function waitForPidChange(oldPid, timeout = 5000) {
                                 strategySelect.appendChild(option);
                             }
                         });
-                        
+
                         let isDnscryptChecked = dnscryptEnabled === '1';
                         const isIpv6Checked = ipv6Enable === '1';
                         toggleIpv6.checked = isIpv6Checked;
@@ -1725,13 +1721,13 @@ async function waitForPidChange(oldPid, timeout = 5000) {
                         toggleBlockedNamesUpdate.checked = blockedNamesUpdate === '1';
                         document.getElementById('toggle-bypass-calls').checked = bypassCalls === '1';
                         document.getElementById('toggle-network-tweaks').checked = networkTweaks === '1';
-                        
+
                         inputIpv4Ranges.value = ipv4RangesLink;
                         inputIpv6Ranges.value = ipv6RangesLink;
                         inputRknRegistry.value = rknRegistryLink;
                         inputCloakingRules.value = cloakingRulesLink;
                         inputBlockedNames.value = blockedNamesLink;
-                        
+
                         updateDnscryptDependentFields(isDnscryptChecked, isIpv6Checked);
 
                         Object.keys(fileContents).forEach(path => {
@@ -1782,7 +1778,7 @@ async function waitForPidChange(oldPid, timeout = 5000) {
                     }
                 };
 
-                
+
 btnPrimary.addEventListener('click', async () => {
     showLoading();
     try {
@@ -1863,7 +1859,7 @@ btnPrimary.addEventListener('click', async () => {
                         if (callback) await callback();
                     });
                 };
-                
+
                 setupToggle(toggleDnscrypt, 'dnscrypt-enable', () => {
                     updateDnscryptDependentFields(toggleDnscrypt.checked, toggleIpv6.checked);
                 });
@@ -2018,7 +2014,7 @@ btnPrimary.addEventListener('click', async () => {
                         return false;
                     }
                 }
-                
+
                 let hasPng = await fileExists('fumo.png');
                 let hasMp3 = await fileExists('fumo.mp3');
 
@@ -2026,24 +2022,24 @@ btnPrimary.addEventListener('click', async () => {
                     if (!hasPng || !hasMp3) {
                         return;
                     }
-                    
+
                     e.preventDefault();
-                    
+
                     const fumo = document.createElement('img');
                     fumo.src = 'fumo.png';
                     fumo.className = 'fumo';
-                    
+
                     const randomSize = 50 + Math.random() * 100;
                     const randomX = Math.random() * (window.innerWidth - randomSize);
                     const randomY = Math.random() * (window.innerHeight - randomSize);
-                    
+
                     fumo.style.left = Math.max(0, randomX) + 'px';
                     fumo.style.top = Math.max(0, randomY) + 'px';
                     fumo.style.width = randomSize + 'px';
                     fumo.style.height = 'auto';
-                    
+
                     document.body.appendChild(fumo);
-                    
+
                     try {
                         const audio = new Audio('fumo.mp3');
                         audio.volume = 0.5;
@@ -2051,7 +2047,7 @@ btnPrimary.addEventListener('click', async () => {
                     } catch (e) {
                         console.log('Could not create fumo audio:', e);
                     }
-                    
+
                     setTimeout(() => {
                         fumo.classList.add('fade-out');
                         setTimeout(() => {
@@ -2076,7 +2072,7 @@ btnPrimary.addEventListener('click', async () => {
                 showLoading();
                 await fetchData();
                 hideLoading();
-                setInterval(fetchData, 10000); 
+                setInterval(fetchData, 10000);
             });
         }
   </script>
