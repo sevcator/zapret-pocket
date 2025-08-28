@@ -106,7 +106,7 @@ update_dir() {
     done
 }
 
-. $MODPATH/dnscrypt/custom-cloaking-rules.sh disappend > /dev/null 2>&1 &
+. "$MODPATH/dnscrypt/custom-cloaking-rules.sh" disappend > /dev/null 2>&1 &
 sleep 2
 
 update_dir "$ZAPRETLISTSDIR" "$ZAPRETLISTSDEFAULTLINK" "$PREDEFINED_LIST_FILES"
@@ -115,5 +115,5 @@ update_dir "$ZAPRETIPSETSDIR" "$ZAPRETIPSETSDEFAULTLINK" "$PREDEFINED_IPSET_FILE
 [ "$CLOAKINGUPDATE" = "1" ] && update_file "$DNSCRYPTLISTSDIR/cloaking-rules.txt" "$DNSCRYPTFILES_cloaking_rules"
 [ "$BLOCKEDUPDATE" = "1" ] && update_file "$DNSCRYPTLISTSDIR/blocked-names.txt" "$DNSCRYPTFILES_blocked_names"
 
-. $MODPATH/dnscrypt/custom-cloaking-rules.sh append > /dev/null 2>&1 &
+. "$MODPATH/dnscrypt/custom-cloaking-rules.sh" append > /dev/null 2>&1 &
 sleep 2

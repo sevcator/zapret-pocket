@@ -16,10 +16,11 @@ touch "$MODPATH/list/providers.txt"
 touch "$MODPATH/list/google.txt"
 touch "$MODPATH/list/reestr.txt"
 if [ "$UPDATEONSTART" = "1" ]; then
-    . $MODPATH/update.sh > /dev/null 2>&1
+    . "$MODPATH/update.sh" > /dev/null 2>&1
     sleep 2
 fi
 if [ "$(cat "$MODPATH/config/dnscrypt-enable" 2>/dev/null)" = "1" ]; then
     nohup sh "$MODPATH/dnscrypt/dnscrypt.sh" > /dev/null 2>&1 &
 fi
 nohup sh "$MODPATH/zapret/zapret.sh" > /dev/null 2>&1 &
+
