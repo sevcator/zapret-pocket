@@ -7,6 +7,7 @@ CUSTOM_RULES=$MODPATH/dnscrypt/custom-cloaking-rules.txt
 
 ensure_newline() {
   [ -f "$1" ] || return
+  [ -s "$1" ] || return
   [ "$(tail -c1 "$1")" = "" ] && return
   printf "\n" >> "$1"
 }
