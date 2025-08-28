@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="ru">
 <head>
 <meta charset="utf-8"/>
@@ -7,7 +6,6 @@
 <title>zapret</title>
 <style>
    :root {
-
             --bg-main: #121212;
             --bg-card: #1E1E1E;
             --bg-input: #2C2C2C;
@@ -16,26 +14,18 @@
             --text-secondary: #A0A0A0;
             --accent-color: #FFFFFF;
             --disabled-color: #555555;
-
-
             --tab-bar-height: 60px;
-
-
             --shadow-color-feedback: rgba(255, 255, 255, 0.15);
             --btn-hover-bg: #383838;
             --btn-hover-border: #454545;
         }
-
-
         * {
             box-sizing: border-box;
         }
-
         button, select, textarea, input {
             -webkit-tap-highlight-color: transparent;
             outline: none;
         }
-
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             background-color: var(--bg-main);
@@ -45,8 +35,6 @@
             padding-top: calc(16px + env(safe-area-inset-top));
             -webkit-font-smoothing: antialiased;
         }
-
-
         .container {
             max-width: 900px;
             margin: 0 auto;
@@ -56,37 +44,30 @@
             position: relative;
             min-height: calc(100vh - var(--tab-bar-height) - 60px);
         }
-
         header {
             text-align: center;
             margin-top: 30px;
             margin-bottom: 30px;
         }
-
         header h1 {
             margin: 0;
             font-weight: 600;
             font-size: 2.5rem;
             letter-spacing: -1px;
         }
-
         section > header h1 {
             font-size: 2rem;
         }
-
         header p {
             margin: 4px 0 10px 0;
             color: var(--text-secondary);
             font-size: 1rem;
         }
-
         .version-info {
             font-size: 0.8em;
             color: var(--text-secondary);
             opacity: 0.7;
         }
-
-
         .card {
             background-color: var(--bg-card);
             border-radius: 12px;
@@ -97,7 +78,6 @@
             display: flex;
             flex-direction: column;
         }
-
         .card-title {
             margin: 0 0 12px 0;
             font-weight: 500;
@@ -106,7 +86,6 @@
             padding-bottom: 8px;
             transition: color 0.3s ease-in-out;
         }
-
         .subsection-title {
             margin: 30px 0 15px 0;
             font-weight: 500;
@@ -115,52 +94,41 @@
             border-bottom: 1px solid var(--border-color);
             padding-bottom: 8px;
         }
-
         .card.all-running {
             border-color: var(--accent-color);
             box-shadow: 0 0 15px rgba(255, 255, 255, 0.15);
         }
-
         .card.all-running .card-title {
             color: var(--accent-color);
         }
-
-
         .page {
             display: none;
         }
-
         .page.active {
             display: block;
         }
-
         .page > main {
             display: flex;
             flex-direction: column;
             gap: 12px;
             min-height: auto;
         }
-
-
         .status-list {
             display: flex;
             flex-direction: column;
             gap: 12px;
         }
-
         .status-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
-
         .status-indicator {
             display: flex;
             align-items: center;
             gap: 8px;
             font-weight: 500;
         }
-
         .status-indicator .dot {
             width: 10px;
             height: 10px;
@@ -169,27 +137,21 @@
             border: 1px solid var(--text-secondary);
             transition: all 0.3s;
         }
-
         .status-indicator.running .dot {
             background-color: var(--accent-color);
             border-color: var(--accent-color);
         }
-
         .status-indicator.running .text {
             color: var(--accent-color);
         }
-
         .status-indicator.stopped .text {
             color: var(--text-secondary);
         }
-
-
         .controls {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
             gap: 8px;
         }
-
         .btn {
             display: flex;
             align-items: center;
@@ -205,80 +167,65 @@
             cursor: pointer;
             transition: all 0.2s ease;
         }
-
         .btn svg {
             width: 20px;
             height: 20px;
         }
-
         .btn:hover:not(:disabled) {
             background-color: var(--btn-hover-bg);
             border-color: var(--btn-hover-border);
         }
-
         .btn:disabled {
             opacity: 0.5;
             cursor: not-allowed;
         }
-
         .btn-save {
             flex-grow: 1;
         }
-
         .btn-full {
             width: 100%;
         }
-
         .btn-icon {
             padding: 8px;
             width: 40px;
             height: 40px;
             flex-shrink: 0;
         }
-
         .btn-icon svg {
             width: 24px;
             height: 24px;
             fill: currentColor;
         }
-
         .active-feedback {
             border-color: var(--accent-color) !important;
             box-shadow: 0 0 10px var(--shadow-color-feedback) !important;
             transform: scale(0.98);
         }
-
-
         .settings {
             display: flex;
             flex-direction: column;
             gap: 6px;
         }
-
         .setting-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
             min-height: 36px;
         }
-
         .setting-item > label {
             flex-shrink: 0;
             margin-right: 8px;
             font-weight: 500;
         }
-
         .setting-item.stacked {
             flex-direction: column;
             align-items: stretch;
             justify-content: flex-start;
         }
-
         .setting-item.stacked > label {
             margin-right: 0;
             margin-bottom: 4px;
         }
-
         select {
             background-color: var(--bg-input);
             color: var(--text-primary);
@@ -288,8 +235,6 @@
             font-size: 1em;
             width: 100%;
         }
-
-
         .text-input {
             background-color: var(--bg-input);
             color: var(--text-primary);
@@ -300,41 +245,31 @@
             width: 100%;
             transition: border-color 0.2s ease;
         }
-
         .text-input:focus {
             border-color: var(--accent-color);
         }
-
         .text-input:disabled {
             opacity: 0.5;
             cursor: not-allowed;
         }
-
-
         .dnscrypt-related {
             transition: opacity 0.3s ease;
         }
-
         .dnscrypt-related.disabled {
             opacity: 0.5;
             pointer-events: none;
         }
-
         .dnscrypt-related.disabled .text-input {
             cursor: not-allowed;
             background-color: var(--disabled-color);
         }
-
         .dnscrypt-related.disabled .switch {
             pointer-events: none;
         }
-
         .dnscrypt-related.disabled .slider {
             cursor: not-allowed;
             opacity: 0.5;
         }
-
-
         .switch {
             position: relative;
             display: inline-block;
@@ -342,13 +277,11 @@
             height: 24px;
             flex-shrink: 0;
         }
-
         .switch input {
             opacity: 0;
             width: 0;
             height: 0;
         }
-
         .slider {
             position: absolute;
             cursor: pointer;
@@ -360,7 +293,6 @@
             transition: .3s;
             border-radius: 24px;
         }
-
         .slider:before {
             position: absolute;
             content: "";
@@ -372,27 +304,21 @@
             transition: .3s;
             border-radius: 50%;
         }
-
         input:checked + .slider {
             background-color: var(--accent-color);
         }
-
         input:checked + .slider:before {
             background-color: var(--bg-card);
             transform: translateX(20px);
         }
-
-
         .tab-content {
             display: none;
             flex-direction: column;
             gap: 12px;
         }
-
         .tab-content.active {
             display: flex;
         }
-
         textarea {
             width: 100%;
             background-color: var(--bg-input);
@@ -405,14 +331,12 @@
             min-height: 180px;
             font-size: 0.9em;
         }
-
         .list-selector {
             display: flex;
             flex-wrap: wrap;
             gap: 8px;
             margin-bottom: 1rem;
         }
-
         .list-btn {
             background: var(--bg-input);
             border: 1px solid var(--border-color);
@@ -426,33 +350,27 @@
             flex-grow: 1;
             text-align: center;
         }
-
         .list-btn:hover {
             background-color: var(--btn-hover-bg);
             color: var(--text-primary);
         }
-
         .list-btn.active {
             background-color: var(--bg-input);
             color: var(--accent-color);
             border-color: var(--accent-color);
             box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
         }
-
         .textarea-footer {
             display: flex;
             align-items: center;
             gap: 8px;
             margin-top: 12px;
         }
-
         .line-counter {
             font-size: 0.9em;
             color: var(--text-secondary);
             margin-right: auto;
         }
-
-
         .logs {
             background-color: var(--bg-main);
             border-radius: 8px;
@@ -463,7 +381,6 @@
             font-size: 0.85em;
             border: 1px solid var(--border-color);
         }
-
         #logs-content-zapret,
         #logs-content-dnscrypt {
             display: flex;
@@ -471,7 +388,6 @@
             gap: 4px;
             min-height: 100%;
         }
-
         .logs-empty,
         .logs-disabled {
             display: flex;
@@ -481,47 +397,37 @@
             color: var(--text-secondary);
             font-style: italic;
         }
-
         .logs-disabled {
             opacity: 0.7;
         }
-
         .log-line {
             white-space: pre-wrap;
             word-break: break-all;
         }
-
         .log-line .log-info {
             color: #81A1C1;
         }
-
         .log-line .log-warn {
             color: #EBCB8B;
         }
-
         .log-line .log-error {
             color: #BF616A;
         }
-
         .log-line .log-debug {
             color: var(--text-secondary);
             opacity: 0.7;
         }
-
         .log-line .log-date {
             color: var(--text-secondary);
             opacity: 0.7;
             margin-right: 8px;
         }
-
         .log-raw {
             color: var(--text-secondary);
             opacity: 0.8;
             font-size: 0.9em;
             margin-left: 10px;
         }
-
-
         .log-header {
             display: flex;
             justify-content: space-between;
@@ -530,14 +436,11 @@
             padding-bottom: 12px;
             border-bottom: 1px solid var(--border-color);
         }
-
         .log-header .card-title {
             margin: 0;
             border: none;
             padding: 0;
         }
-
-
         .tab-bar {
             position: fixed;
             bottom: 0;
@@ -551,7 +454,6 @@
             padding-bottom: env(safe-area-inset-bottom);
             z-index: 100;
         }
-
         .tab-btn {
             background: none;
             border: none;
@@ -567,30 +469,23 @@
             transition: color 0.2s, transform 0.1s ease;
             cursor: pointer;
         }
-
         .tab-btn svg {
             width: 24px;
             height: 24px;
             fill: currentColor;
         }
-
         .tab-btn:hover {
             color: var(--text-primary);
         }
-
         .tab-btn.active {
             color: var(--accent-color);
         }
-
         .tab-btn:active {
             transform: scale(0.9);
         }
-
-
         .credits-section {
             margin-top: 20px;
         }
-
         .credits-text {
             text-align: center;
             font-size: 0.9em;
@@ -598,24 +493,19 @@
             line-height: 1.5;
             margin: 0;
         }
-
         .credits-text a {
             color: var(--text-secondary);
             text-decoration: none;
             transition: opacity 0.2s ease;
         }
-
         .credits-text a:hover {
             opacity: 0.8;
             text-decoration: underline;
         }
-
         .credits-author {
             color: var(--text-secondary);
             cursor: default;
         }
-
-
         .note {
             font-size: 0.9em;
             color: var(--text-secondary);
@@ -623,8 +513,6 @@
             margin-top: 1rem;
             text-align: center;
         }
-
-
         body.light-theme {
             --bg-main: #F5F5F5;
             --bg-card: #FFFFFF;
@@ -637,62 +525,49 @@
             --btn-hover-bg: #E0E0E0;
             --btn-hover-border: #C7C7C7;
         }
-
         .light-theme .status-indicator.running .dot,
         .light-theme .status-indicator.running .text,
         .light-theme .card.all-running .card-title,
         .light-theme .tab-btn.active {
             color: var(--accent-color);
         }
-
         .light-theme .status-indicator.running .dot {
             background-color: var(--accent-color);
             border-color: var(--accent-color);
         }
-
         .light-theme input:checked + .slider {
             background-color: var(--accent-color);
         }
-
         .light-theme .card.all-running {
             border-color: var(--accent-color);
             box-shadow: 0 0 15px rgba(0, 122, 255, 0.2);
         }
-
         .light-theme .list-btn.active {
             color: var(--accent-color);
             border-color: var(--accent-color);
             background-color: #E8F4FF;
             box-shadow: none;
         }
-
         .light-theme .log-line .log-info {
             color: #00529B;
         }
-
         .light-theme .log-line .log-warn {
             color: #9F6000;
         }
-
         .light-theme .log-line .log-error {
             color: #D8000C;
         }
-
         .light-theme .log-line .log-debug {
             color: var(--text-secondary);
             opacity: 0.8;
         }
-
         .light-theme .credits-text a,
         .light-theme .credits-author {
             color: var(--text-secondary);
         }
-
         .light-theme .credits-author {
             cursor: default;
         }
-
-
         .fumo {
             position: fixed;
             z-index: 9999;
@@ -700,40 +575,29 @@
             opacity: 1;
             transition: opacity 1s ease-out;
         }
-
         .fumo.fade-out {
             opacity: 0;
         }
-
-
         @media (max-width: 480px) {
             body {
                 padding: 20px 20px var(--tab-bar-height) 20px;
                 padding-top: calc(8px + env(safe-area-inset-top));
             }
-
             .card {
                 padding: 16px;
             }
-
             header h1 {
                 font-size: 2rem;
             }
-
             .controls {
                 grid-template-columns: 1fr;
             }
-
-
             .setting-item select,
             .setting-item .text-input {
                 max-width: 100%;
                 width: 100%;
             }
-
         }
-
-
 #loading-overlay {
     position: fixed;
     top: 0;
@@ -759,7 +623,6 @@
     border-radius: 50%;
     animation: spin 1s linear infinite;
 }
-
 #import-modal-overlay {
     position: fixed;
     top: 0;
@@ -821,7 +684,6 @@ body.light-theme #error-overlay {
 @keyframes spin {
     to { transform: rotate(360deg); }
 }
-
 @keyframes bgChange {
     0.0% { background-color: #888888; }
     7.14% { background-color: #7e7e7e; }
@@ -873,7 +735,7 @@ body.light-theme #error-overlay {
 <div class="status-list">
 <div class="status-item">
 <span data-i18n="status_zapret">
-         Zapret
+         zapret
         </span>
 <div class="status-indicator" id="status-nfqws">
 <span class="dot">
@@ -913,7 +775,7 @@ body.light-theme #error-overlay {
 </div>
 <div class="credits-section">
 <p class="credits-text">
-       Zapret Pocket by
+       zapret Pocket by
        <a href="javascript:void(0)" id="sevcator-link" target="_blank">
         sevcator
        </a>
@@ -1153,7 +1015,7 @@ body.light-theme #error-overlay {
 <main>
 <div class="card">
 <div class="log-header">
-<h2 class="card-title" data-i18n="status_zapret">Zapret</h2>
+<h2 class="card-title" data-i18n="status_zapret">zapret</h2>
 <button class="btn btn-icon" data-i18n-title="copy_log_title" id="btn-copy-log-zapret">
 <svg viewbox="0 0 24 24">
 <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z">
@@ -1229,7 +1091,7 @@ body.light-theme #error-overlay {
             ru: {
                 "home_title": "zapret",
                 "status_card_title": "Статус",
-                "status_zapret": "Zapret",
+                "status_zapret": "zapret",
                 "status_dnscrypt": "DNSCrypt Proxy",
                 "controls_card_title": "Управление",
                 "btn_start": "Запустить",
@@ -1281,7 +1143,7 @@ body.light-theme #error-overlay {
             en: {
                 "home_title": "zapret",
                 "status_card_title": "Status",
-                "status_zapret": "Zapret",
+                "status_zapret": "zapret",
                 "status_dnscrypt": "DNSCrypt Proxy",
                 "controls_card_title": "Controls",
                 "btn_start": "Start",
@@ -1331,27 +1193,22 @@ body.light-theme #error-overlay {
                 "tab_logs": "Logs"
             }
         };
-
         const countLines = (text) => {
             if (!text) return 0;
             return text.split('\n').filter(line => line.trim() !== '').length;
         };
-
         let callbackCounter = 0;
         function getUniqueCallbackName(prefix) {
             return `${prefix}_callback_${Date.now()}_${callbackCounter++}`;
         }
-
         function ksu_exec(command, options) {
             const ksuApi = typeof kernelsu !== 'undefined' ? kernelsu : (typeof ksu !== 'undefined' ? ksu : null);
             if (!ksuApi) {
                 return Promise.reject(new Error("KernelSU API is not available"));
             }
-
             if (typeof options === "undefined") {
                 options = {};
             }
-
             return new Promise((resolve, reject) => {
                 const callbackFuncName = getUniqueCallbackName("exec");
                 window[callbackFuncName] = (errno, stdout, stderr) => {
@@ -1366,13 +1223,10 @@ body.light-theme #error-overlay {
                 }
             });
         }
-
         if (typeof kernelsu !== 'undefined' || typeof ksu !== 'undefined') {
             document.addEventListener('DOMContentLoaded', async () => {
                 const MODPATH = '/data/adb/modules/zapret';
-
                 let langData = {};
-
                 const applyLanguage = () => {
                     document.querySelectorAll('[data-i18n]').forEach(el => {
                         const key = el.getAttribute('data-i18n');
@@ -1398,7 +1252,6 @@ body.light-theme #error-overlay {
                         }
                     });
                 };
-
                 const loadLanguage = async (lang) => {
                     try {
                         langData = LANG_DATA[lang] || LANG_DATA['ru'];
@@ -1409,8 +1262,6 @@ body.light-theme #error-overlay {
                         applyLanguage();
                     }
                 };
-
-
 const loadingOverlay = document.getElementById('loading-overlay');
 function showLoading() {
     btnPrimary.disabled = true;
@@ -1431,7 +1282,6 @@ async function waitForPidChange(oldPid, timeout = 5000) {
     }
     throw new Error('Status did not change');
 }
-
                 const statusNfqws = document.getElementById('status-nfqws');
                 const statusDnscrypt = document.getElementById('status-dnscrypt');
                 const btnPrimary = document.getElementById('btn-primary');
@@ -1445,10 +1295,10 @@ async function waitForPidChange(oldPid, timeout = 5000) {
                 const toggleCloakingUpdate = document.getElementById('toggle-cloaking-update');
                 const toggleBlockedNamesUpdate = document.getElementById('toggle-blocked-names-update');
                 const toggleIpv6 = document.getElementById('toggle-ipv6');
-                const logsContentZapret = document.getElementById('logs-content-zapret');
+                const logsContentzapret = document.getElementById('logs-content-zapret');
                 const logsContentDnscrypt = document.getElementById('logs-content-dnscrypt');
                 const toggleTheme = document.getElementById('toggle-theme');
-                const btnCopyLogZapret = document.getElementById('btn-copy-log-zapret');
+                const btnCopyLogzapret = document.getElementById('btn-copy-log-zapret');
                 const btnCopyLogDnscrypt = document.getElementById('btn-copy-log-dnscrypt');
                 const languageSelect = document.getElementById('language-select');
                 const moduleVersionEl = document.getElementById('module-version');
@@ -1458,16 +1308,13 @@ async function waitForPidChange(oldPid, timeout = 5000) {
                 const importConfirm = document.getElementById('import-confirm');
                 const importCancel = document.getElementById('import-cancel');
                 const errorOverlay = document.getElementById('error-overlay');
-
                 const inputIpv4Ranges = document.getElementById('input-ipv4-ranges');
                 const inputIpv6Ranges = document.getElementById('input-ipv6-ranges');
                 const inputRknRegistry = document.getElementById('input-rkn-registry');
                 const inputCloakingRules = document.getElementById('input-cloaking-rules');
                 const inputBlockedNames = document.getElementById('input-blocked-names');
-
-                let currentZapretLogText = '';
+                let currentzapretLogText = '';
                 let currentDnscryptLogText = '';
-
                 const fileContents = {
                     'list/custom.txt': document.getElementById('file-list-custom'),
                     'list/exclude.txt': document.getElementById('file-list-exclude'),
@@ -1475,12 +1322,10 @@ async function waitForPidChange(oldPid, timeout = 5000) {
                     'ipset/exclude.txt': document.getElementById('file-ipset-exclude'),
                     'dnscrypt/custom-cloaking-rules.txt': document.getElementById('file-dnscrypt-custom')
                 };
-
                 const isDirty = {};
                 Object.keys(fileContents).forEach(path => {
                     isDirty[path] = false;
                 });
-
                 const updateStatusIndicator = (element, status) => {
                     const textEl = element.querySelector('.text');
                     if (status === 'Running') {
@@ -1493,7 +1338,6 @@ async function waitForPidChange(oldPid, timeout = 5000) {
                         if (textEl) textEl.textContent = 'Stopped';
                     }
                 };
-
                 const run = async (command) => {
                     const { errno, stdout, stderr } = await ksu_exec(command);
                     if (errno !== 0) {
@@ -1502,10 +1346,8 @@ async function waitForPidChange(oldPid, timeout = 5000) {
                     }
                     return stdout.trim();
                 };
-
                 const updateDnscryptDependentFields = (dnscryptEnabled, ipv6Enabled) => {
                     const dnscryptElements = document.querySelectorAll('.dnscrypt-related');
-
                     dnscryptElements.forEach(element => {
                         const isDependent = element.classList.contains('dnscrypt-dependent');
                         const shouldDisable = ipv6Enabled || (isDependent && !dnscryptEnabled);
@@ -1516,17 +1358,15 @@ async function waitForPidChange(oldPid, timeout = 5000) {
                         });
                     });
                 };
-
-                const renderZapretLogs = (logText) => {
+                const renderzapretLogs = (logText) => {
                     if (!logText) {
-                        logsContentZapret.innerHTML = `<div class="logs-empty">${langData.logs_empty || 'Пусто'}</div>`;
+                        logsContentzapret.innerHTML = `<div class="logs-empty">${langData.logs_empty || 'Пусто'}</div>`;
                         return;
                     }
                     const lines = logText.split('\n');
                     let html = '';
                     lines.forEach(line => {
                         if (!line.trim()) return;
-
                         const match = line.match(/^(\[.*?\])\s\[(INFO|WARN|ERROR|DEBUG)\]\s(.*)/);
                         if (match) {
                             const date = match[1];
@@ -1538,10 +1378,9 @@ async function waitForPidChange(oldPid, timeout = 5000) {
                             html += `<div class="log-line log-raw">${line}</div>`;
                         }
                     });
-                    logsContentZapret.innerHTML = html;
-                    logsContentZapret.parentElement.scrollTop = logsContentZapret.parentElement.scrollHeight;
+                    logsContentzapret.innerHTML = html;
+                    logsContentzapret.parentElement.scrollTop = logsContentzapret.parentElement.scrollHeight;
                 };
-
                 const renderDnscryptLogs = (logText, dnscryptEnabled, dnscryptRunning) => {
                     if (!dnscryptEnabled && !dnscryptRunning) {
                         logsContentDnscrypt.innerHTML = `<div class="logs-disabled">${langData.logs_disabled || 'Отключен'}</div>`;
@@ -1555,7 +1394,6 @@ async function waitForPidChange(oldPid, timeout = 5000) {
                     let html = '';
                     lines.forEach(line => {
                         if (!line.trim()) return;
-
                         const match = line.match(/^(\[.*?\])\s\[(INFO|WARN|ERROR|DEBUG)\]\s(.*)/);
                         if (match) {
                             const date = match[1];
@@ -1570,15 +1408,12 @@ async function waitForPidChange(oldPid, timeout = 5000) {
                     logsContentDnscrypt.innerHTML = html;
                     logsContentDnscrypt.parentElement.scrollTop = logsContentDnscrypt.parentElement.scrollHeight;
                 };
-
                 const fetchData = async () => {
                     try {
                         const nfqwsStatus = await run('pgrep -f "nfqws" >/dev/null 2>&1 && echo "Running" || echo "Stopped"');
                         const dnscryptStatus = await run('pgrep -f "dnscrypt-proxy" >/dev/null 2>&1 && echo "Running" || echo "Stopped"');
-
                         const strategiesRaw = await run(`ls ${MODPATH}/strategy | sed 's/\\.sh$//'`);
                         const currentStrategy = await run(`cat ${MODPATH}/config/current-strategy 2>/dev/null || true`);
-
                         const dnscryptEnabled = await run(`cat ${MODPATH}/config/dnscrypt-enable 2>/dev/null || true`);
                         const rulesRecheck = await run(`cat ${MODPATH}/config/dnscrypt-rules-fix 2>/dev/null || true`);
                         const updateOnStart = await run(`cat ${MODPATH}/config/update-on-start 2>/dev/null || true`);
@@ -1587,29 +1422,24 @@ async function waitForPidChange(oldPid, timeout = 5000) {
                         const bypassCalls = await run(`cat ${MODPATH}/config/bypass-calls 2>/dev/null || true`);
                         const ipv6Enable = await run(`cat ${MODPATH}/config/ipv6-enable 2>/dev/null || true`);
                         const networkTweaks = await run(`cat ${MODPATH}/config/network-tweaks 2>/dev/null || true`);
-
                         const ipv4RangesLink = await run(`cat ${MODPATH}/config/ipset-v4-link 2>/dev/null || true`);
                         const ipv6RangesLink = await run(`cat ${MODPATH}/config/ipset-v6-link 2>/dev/null || true`);
                         const rknRegistryLink = await run(`cat ${MODPATH}/config/reestr-link 2>/dev/null || true`);
                         const cloakingRulesLink = await run(`cat ${MODPATH}/config/dnscrypt-cloaking-rules-link 2>/dev/null || true`);
                         const blockedNamesLink = await run(`cat ${MODPATH}/config/dnscrypt-blocked-names-link 2>/dev/null || true`);
-
                         const listCustom = await run(`cat ${MODPATH}/list/custom.txt 2>/dev/null || true`);
                         const listExclude = await run(`cat ${MODPATH}/list/exclude.txt 2>/dev/null || true`);
                         const ipsetCustom = await run(`cat ${MODPATH}/ipset/custom.txt 2>/dev/null || true`);
                         const ipsetExclude = await run(`cat ${MODPATH}/ipset/exclude.txt 2>/dev/null || true`);
                         const dnscryptCustom = await run(`cat ${MODPATH}/dnscrypt/custom-cloaking-rules.txt 2>/dev/null || true`);
-
                         const zapretLogs = await run(`cat ${MODPATH}/zapret/latest.log 2>/dev/null || true`);
                         const dnscryptLogs = await run(`cat ${MODPATH}/dnscrypt/latest.log 2>/dev/null || true`);
-                        currentZapretLogText = zapretLogs;
+                        currentzapretLogText = zapretLogs;
                         currentDnscryptLogText = dnscryptLogs;
                         const moduleProp = await run(`cat ${MODPATH}/module.prop 2>/dev/null || true`);
-
                         const isRunning = nfqwsStatus === 'Running';
                         updateStatusIndicator(statusNfqws, nfqwsStatus);
                         updateStatusIndicator(statusDnscrypt, dnscryptStatus);
-
                         if (isRunning) {
                             btnPrimaryIcon.innerHTML = '<path d="M6 6h12v12H6z"></path>';
                             btnPrimaryText.textContent = langData.btn_stop || 'Остановить';
@@ -1619,7 +1449,6 @@ async function waitForPidChange(oldPid, timeout = 5000) {
                             btnPrimaryText.textContent = langData.btn_start || 'Запустить';
                             btnPrimary.dataset.action = 'start';
                         }
-
                         strategySelect.innerHTML = '';
                         strategiesRaw.split('\n').forEach(strategy => {
                             if (strategy) {
@@ -1630,7 +1459,6 @@ async function waitForPidChange(oldPid, timeout = 5000) {
                                 strategySelect.appendChild(option);
                             }
                         });
-
                         let isDnscryptChecked = dnscryptEnabled === '1';
                         const isIpv6Checked = ipv6Enable === '1';
                         toggleIpv6.checked = isIpv6Checked;
@@ -1641,15 +1469,12 @@ async function waitForPidChange(oldPid, timeout = 5000) {
                         toggleBlockedNamesUpdate.checked = blockedNamesUpdate === '1';
                         document.getElementById('toggle-bypass-calls').checked = bypassCalls === '1';
                         document.getElementById('toggle-network-tweaks').checked = networkTweaks === '1';
-
                         inputIpv4Ranges.value = ipv4RangesLink;
                         inputIpv6Ranges.value = ipv6RangesLink;
                         inputRknRegistry.value = rknRegistryLink;
                         inputCloakingRules.value = cloakingRulesLink;
                         inputBlockedNames.value = blockedNamesLink;
-
                         updateDnscryptDependentFields(isDnscryptChecked, isIpv6Checked);
-
                         Object.keys(fileContents).forEach(path => {
                             if (!isDirty[path]) {
                                 const textarea = fileContents[path];
@@ -1664,7 +1489,6 @@ async function waitForPidChange(oldPid, timeout = 5000) {
                                 textarea.value = content;
                             }
                         });
-
                         Object.keys(fileContents).forEach(path => {
                             const textarea = fileContents[path];
                             const counter = textarea.parentElement.querySelector('.line-counter');
@@ -1673,32 +1497,25 @@ async function waitForPidChange(oldPid, timeout = 5000) {
                                 counter.textContent = (langData.line_counter || 'Строк: {count}').replace('{count}', count);
                             }
                         });
-
-                        renderZapretLogs(currentZapretLogText);
+                        renderzapretLogs(currentzapretLogText);
                         const dnscryptActive = isDnscryptChecked && !isIpv6Checked;
                         renderDnscryptLogs(currentDnscryptLogText, dnscryptActive, dnscryptStatus === 'Running');
-
                         const statusCard = statusNfqws.closest('.card');
                         const isNfqwsRunning = nfqwsStatus === 'Running';
                         const isDnscryptOk = !dnscryptActive || (dnscryptActive && dnscryptStatus === 'Running');
-
                         if (isNfqwsRunning && isDnscryptOk) {
                             statusCard.classList.add('all-running');
                         } else {
                             statusCard.classList.remove('all-running');
                         }
-
                         const versionMatch = moduleProp.match(/^version=(.*)/m);
                         if (versionMatch) {
                             moduleVersionEl.textContent = `v${versionMatch[1]}`;
                         }
-
                     } catch (e) {
                         console.error(`Ошибка загрузки данных: ${e.message}`);
                     }
                 };
-
-
 btnPrimary.addEventListener('click', async () => {
     showLoading();
     try {
@@ -1719,12 +1536,9 @@ btnPrimary.addEventListener('click', async () => {
         hideLoading();
     }
 });
-
-
                 strategySelect.addEventListener('change', async (e) => {
                     await run(`echo '${e.target.value}' > ${MODPATH}/config/current-strategy`);
                 });
-
                 const flashError = () => {
                     errorOverlay.classList.remove('hidden');
                     errorOverlay.classList.add('visible');
@@ -1733,17 +1547,14 @@ btnPrimary.addEventListener('click', async () => {
                         setTimeout(() => errorOverlay.classList.add('hidden'), 2000);
                     }, 50);
                 };
-
                 btnImportStrategy.addEventListener('click', () => {
                     importUrlInput.value = '';
                     importModalOverlay.classList.remove('hidden');
                     importUrlInput.focus();
                 });
-
                 importCancel.addEventListener('click', () => {
                     importModalOverlay.classList.add('hidden');
                 });
-
                 importConfirm.addEventListener('click', async () => {
                     const url = importUrlInput.value.trim();
                     if (!url) {
@@ -1771,7 +1582,6 @@ btnPrimary.addEventListener('click', async () => {
                         hideLoading();
                     }
                 });
-
                 const setupToggle = (element, configName, callback) => {
                     element.addEventListener('change', async () => {
                         const value = element.checked ? '1' : '0';
@@ -1779,7 +1589,6 @@ btnPrimary.addEventListener('click', async () => {
                         if (callback) await callback();
                     });
                 };
-
                 setupToggle(toggleDnscrypt, 'dnscrypt-enable', () => {
                     updateDnscryptDependentFields(toggleDnscrypt.checked, toggleIpv6.checked);
                 });
@@ -1793,7 +1602,6 @@ btnPrimary.addEventListener('click', async () => {
                     updateDnscryptDependentFields(toggleDnscrypt.checked, ipv6Enabled);
                 });
                 setupToggle(document.getElementById('toggle-network-tweaks'), 'network-tweaks');
-
                 const setupCustomLinkInput = (input, configName) => {
                     input.addEventListener('blur', async () => {
                         const value = input.value.trim();
@@ -1804,13 +1612,11 @@ btnPrimary.addEventListener('click', async () => {
                         }
                     });
                 };
-
                 setupCustomLinkInput(inputIpv4Ranges, 'custom-ipv4-ranges-url');
                 setupCustomLinkInput(inputIpv6Ranges, 'custom-ipv6-ranges-url');
                 setupCustomLinkInput(inputRknRegistry, 'custom-rkn-registry-url');
                 setupCustomLinkInput(inputCloakingRules, 'custom-cloaking-rules-url');
                 setupCustomLinkInput(inputBlockedNames, 'custom-blocked-names-url');
-
                 document.querySelectorAll('.btn-save').forEach(button => {
                     button.addEventListener('click', async () => {
                         const path = button.dataset.path;
@@ -1819,7 +1625,6 @@ btnPrimary.addEventListener('click', async () => {
                         isDirty[path] = false;
                     });
                 });
-
                 Object.keys(fileContents).forEach(path => {
                     const textarea = fileContents[path];
                     textarea.addEventListener('input', () => {
@@ -1831,10 +1636,8 @@ btnPrimary.addEventListener('click', async () => {
                         }
                     });
                 });
-
                 const listButtons = document.querySelectorAll('.list-btn');
                 const tabContents = document.querySelectorAll('.tab-content');
-
                 listButtons.forEach(button => {
                     button.addEventListener('click', () => {
                         listButtons.forEach(btn => btn.classList.remove('active'));
@@ -1847,7 +1650,6 @@ btnPrimary.addEventListener('click', async () => {
                         }
                     });
                 });
-
                 const allButtons = document.querySelectorAll('.btn, .list-btn');
                 allButtons.forEach(button => {
                     button.addEventListener('click', () => {
@@ -1858,7 +1660,6 @@ btnPrimary.addEventListener('click', async () => {
                         }, 300);
                     });
                 });
-
                 document.querySelectorAll('.btn-clear').forEach(button => {
                     button.addEventListener('click', () => {
                         const targetId = button.dataset.target;
@@ -1869,15 +1670,12 @@ btnPrimary.addEventListener('click', async () => {
                         }
                     });
                 });
-
                 const tabButtons = document.querySelectorAll('.tab-btn');
                 const pages = document.querySelectorAll('.page');
-
                 tabButtons.forEach(button => {
                     button.addEventListener('click', () => {
                         tabButtons.forEach(btn => btn.classList.remove('active'));
                         pages.forEach(page => page.classList.remove('active'));
-
                         button.classList.add('active');
                         const targetPageId = button.dataset.page;
                         const targetPage = document.getElementById(targetPageId);
@@ -1886,7 +1684,6 @@ btnPrimary.addEventListener('click', async () => {
                         }
                     });
                 });
-
                 const applyTheme = (theme) => {
                     if (theme === 'light') {
                         document.body.classList.add('light-theme');
@@ -1896,26 +1693,22 @@ btnPrimary.addEventListener('click', async () => {
                         toggleTheme.checked = true;
                     }
                 };
-
                 const savedTheme = localStorage.getItem('zapret_theme') || 'dark';
                 applyTheme(savedTheme);
-
                 toggleTheme.addEventListener('change', () => {
                     const newTheme = toggleTheme.checked ? 'dark' : 'light';
                     localStorage.setItem('zapret_theme', newTheme);
                     applyTheme(newTheme);
                 });
-
-                btnCopyLogZapret.addEventListener('click', () => {
+                btnCopyLogzapret.addEventListener('click', () => {
                     if (navigator.clipboard) {
-                        navigator.clipboard.writeText(currentZapretLogText)
-                            .then(() => console.log('Zapret log copied to clipboard'))
+                        navigator.clipboard.writeText(currentzapretLogText)
+                            .then(() => console.log('zapret log copied to clipboard'))
                             .catch(err => console.error('Copy error:', err));
                     } else {
                         console.error('Clipboard API not supported');
                     }
                 });
-
                 btnCopyLogDnscrypt.addEventListener('click', () => {
                     if (navigator.clipboard) {
                         navigator.clipboard.writeText(currentDnscryptLogText)
@@ -1925,7 +1718,6 @@ btnPrimary.addEventListener('click', async () => {
                         console.error('Clipboard API not supported');
                     }
                 });
-
                 async function fileExists(path) {
                     try {
                         const res = await fetch(path, { method: 'HEAD' });
@@ -1934,32 +1726,24 @@ btnPrimary.addEventListener('click', async () => {
                         return false;
                     }
                 }
-
                 let hasPng = await fileExists('fumo.png');
                 let hasMp3 = await fileExists('fumo.mp3');
-
                 sevcatorLink.addEventListener('click', (e) => {
                     if (!hasPng || !hasMp3) {
                         return;
                     }
-
                     e.preventDefault();
-
                     const fumo = document.createElement('img');
                     fumo.src = 'fumo.png';
                     fumo.className = 'fumo';
-
                     const randomSize = 50 + Math.random() * 100;
                     const randomX = Math.random() * (window.innerWidth - randomSize);
                     const randomY = Math.random() * (window.innerHeight - randomSize);
-
                     fumo.style.left = Math.max(0, randomX) + 'px';
                     fumo.style.top = Math.max(0, randomY) + 'px';
                     fumo.style.width = randomSize + 'px';
                     fumo.style.height = 'auto';
-
                     document.body.appendChild(fumo);
-
                     try {
                         const audio = new Audio('fumo.mp3');
                         audio.volume = 0.5;
@@ -1967,7 +1751,6 @@ btnPrimary.addEventListener('click', async () => {
                     } catch (e) {
                         console.log('Could not create fumo audio:', e);
                     }
-
                     setTimeout(() => {
                         fumo.classList.add('fade-out');
                         setTimeout(() => {
@@ -1977,18 +1760,15 @@ btnPrimary.addEventListener('click', async () => {
                         }, 1000);
                     }, 4000);
                 });
-
                 const savedLang = localStorage.getItem('zapret_lang') || 'ru';
                 languageSelect.value = savedLang;
                 await loadLanguage(savedLang);
-
                 languageSelect.addEventListener('change', async (e) => {
                     const newLang = e.target.value;
                     localStorage.setItem('zapret_lang', newLang);
                     await loadLanguage(newLang);
                     fetchData();
                 });
-
                 showLoading();
                 await fetchData();
                 hideLoading();
