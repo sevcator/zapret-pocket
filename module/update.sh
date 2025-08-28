@@ -40,18 +40,20 @@ update_file() {
     name=$(basename "$file")
 
     tmp_file="${file}.tmp"
-    if $WGETCMD -q -O "$tmp_file" "$url" >/dev/null 2>&1; then
-        if [ ! -f "$file" ] || ! cmp -s "$tmp_file" "$file"; then
-            mv "$tmp_file" "$file"
-            echo "[ $name ] Downloaded"
-        else
-            rm -f "$tmp_file"
-            echo "[ $name ] Unchanged"
+    for _ in 1 2 3 4 5; do
+        if $WGETCMD -q -O "$tmp_file" "$url" >/dev/null 2>&1; then
+            if [ ! -f "$file" ] || ! cmp -s "$tmp_file" "$file"; then
+                mv "$tmp_file" "$file"
+                echo "[ $name ] Downloaded"
+            else
+                rm -f "$tmp_file"
+                echo "[ $name ] Unchanged"
+            fi
+            return
         fi
-    else
-        rm -f "$tmp_file"
-        echo "[ $name ] Failed"
-    fi
+    done
+    rm -f "$tmp_file"
+    echo "[ $name ] Failed"
 }
 
 update_dir() {
