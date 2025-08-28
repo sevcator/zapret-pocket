@@ -1667,11 +1667,12 @@ async function waitForPidChange(oldPid, timeout = 5000) {
                         });
 
                         renderZapretLogs(currentZapretLogText);
-                        renderDnscryptLogs(currentDnscryptLogText, isDnscryptChecked, dnscryptStatus === 'Running');
+                        const dnscryptActive = isDnscryptChecked && !isIpv6Checked;
+                        renderDnscryptLogs(currentDnscryptLogText, dnscryptActive, dnscryptStatus === 'Running');
 
                         const statusCard = statusNfqws.closest('.card');
                         const isNfqwsRunning = nfqwsStatus === 'Running';
-                        const isDnscryptOk = !isDnscryptChecked || (isDnscryptChecked && dnscryptStatus === 'Running');
+                        const isDnscryptOk = !dnscryptActive || (dnscryptActive && dnscryptStatus === 'Running');
 
                         if (isNfqwsRunning && isDnscryptOk) {
                             statusCard.classList.add('all-running');
