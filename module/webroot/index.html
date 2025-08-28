@@ -1627,7 +1627,7 @@ async function waitForPidChange(oldPid, timeout = 5000) {
                 };
 
                 const renderDnscryptLogs = (logText, dnscryptEnabled, dnscryptRunning) => {
-                    if (!dnscryptEnabled) {
+                    if (!dnscryptEnabled && !dnscryptRunning) {
                         logsContentDnscrypt.innerHTML = `<div class="logs-disabled">${langData.logs_disabled || 'Отключен'}</div>`;
                         return;
                     }
