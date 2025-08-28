@@ -994,6 +994,11 @@
       </h2>
 <div class="settings">
 <div class="setting-item">
+<button class="btn" id="btn-import-strategy" data-i18n="import_strategy">
+         Импорт стратегии
+        </button>
+</div>
+<div class="setting-item">
 <label data-i18n="active_strategy">
          Активная стратегия
         </label>
@@ -1258,6 +1263,7 @@
                 "settings_title": "Настройки",
                 "module_settings_title": "Параметры модуля",
                 "bypass_calls": "Включить обход звонков",
+                "import_strategy": "Импорт стратегии",
                 "active_strategy": "Стратегия",
                 "dnscrypt_proxy": "DNSCrypt Proxy",
                 "dnscrypt_rules_refresh": "Обновление правил",
@@ -1306,6 +1312,7 @@
                 "settings_title": "Settings",
                 "module_settings_title": "Module Parameters",
                 "bypass_calls": "Enable bypass calls",
+                "import_strategy": "Import strategy",
                 "active_strategy": "Strategy",
                 "dnscrypt_proxy": "DNSCrypt Proxy",
                 "dnscrypt_rules_refresh": "Refresh rules",  
@@ -1436,6 +1443,7 @@ async function waitForPidChange(oldPid, timeout = 5000) {
                 const btnPrimaryIcon = document.getElementById('btn-primary-icon');
                 const btnPrimaryText = document.getElementById('btn-primary-text');
                 const strategySelect = document.getElementById('strategy-select');
+                const btnImportStrategy = document.getElementById('btn-import-strategy');
                 const toggleDnscrypt = document.getElementById('toggle-dnscrypt');
                 const toggleRulesRecheck = document.getElementById('toggle-rules-recheck');
                 const toggleUpdateOnStart = document.getElementById('toggle-update-on-start');
@@ -1715,6 +1723,29 @@ btnPrimary.addEventListener('click', async () => {
 
                 strategySelect.addEventListener('change', async (e) => {
                     await run(`echo '${e.target.value}' > ${MODPATH}/config/current-strategy`);
+                });
+
+                btnImportStrategy.addEventListener('click', async () => {
+                    const url = prompt('Введите ссылку на стратегию:');
+                    if (!url) return;
+                    showLoading();
+                    try {
+                        const filePart = url.split('/').pop().split('?')[0];
+                        const isSh = filePart.endsWith('.sh');
+                        const now = new Date();
+                        const pad = n => n.toString().padStart(2, '0');
+                        const stamp = `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+                        const filename = (isSh && filePart) ? filePart : `downloaded-${stamp}.sh`;
+                        const safeUrl = url.replace(/'/g, "'\\''");
+                        await run(`curl -fL --silent --show-error -o ${MODPATH}/strategy/${filename} '${safeUrl}'`);
+                        await run(`chmod +x ${MODPATH}/strategy/${filename}`);
+                        await fetchData();
+                    } catch (e) {
+                        alert('Ошибка загрузки стратегии');
+                        console.error(e);
+                    } finally {
+                        hideLoading();
+                    }
                 });
 
                 const setupToggle = (element, configName, callback) => {
