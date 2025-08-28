@@ -1,2 +1,5 @@
 roskomsvoboda.org
 whoer.net
+speedtest.net
+ookla.com
+phncdn.com
