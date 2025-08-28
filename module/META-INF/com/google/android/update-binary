@@ -2,7 +2,6 @@
 
 umask 022
 
-# echo before loading util_functions
 ui_print() { echo "$1"; }
 
 OUTFD=$2
