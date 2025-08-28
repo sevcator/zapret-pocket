@@ -254,7 +254,7 @@
         .settings {
             display: flex;
             flex-direction: column;
-            gap: 18px;
+            gap: 12px;
         }
 
         .setting-item {
@@ -807,7 +807,7 @@
     background: rgba(255, 0, 0, 0.4);
     z-index: 10001;
     opacity: 0;
-    transition: opacity 1s ease;
+    transition: opacity 2s ease;
 }
 #error-overlay.visible {
     opacity: 1;
@@ -1061,16 +1061,16 @@
       </h2>
 <div class="settings">
 <div class="setting-item">
+<button class="btn btn-full" id="btn-import-strategy" data-i18n="import_strategy">
+         Импорт стратегии
+        </button>
+</div>
+<div class="setting-item">
 <label data-i18n="active_strategy">
          Активная стратегия
         </label>
 <select id="strategy-select">
 </select>
-</div>
-<div class="setting-item">
-<button class="btn btn-full" id="btn-import-strategy" data-i18n="import_strategy">
-         Импорт стратегии
-        </button>
 </div>
 <div class="setting-item">
 <label data-i18n="bypass_calls">
@@ -1814,7 +1814,7 @@ btnPrimary.addEventListener('click', async () => {
                     errorOverlay.classList.add('visible');
                     setTimeout(() => {
                         errorOverlay.classList.remove('visible');
-                        setTimeout(() => errorOverlay.classList.add('hidden'), 1000);
+                        setTimeout(() => errorOverlay.classList.add('hidden'), 2000);
                     }, 50);
                 };
 
@@ -1844,7 +1844,8 @@ btnPrimary.addEventListener('click', async () => {
                         const stamp = `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
                         const filename = (isSh && filePart) ? filePart : `downloaded-${stamp}.sh`;
                         const safeUrl = url.replace(/'/g, "'\\''");
-                        await run(`curl -fL --silent --show-error -o ${MODPATH}/strategy/${filename} '${safeUrl}'`);
+                        const wgetCmd = await run(`cat ${MODPATH}/wgetpath 2>/dev/null || echo wget`);
+                        await run(`${wgetCmd} -q -O ${MODPATH}/strategy/${filename} '${safeUrl}'`);
                         await run(`chmod +x ${MODPATH}/strategy/${filename}`);
                         await fetchData();
                     } catch (e) {
