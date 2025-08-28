@@ -1,10 +1,10 @@
 ########################################################
-#         For github.com/sevcator/zapret-pocket       #
+#         For github.com/sevcator/zapret-pocket        #
 ########################################################
 
 listen_addresses = ['127.0.0.1:5253']
 
-server_names = ['controld-unfiltered', 'nextdns', 'nextdns-ultralow']
+server_names = ['google']
 
 max_clients = 250
 ipv4_servers = true
@@ -13,7 +13,7 @@ dnscrypt_servers = true
 doh_servers = true
 odoh_servers = true
 require_dnssec = true
-require_nolog = true
+require_nolog = false
 require_nofilter = true
 disabled_server_names = []
 
@@ -25,10 +25,10 @@ keepalive = 60
 use_syslog = false
 
 cert_refresh_delay = 240
-bootstrap_resolvers = ['1.1.1.1:53', '1.0.0.1:53', '76.76.2.0:53','76.76.10.0:53', '45.90.28.0:53', '45.90.30.0:53']
+bootstrap_resolvers = ['8.8.8.8:53', '8.8.4.4:53']
 ignore_system_dns = true
 netprobe_timeout = 10
-netprobe_address = '45.90.28.0:53'
+netprobe_address = '8.8.4.4:53'
 
 block_ipv6 = true
 block_unqualified = false
@@ -57,11 +57,5 @@ fragments_blocked = ['cisco', 'cisco-ipv6', 'cisco-familyshield', 'cisco-familys
 skip_incompatible = true
 
 [static]
-[static.'controld-unfiltered']
-stamp = 'sdns://AgcAAAAAAAAACjc2Ljc2LjIuMTEAFGZyZWVkbnMuY29udHJvbGQuY29tAy9wMA'
-[static.'nextdns']
-stamp = 'sdns://AgcAAAAAAAAACjQ1LjkwLjMwLjAgmjo09yfeubylEAPZzpw5-PJ92cUkKQHCurGkTmNaAhkWYW55Y2FzdC5kbnMubmV4dGRucy5pbwovZG5zLXF1ZXJ5'
-[static.'nextdns-ultralow']
-stamp = 'sdns://AgcAAAAAAAAACjQ1LjkwLjMwLjAgmjo09yfeubylEAPZzpw5-PJ92cUkKQHCurGkTmNaAhkWYW55Y2FzdC5kbnMubmV4dGRucy5pbwovZG5zLXF1ZXJ5'
-[static.'nextdns-ipv6']
-stamp = 'sdns://AgcAAAAAAAAADVsyYTA3OmE4YzA6Ol0gmjo09yfeubylEAPZzpw5-PJ92cUkKQHCurGkTmNaAhkWYW55Y2FzdC5kbnMubmV4dGRucy5pbwovZG5zLXF1ZXJ5'
+[static.'google']
+stamp = 'sdns://AgUAAAAAAAAABzguOC44LjggsKKKE4EwvtIbNjGjagI2607EdKSVHowYZtyvD9iPrkkHOC44LjguOAovZG5zLXF1ZXJ5'
