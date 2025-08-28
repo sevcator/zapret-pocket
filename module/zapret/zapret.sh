@@ -4,7 +4,7 @@ MODPATH="/data/adb/modules/zapret"
 CURRENTSTRATEGY=$(cat "$MODPATH/config/current-strategy")
 . "$MODPATH/strategy/$CURRENTSTRATEGY.sh"
 sysctl net.netfilter.nf_conntrack_tcp_be_liberal=1 > /dev/null 2>&1
-if [[ "$config" == *badsum* ]]; then
+if echo "$config" | grep -q 'badsum'; then
     sysctl net.netfilter.nf_conntrack_checksum=0 > /dev/null 2>&1
 fi
 . "$MODPATH/zapret/nfqws.sh" &
@@ -22,15 +22,18 @@ ip6tAdd() {
 }
 addMultiPort() {
     for current_port in $2; do
-        if [[ $current_port == *-* ]]; then
-            for i in $(seq ${current_port%-*} ${current_port#*-}); do
-                iptAdd "$1" "$i";
-		ip6tAdd "$1" "$i";
-            done
-        else
-            iptAdd "$1" "$current_port";
-	    ip6tAdd "$1" "$current_port";
-        fi
+        case "$current_port" in
+            *-*)
+                for i in $(seq "${current_port%-*}" "${current_port#*-}"); do
+                    iptAdd "$1" "$i"
+                    ip6tAdd "$1" "$i"
+                done
+                ;;
+            *)
+                iptAdd "$1" "$current_port"
+                ip6tAdd "$1" "$current_port"
+                ;;
+        esac
     done
 }
 if [ "$(cat /proc/net/ip_tables_targets | grep -c 'NFQUEUE')" == "0" ]; then

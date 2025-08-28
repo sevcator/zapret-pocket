@@ -53,7 +53,7 @@ if [ "$NETWORKTWEAKS" = "1" ]; then
     sysctl -w net.core.xfrm_larval_drop=1
 fi
 boot_wait() {
-    while [[ -z $(getprop sys.boot_completed) ]]; do sleep 2; done
+    while [ -z "$(getprop sys.boot_completed)" ]; do sleep 2; done
 }
 boot_wait
 sleep 2
