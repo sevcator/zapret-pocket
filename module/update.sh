@@ -1,8 +1,13 @@
-#!/system/bin/sh
+#!/bin/sh
 set +e
 
-MODPATH="/data/adb/modules/zapret"
+MODPATH="${MODPATH:-$(cd "$(dirname "$0")" && pwd)}"
+
 WGETCMD=$(cat "$MODPATH/wgetpath" 2>/dev/null || echo "wget")
+if ! command -v "${WGETCMD%% *}" >/dev/null 2>&1; then
+    echo "wget command not found: $WGETCMD" >&2
+    exit 1
+fi
 DNSCRYPTLISTSDIR="$MODPATH/dnscrypt"
 ZAPRETLISTSDIR="$MODPATH/list"
 ZAPRETIPSETSDIR="$MODPATH/ipset"
@@ -35,7 +40,7 @@ update_file() {
     url="$2"
     name=$(basename "$file")
 
-    remote_size=$(busybox wget --spider -S "$url" 2>&1 | awk 'BEGIN{IGNORECASE=1}/Content-Length:/ {print $2}' | tr -d '\r')
+    remote_size=$($WGETCMD --spider -S "$url" 2>&1 | awk 'BEGIN{IGNORECASE=1}/Content-Length:/ {print $2}' | tr -d '\r')
     if [ -z "$remote_size" ] || [ "$remote_size" = "0" ]; then
         return 0
     fi
