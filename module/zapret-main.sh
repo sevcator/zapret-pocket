@@ -1,6 +1,7 @@
 #!/system/bin/sh
 MODPATH="/data/adb/modules/zapret"
 UPDATEONSTART=$(cat "$MODPATH/config/update-on-start" 2>/dev/null || echo "1")
+IPV6ENABLE=$(cat "$MODPATH/config/ipv6-enable" 2>/dev/null || echo "0")
 touch "$MODPATH/dnscrypt/cloaking-rules.txt"
 touch "$MODPATH/dnscrypt/custom-cloaking-rules.txt"
 touch "$MODPATH/dnscrypt/blocked-names.txt"
@@ -19,7 +20,7 @@ if [ "$UPDATEONSTART" = "1" ]; then
     . "$MODPATH/update.sh" > /dev/null 2>&1
     sleep 2
 fi
-if [ "$(cat "$MODPATH/config/dnscrypt-enable" 2>/dev/null)" = "1" ]; then
+if [ "$IPV6ENABLE" != "1" ] && [ "$(cat "$MODPATH/config/dnscrypt-enable" 2>/dev/null)" = "1" ]; then
     nohup sh "$MODPATH/dnscrypt/dnscrypt.sh" > /dev/null 2>&1 &
 fi
 nohup sh "$MODPATH/zapret/zapret.sh" > /dev/null 2>&1 &

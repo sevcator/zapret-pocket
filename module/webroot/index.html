@@ -1446,6 +1446,7 @@ async function waitForPidChange(oldPid, timeout = 5000) {
                 const toggleUpdateOnStart = document.getElementById('toggle-update-on-start');
                 const toggleCloakingUpdate = document.getElementById('toggle-cloaking-update');
                 const toggleBlockedNamesUpdate = document.getElementById('toggle-blocked-names-update');
+                const toggleIpv6 = document.getElementById('toggle-ipv6');
                 const logsContentZapret = document.getElementById('logs-content-zapret');
                 const logsContentDnscrypt = document.getElementById('logs-content-dnscrypt');
                 const toggleTheme = document.getElementById('toggle-theme');
@@ -1503,10 +1504,14 @@ async function waitForPidChange(oldPid, timeout = 5000) {
                     return stdout.trim();
                 };
 
-                const updateDnscryptDependentFields = (dnscryptEnabled) => {
+                const updateDnscryptDependentFields = (dnscryptEnabled, ipv6Enabled) => {
                     const dnscryptDependentElements = document.querySelectorAll('.dnscrypt-dependent');
+
+                    toggleDnscrypt.disabled = ipv6Enabled;
+
+                    const enableElements = dnscryptEnabled && !ipv6Enabled;
                     dnscryptDependentElements.forEach(element => {
-                        if (dnscryptEnabled) {
+                        if (enableElements) {
                             element.classList.remove('disabled');
                             const input = element.querySelector('.text-input');
                             if (input) input.disabled = false;
@@ -1649,13 +1654,14 @@ async function waitForPidChange(oldPid, timeout = 5000) {
                         
                         // Update toggles
                         const isDnscryptChecked = dnscryptEnabled === '1';
+                        const isIpv6Checked = ipv6Enable === '1';
                         toggleDnscrypt.checked = isDnscryptChecked;
                         toggleRulesRecheck.checked = rulesRecheck === '1';
                         toggleUpdateOnStart.checked = updateOnStart === '1' || updateOnStart === '';
                         toggleCloakingUpdate.checked = cloakingUpdate === '1';
                         toggleBlockedNamesUpdate.checked = blockedNamesUpdate === '1';
                         document.getElementById('toggle-bypass-calls').checked = bypassCalls === '1';
-                        document.getElementById('toggle-ipv6').checked = ipv6Enable === '1';
+                        toggleIpv6.checked = isIpv6Checked;
                         document.getElementById('toggle-network-tweaks').checked = networkTweaks === '1';
                         
                         // Update custom links
@@ -1666,7 +1672,7 @@ async function waitForPidChange(oldPid, timeout = 5000) {
                         inputBlockedNames.value = blockedNamesLink;
                         
                         // Update DNSCrypt dependent fields
-                        updateDnscryptDependentFields(isDnscryptChecked);
+                        updateDnscryptDependentFields(isDnscryptChecked, isIpv6Checked);
 
                         // Update file contents (only if not dirty)
                         Object.keys(fileContents).forEach(path => {
@@ -1760,14 +1766,17 @@ btnPrimary.addEventListener('click', async () => {
                 
                 // Setup all toggles
                 setupToggle(toggleDnscrypt, 'dnscrypt-enable', () => {
-                    updateDnscryptDependentFields(toggleDnscrypt.checked);
+                    updateDnscryptDependentFields(toggleDnscrypt.checked, toggleIpv6.checked);
                 });
                 setupToggle(toggleRulesRecheck, 'dnscrypt-rules-fix');
                 setupToggle(toggleUpdateOnStart, 'update-on-start');
                 setupToggle(toggleCloakingUpdate, 'dnscrypt-cloaking-rules-update');
                 setupToggle(toggleBlockedNamesUpdate, 'dnscrypt-blocked-names-update');
                 setupToggle(document.getElementById('toggle-bypass-calls'), 'bypass-calls');
-                setupToggle(document.getElementById('toggle-ipv6'), 'ipv6-enable');
+                setupToggle(toggleIpv6, 'ipv6-enable', () => {
+                    const ipv6Enabled = toggleIpv6.checked;
+                    updateDnscryptDependentFields(toggleDnscrypt.checked, ipv6Enabled);
+                });
                 setupToggle(document.getElementById('toggle-network-tweaks'), 'network-tweaks');
 
                 // Custom links setup helper

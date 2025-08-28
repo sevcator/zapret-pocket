@@ -96,9 +96,6 @@ restart_service() {
 
 setup() {
     mkdir -p "$MODPATH/config"
-    DNSCRYPTENABLE="0"
-    CLOAKINGUPDATE="0"
-    BLOCKEDUPDATE="0"
     UPDATEONSTART="0"
     BYPASSCALLS="0"
     echo "! If the selection is anything other than \"Y\" or \"Yes\", it is considered a negative choice"
@@ -112,7 +109,10 @@ setup() {
     echo -n "- Enable IPv6? "
     read response
     case "$(echo "$response" | tr A-Z a-z)" in
-        y|yes) echo "- Enabled"; IPV6ENABLE="1" ;;
+        y|yes)
+            echo "- Enabled"
+            IPV6ENABLE="1"
+        ;;
     esac
     
     echo -n "- Enable Network Tweaks? "
@@ -126,12 +126,14 @@ setup() {
     case "$(echo "$response" | tr A-Z a-z)" in
         y|yes) echo "- Enabled"; BYPASSCALLS="1" ;;
     esac
-    
-    echo -n "- Enable DNSCrypt? "
-    read response
-    case "$(echo "$response" | tr A-Z a-z)" in
-        y|yes) echo "- Enabled"; DNSCRYPTENABLE="1" ;;
-    esac
+
+    if [ "$IPV6ENABLE" != "1" ]; then
+        echo -n "- Enable DNSCrypt? "
+        read response
+        case "$(echo "$response" | tr A-Z a-z)" in
+            y|yes) echo "- Enabled"; DNSCRYPTENABLE="1" ;;
+        esac
+    fi
 
     echo "- Available strategies:"
     find "$MODPATH/strategy" -type f -name "*.sh" 2>/dev/null | while IFS= read -r file; do
@@ -183,7 +185,7 @@ setup() {
         esac
     fi
     
-    if [ "$DNSCRYPTENABLE" = "1" ]; then
+    if [ "$IPV6ENABLE" != "1" ] && [ "$DNSCRYPTENABLE" = "1" ]; then
         echo -n "- Auto-update cloaking rules for DNSCrypt? "
         read resp
         case "$(echo "$resp" | tr A-Z a-z)" in
