@@ -301,25 +301,25 @@
         }
 
         
-        .dnscrypt-dependent {
+        .dnscrypt-related {
             transition: opacity 0.3s ease;
         }
 
-        .dnscrypt-dependent.disabled {
+        .dnscrypt-related.disabled {
             opacity: 0.5;
             pointer-events: none;
         }
 
-        .dnscrypt-dependent.disabled .text-input {
+        .dnscrypt-related.disabled .text-input {
             cursor: not-allowed;
             background-color: var(--disabled-color);
         }
 
-        .dnscrypt-dependent.disabled .switch {
+        .dnscrypt-related.disabled .switch {
             pointer-events: none;
         }
 
-        .dnscrypt-dependent.disabled .slider {
+        .dnscrypt-related.disabled .slider {
             cursor: not-allowed;
             opacity: 0.5;
         }
@@ -1030,7 +1030,7 @@
 </span>
 </label>
 </div>
-<div class="setting-item">
+<div class="setting-item dnscrypt-related">
 <label data-i18n="dnscrypt_proxy">
          DNSCrypt Proxy
         </label>
@@ -1040,7 +1040,7 @@
 </span>
 </label>
 </div>
-<div class="setting-item dnscrypt-dependent">
+<div class="setting-item dnscrypt-related dnscrypt-dependent">
 <label data-i18n="dnscrypt_rules_refresh">
          Обновление правил
         </label>
@@ -1060,7 +1060,7 @@
 </span>
 </label>
 </div>
-<div class="setting-item dnscrypt-dependent">
+<div class="setting-item dnscrypt-related dnscrypt-dependent">
 <label data-i18n="update_cloaking">
          Обновление Cloaking Rules
         </label>
@@ -1070,7 +1070,7 @@
 </span>
 </label>
 </div>
-<div class="setting-item dnscrypt-dependent">
+<div class="setting-item dnscrypt-related dnscrypt-dependent">
 <label data-i18n="update_blocked_names">
          Обновление доменов для блокировки
         </label>
@@ -1103,13 +1103,13 @@
         </label>
 <input class="text-input" id="input-rkn-registry" placeholder="https://example.github.io/reestr.txt" type="text"/>
 </div>
-<div class="setting-item dnscrypt-dependent">
+<div class="setting-item dnscrypt-related dnscrypt-dependent">
 <label data-i18n="cloaking_rules_link">
          Ссылка на Cloaking Rules
         </label>
 <input class="text-input" id="input-cloaking-rules" placeholder="https://example.github.io/cloaking-rules.txt" type="text"/>
 </div>
-<div class="setting-item dnscrypt-dependent">
+<div class="setting-item dnscrypt-related dnscrypt-dependent">
 <label data-i18n="blocked_names_link">
          Ссылка на Blocked Names
         </label>
@@ -1494,25 +1494,16 @@ async function waitForPidChange(oldPid, timeout = 5000) {
                 };
 
                 const updateDnscryptDependentFields = (dnscryptEnabled, ipv6Enabled) => {
-                    const dnscryptDependentElements = document.querySelectorAll('.dnscrypt-dependent');
+                    const dnscryptElements = document.querySelectorAll('.dnscrypt-related');
 
-                    toggleDnscrypt.disabled = ipv6Enabled;
-
-                    const enableElements = dnscryptEnabled && !ipv6Enabled;
-                    dnscryptDependentElements.forEach(element => {
-                        if (enableElements) {
-                            element.classList.remove('disabled');
-                            const input = element.querySelector('.text-input');
-                            if (input) input.disabled = false;
-                            const toggle = element.querySelector('input[type="checkbox"]');
-                            if (toggle) toggle.disabled = false;
-                        } else {
-                            element.classList.add('disabled');
-                            const input = element.querySelector('.text-input');
-                            if (input) input.disabled = true;
-                            const toggle = element.querySelector('input[type="checkbox"]');
-                            if (toggle) toggle.disabled = true;
-                        }
+                    dnscryptElements.forEach(element => {
+                        const isDependent = element.classList.contains('dnscrypt-dependent');
+                        const shouldDisable = ipv6Enabled || (isDependent && !dnscryptEnabled);
+                        element.classList.toggle('disabled', shouldDisable);
+                        const inputs = element.querySelectorAll('input, .text-input');
+                        inputs.forEach(input => {
+                            input.disabled = shouldDisable;
+                        });
                     });
                 };
 
@@ -1630,15 +1621,21 @@ async function waitForPidChange(oldPid, timeout = 5000) {
                             }
                         });
                         
-                        const isDnscryptChecked = dnscryptEnabled === '1';
+                        let isDnscryptChecked = dnscryptEnabled === '1';
                         const isIpv6Checked = ipv6Enable === '1';
-                        toggleDnscrypt.checked = isDnscryptChecked;
+                        toggleIpv6.checked = isIpv6Checked;
+                        if (isIpv6Checked && isDnscryptChecked) {
+                            isDnscryptChecked = false;
+                            toggleDnscrypt.checked = false;
+                            await run(`echo '0' > ${MODPATH}/config/dnscrypt-enable`);
+                        } else {
+                            toggleDnscrypt.checked = isDnscryptChecked;
+                        }
                         toggleRulesRecheck.checked = rulesRecheck === '1';
                         toggleUpdateOnStart.checked = updateOnStart === '1' || updateOnStart === '';
                         toggleCloakingUpdate.checked = cloakingUpdate === '1';
                         toggleBlockedNamesUpdate.checked = blockedNamesUpdate === '1';
                         document.getElementById('toggle-bypass-calls').checked = bypassCalls === '1';
-                        toggleIpv6.checked = isIpv6Checked;
                         document.getElementById('toggle-network-tweaks').checked = networkTweaks === '1';
                         
                         inputIpv4Ranges.value = ipv4RangesLink;
@@ -1727,7 +1724,7 @@ btnPrimary.addEventListener('click', async () => {
                     element.addEventListener('change', async () => {
                         const value = element.checked ? '1' : '0';
                         await run(`echo '${value}' > ${MODPATH}/config/${configName}`);
-                        if (callback) callback();
+                        if (callback) await callback();
                     });
                 };
                 
@@ -1739,8 +1736,12 @@ btnPrimary.addEventListener('click', async () => {
                 setupToggle(toggleCloakingUpdate, 'dnscrypt-cloaking-rules-update');
                 setupToggle(toggleBlockedNamesUpdate, 'dnscrypt-blocked-names-update');
                 setupToggle(document.getElementById('toggle-bypass-calls'), 'bypass-calls');
-                setupToggle(toggleIpv6, 'ipv6-enable', () => {
+                setupToggle(toggleIpv6, 'ipv6-enable', async () => {
                     const ipv6Enabled = toggleIpv6.checked;
+                    if (ipv6Enabled && toggleDnscrypt.checked) {
+                        toggleDnscrypt.checked = false;
+                        await run(`echo '0' > ${MODPATH}/config/dnscrypt-enable`);
+                    }
                     updateDnscryptDependentFields(toggleDnscrypt.checked, ipv6Enabled);
                 });
                 setupToggle(document.getElementById('toggle-network-tweaks'), 'network-tweaks');
