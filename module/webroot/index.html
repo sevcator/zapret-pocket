@@ -252,7 +252,7 @@
         .settings {
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 8px;
         }
 
         .setting-item {
@@ -268,6 +268,16 @@
             font-weight: 500;
         }
 
+        .setting-item.stacked {
+            flex-direction: column;
+            align-items: stretch;
+            justify-content: flex-start;
+        }
+
+        .setting-item.stacked > label {
+            margin-right: 0;
+            margin-bottom: 6px;
+        }
 
         select {
             background-color: var(--bg-input);
@@ -277,7 +287,6 @@
             padding: 10px;
             font-size: 1em;
             width: 100%;
-            max-width: 250px;
         }
 
 
@@ -289,7 +298,6 @@
             padding: 10px;
             font-size: 1em;
             width: 100%;
-            max-width: 350px;
             transition: border-color 0.2s ease;
         }
 
@@ -776,7 +784,7 @@
     max-width: 400px;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 8px;
 }
 #import-modal .text-input {
     max-width: 100%;
@@ -784,7 +792,7 @@
 #import-modal .modal-actions {
     display: flex;
     justify-content: flex-end;
-    gap: 10px;
+    gap: 8px;
 }
 #error-overlay {
     position: fixed;
@@ -1022,7 +1030,7 @@ body.light-theme #error-overlay {
 <div class="setting-item">
 <button class="btn btn-full" id="btn-import-strategy" data-i18n="import_strategy">Импорт стратегии</button>
 </div>
-<div class="setting-item">
+<div class="setting-item stacked">
 <label data-i18n="active_strategy">Активная стратегия</label>
 <select id="strategy-select"></select>
 </div>
@@ -1093,23 +1101,23 @@ body.light-theme #error-overlay {
 </div>
 <h3 class="subsection-title" data-i18n="custom_links_title">Свои ссылки</h3>
 <div class="settings">
-<div class="setting-item">
+<div class="setting-item stacked">
 <label data-i18n="ipv4_ranges_link">Ссылка на IPv4 диапазоны</label>
 <input class="text-input" id="input-ipv4-ranges" placeholder="https://example.github.io/ipset-v4.txt" type="text"/>
 </div>
-<div class="setting-item">
+<div class="setting-item stacked">
 <label data-i18n="ipv6_ranges_link">Ссылка на IPv6 диапазоны</label>
 <input class="text-input" id="input-ipv6-ranges" placeholder="https://example.github.io/ipset-v6.txt" type="text"/>
 </div>
-<div class="setting-item">
+<div class="setting-item stacked">
 <label data-i18n="registry_link">Ссылка на реестр</label>
 <input class="text-input" id="input-rkn-registry" placeholder="https://example.github.io/reestr.txt" type="text"/>
 </div>
-<div class="setting-item dnscrypt-related dnscrypt-dependent">
+<div class="setting-item dnscrypt-related dnscrypt-dependent stacked">
 <label data-i18n="cloaking_rules_link">Ссылка на Cloaking Rules</label>
 <input class="text-input" id="input-cloaking-rules" placeholder="https://example.github.io/cloaking-rules.txt" type="text"/>
 </div>
-<div class="setting-item dnscrypt-related dnscrypt-dependent">
+<div class="setting-item dnscrypt-related dnscrypt-dependent stacked">
 <label data-i18n="blocked_names_link">Ссылка на Blocked Names</label>
 <input class="text-input" id="input-blocked-names" placeholder="https://example.github.io/blocked-names.txt" type="text"/>
 </div>
@@ -1127,7 +1135,7 @@ body.light-theme #error-overlay {
 </span>
 </label>
 </div>
-<div class="setting-item">
+<div class="setting-item stacked">
 <label data-i18n="language">Язык</label>
 <select id="language-select">
 <option value="ru">Русский</option>
