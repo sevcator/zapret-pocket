@@ -3,9 +3,9 @@
 MODPATH="/data/adb/modules/zapret"
 CURRENTSTRATEGY=$(cat "$MODPATH/config/current-strategy")
 . "$MODPATH/strategy/$CURRENTSTRATEGY.sh"
-sysctl net.netfilter.nf_conntrack_tcp_be_liberal=1 > /dev/null 2>&1
+sysctl net.netfilter.nf_conntrack_tcp_be_liberal=1 > /dev/null 2>&1 &
 if echo "$config" | grep -q 'badsum'; then
-    sysctl net.netfilter.nf_conntrack_checksum=0 > /dev/null 2>&1
+    sysctl net.netfilter.nf_conntrack_checksum=0 > /dev/null 2>&1 &
 fi
 . "$MODPATH/zapret/nfqws.sh" &
 tcp_ports="$(echo $config | grep -oE 'filter-tcp=[0-9,-]+' | sed -e 's/.*=//g' -e 's/,/\n/g' -e 's/ /,/g' | sort -un)";
