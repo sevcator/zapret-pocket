@@ -2,9 +2,8 @@
 set +e
 
 MODPATH="/data/adb/modules/zapret"
-WGETCMD=$(cat "$MODPATH/wgetpath" 2>/dev/null || echo "wget")
-if ! command -v "${WGETCMD%% *}" >/dev/null 2>&1; then
-    echo "wget command not found: $WGETCMD" >&2
+if [ ! -x "$MODPATH/curl" ]; then
+    echo "curl command not found: $MODPATH/curl" >&2
     exit 1
 fi
 DNSCRYPTLISTSDIR="$MODPATH/dnscrypt"
@@ -41,7 +40,7 @@ update_file() {
 
     tmp_file="${file}.tmp"
     for _ in 1 2 3 4 5; do
-        if $WGETCMD -q -O "$tmp_file" "$url" >/dev/null 2>&1; then
+        if "$MODPATH/curl" -fsSL -o "$tmp_file" "$url" >/dev/null 2>&1; then
             if [ ! -f "$file" ] || ! cmp -s "$tmp_file" "$file"; then
                 mv "$tmp_file" "$file"
                 echo "[ $name ] Downloaded"
