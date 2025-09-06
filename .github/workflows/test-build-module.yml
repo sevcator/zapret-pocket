@@ -1,4 +1,4 @@
-name: Build Zapret Pocket
+name: Test Build Zapret Pocket
 run-name: ${{ startsWith(github.ref, 'refs/tags/') && format('Release {0}', github.ref_name) || null }}
 
 on:
