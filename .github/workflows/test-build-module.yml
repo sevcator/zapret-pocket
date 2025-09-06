@@ -1,0 +1,318 @@
+name: Build Zapret Pocket
+run-name: ${{ startsWith(github.ref, 'refs/tags/') && format('Release {0}', github.ref_name) || null }}
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - '[0-9]+*'
+      
+jobs:          
+  build-zapret:
+    name: zapret for Android ${{ matrix.abi }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - abi: armeabi-v7a
+            target: armv7a-linux-androideabi
+          - abi: arm64-v8a
+            target: aarch64-linux-android
+          - abi: x86
+            target: i686-linux-android
+          - abi: x86_64
+            target: x86_64-linux-android
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          repository: bol-van/zapret
+          path: zapret
+
+      - name: Build
+        env:
+          ABI: ${{ matrix.abi }}
+          TARGET: ${{ matrix.target }}
+        run: |
+          DEPS_DIR=$GITHUB_WORKSPACE/deps
+          export TOOLCHAIN=$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64
+          export API=21
+          export CC="$TOOLCHAIN/bin/clang --target=$TARGET$API"
+          export AR=$TOOLCHAIN/bin/llvm-ar
+          export AS=$CC
+          export LD=$TOOLCHAIN/bin/ld
+          export RANLIB=$TOOLCHAIN/bin/llvm-ranlib
+          export STRIP=$TOOLCHAIN/bin/llvm-strip
+          export PKG_CONFIG_PATH=$DEPS_DIR/lib/pkgconfig
+
+            curl -sSL https://www.netfilter.org/pub/libnfnetlink/libnfnetlink-1.0.2.tar.bz2 | tar -xj
+            curl -sSL https://www.netfilter.org/pub/libmnl/libmnl-1.0.5.tar.bz2 | tar -xj
+            curl -sSL https://www.netfilter.org/pub/libnetfilter_queue/libnetfilter_queue-1.0.5.tar.bz2 | tar -xj
+            curl -sSL https://raw.githubusercontent.com/bol-van/zapret/master/.github/workflows/libnetfilter_queue-android.patch | patch -p1 -d libnetfilter_queue-1.0.5
+
+          for i in libmnl libnfnetlink libnetfilter_queue; do
+            (
+              cd $i-*
+
+              CFLAGS="-Os -flto=auto -Wno-implicit-function-declaration" \
+              ./configure --prefix= --host=$TARGET --enable-static --disable-shared --disable-dependency-tracking
+
+              make install -j$(nproc) DESTDIR=$DEPS_DIR
+            )
+            sed -i "s|^prefix=.*|prefix=$DEPS_DIR|g" $DEPS_DIR/lib/pkgconfig/$i.pc
+          done
+
+          CFLAGS="-DZAPRET_GH_VER=${{ github.ref_name }} -DZAPRET_GH_HASH=${{ github.sha }} -I$DEPS_DIR/include" \
+          LDFLAGS="-L$DEPS_DIR/lib" \
+          make -C zapret android -j$(nproc)
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: nfqws-${{ matrix.abi }}
+          path: zapret/binaries/my/nfqws
+          if-no-files-found: error
+
+  build-dnscrypt:
+    name: dnscrypt-proxy for Android (All)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          repository: DNSCrypt/dnscrypt-proxy
+          path: dnscrypt-proxy
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1
+          check-latest: true
+        id: go
+
+      - name: Build All
+        run: |
+          cd dnscrypt-proxy/dnscrypt-proxy
+          curl -sSL "https://raw.githubusercontent.com/${{ github.repository }}/refs/heads/main/.github/modified-ci-build.sh" | bash
+          mkdir binaries
+          mv dnscrypt-proxy-* binaries/
+          
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dnscrypt-proxy
+          path: dnscrypt-proxy/dnscrypt-proxy/binaries/*
+
+  build-curl:
+    name: curl for Android ${{ matrix.abi }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - abi: armeabi-v7a
+            target: armv7a-linux-androideabi
+            openssl: android-arm
+          - abi: arm64-v8a
+            target: aarch64-linux-android
+            openssl: android-arm64
+          - abi: x86
+            target: i686-linux-android
+            openssl: android-x86
+          - abi: x86_64
+            target: x86_64-linux-android
+            openssl: android-x86_64
+    steps:
+      - name: Build
+        env:
+          TARGET: ${{ matrix.target }}
+          OPENSSL_TARGET: ${{ matrix.openssl }}
+          ABI: ${{ matrix.abi }}
+        run: |
+          export TOOLCHAIN=$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64
+          export API=21
+          export CC="$TOOLCHAIN/bin/clang --target=$TARGET$API"
+          export AR=$TOOLCHAIN/bin/llvm-ar
+          export AS=$CC
+          export LD=$TOOLCHAIN/bin/ld
+          export RANLIB=$TOOLCHAIN/bin/llvm-ranlib
+          export STRIP=$TOOLCHAIN/bin/llvm-strip
+
+          curl -sSL https://www.openssl.org/source/openssl-3.3.0.tar.gz | tar -xz
+          cd openssl-3.3.0
+          ./Configure $OPENSSL_TARGET no-shared no-tests no-dso --prefix=$PWD/../openssl-out
+          make install_sw -j$(nproc)
+          cd ..
+
+          curl -sSL https://curl.se/download/curl-8.7.1.tar.xz | tar -xJ
+          cd curl-8.7.1
+          ./configure --host=$TARGET --with-openssl=../openssl-out --disable-shared --enable-static --without-libidn2 --without-libssh2 --disable-ldap --disable-ldaps --disable-manual
+          make -j$(nproc)
+          $STRIP src/curl
+          mv src/curl ../curl
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: curl-${{ matrix.abi }}
+          path: curl
+          if-no-files-found: error
+
+  build-module:
+    name: Zapret Pocket Module
+    runs-on: ubuntu-latest
+    needs: [build-zapret, build-dnscrypt, build-curl]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download nfqws armeabi-v7a
+        uses: actions/download-artifact@v4
+        with:
+          name: nfqws-armeabi-v7a
+          path: module
+
+      - name: Rename nfqws to nfqws-arm
+        run: |
+          mv module/nfqws module/zapret/nfqws-arm
+
+      - name: Download nfqws arm64-v8a
+        uses: actions/download-artifact@v4
+        with:
+          name: nfqws-arm64-v8a
+          path: module
+
+      - name: Rename nfqws to nfqws-aarch64
+        run: |
+          mv module/nfqws module/zapret/nfqws-aarch64
+
+      - name: Download nfqws x86
+        uses: actions/download-artifact@v4
+        with:
+          name: nfqws-x86
+          path: module
+
+      - name: Rename nfqws to nfqws-x86
+        run: |
+          mv module/nfqws module/zapret/nfqws-x86
+
+      - name: Download nfqws x86_64
+        uses: actions/download-artifact@v4
+        with:
+          name: nfqws-x86_64
+          path: module
+
+        - name: Rename nfqws to nfqws-x86_x64
+          run: |
+            mv module/nfqws module/zapret/nfqws-x86_x64
+
+        - name: Download curl armeabi-v7a
+          uses: actions/download-artifact@v4
+          with:
+            name: curl-armeabi-v7a
+            path: module
+
+        - name: Rename curl to curl-arm
+          run: |
+            mv module/curl module/curl-arm
+
+        - name: Download curl arm64-v8a
+          uses: actions/download-artifact@v4
+          with:
+            name: curl-arm64-v8a
+            path: module
+
+        - name: Rename curl to curl-aarch64
+          run: |
+            mv module/curl module/curl-aarch64
+
+        - name: Download curl x86
+          uses: actions/download-artifact@v4
+          with:
+            name: curl-x86
+            path: module
+
+        - name: Rename curl to curl-x86
+          run: |
+            mv module/curl module/curl-x86
+
+        - name: Download curl x86_64
+          uses: actions/download-artifact@v4
+          with:
+            name: curl-x86_64
+            path: module
+
+        - name: Rename curl to curl-x86_64
+          run: |
+            mv module/curl module/curl-x86_64
+
+        - name: Download dnscrypt-proxy
+          uses: actions/download-artifact@v4
+          with:
+            name: dnscrypt-proxy
+            path: module/dnscrypt
+
+      - name: Build Module
+        run: |
+          version=${{ github.ref_name }}
+          version_code=$(echo "${version}" | sed 's/[^0-9]//g')
+          echo "version=${version}" >> $GITHUB_ENV
+          echo "versionCode=${version_code}" >> $GITHUB_ENV
+          echo version=${version}
+          echo versionCode=${version_code}
+          
+          sudo apt update
+          sudo apt install -y p7zip-full
+          cd module
+
+          mkdir -p system/app ipset list
+          apk_url=$(curl -s https://api.github.com/repos/Mygod/VPNHotspot/releases/latest | jq -r '.assets[] | select(.name | endswith(".apk")) | .browser_download_url')
+          curl -L -o ./system/app/VpnHotspot.apk "$apk_url" || true
+          curl -s https://raw.githubusercontent.com/sevcator/zapret-lists/refs/heads/main/ipset-v4.txt > ./ipset/ipset-v4.txt || true
+          curl -s https://raw.githubusercontent.com/sevcator/zapret-lists/refs/heads/main/ipset-v6.txt > ./ipset/ipset-v6.txt || true
+          curl -s https://raw.githubusercontent.com/sevcator/zapret-lists/refs/heads/main/reestr_filtered.txt -o ./list/reestr.txt || true
+          curl -s https://raw.githubusercontent.com/sevcator/dnscrypt-proxy-stuff/refs/heads/main/cloaking-rules.txt -o ./dnscrypt/cloaking-rules.txt || true
+
+          echo "id=zapret" > module.prop
+          echo "name=zapret" >> module.prop
+          echo "version=${version}" >> module.prop
+          echo "versionCode=${version_code}" >> module.prop
+          echo "author=sevcator, t.me/nigga2011, GAME-OVER-op, bol-van, DNSCrypt, ImMALWARE, Fenrir-0xFF, Flowseal, LeonMskRu" >> module.prop
+          echo "description=⚡ DPI bypass on Android with additional features" >> module.prop
+          echo "updateJson=https://raw.githubusercontent.com/${{ github.repository }}/refs/heads/main/update.json" >> module.prop
+
+          cd ..
+          7z a zapret-pocket.zip ./module/*
+
+      - name: Set up Git
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          
+      - name: Push updated files to Main branch
+        run: |
+          echo '{
+            "version": "${{ env.version }}",
+            "versionCode": "${{ env.versionCode }}",
+            "zipUrl": "https://github.com/${{ github.repository }}/releases/download/${{ env.version }}/zapret-pocket.zip",
+            "changelog": "https://raw.githubusercontent.com/${{ github.repository }}/main/CHANGELOG.md"
+          }' > update.json
+          git add update.json
+          git add module/system/app/VpnHotspot.apk
+          git add module/ipset/ipset-v4.txt
+          git add module/ipset/ipset-v6.txt
+          git add module/list/reestr.txt
+          git add module/dnscrypt/cloaking-rules.txt
+          git commit -m "Release ${{ env.version }}"
+          git push origin HEAD:main --force || echo "No changes to commit"
+
+      - name: Calculate SHA-256 checksum
+        id: sha256
+        run: echo "SHA256=$(sha256sum zapret-pocket.zip | awk '{ print $1 }')" >> $GITHUB_ENV
+          
+      - name: Upload Module Zip
+        uses: actions/upload-artifact@v4
+        with:
+          name: zapret-pocket
+          path: zapret-pocket.zip
+          if-no-files-found: error
