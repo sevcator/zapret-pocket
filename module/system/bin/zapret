@@ -1,5 +1,5 @@
 MODPATH="/data/adb/modules/zapret"
-WGETPATH=$(cat "$MODPATH/wgetpath" 2>/dev/null)
+CURLPATH="$MODPATH/curl"
 CURRENTSTRATEGY=$(cat "$MODPATH/config/current-strategy" 2>/dev/null || echo "Unknown")
 DNSCRYPTENABLE=$(cat "$MODPATH/config/dnscrypt-enable" 2>/dev/null || echo "0")
 CLOAKINGUPDATE=$(cat "$MODPATH/config/dnscrypt-cloaking-rules-update" 2>/dev/null || echo "0")
@@ -291,7 +291,7 @@ import_strategy() {
     filename="${filename##*/}"
     [ "${filename##*.}" = "sh" ] || filename="downloaded-$(date +%Y%m%d%H%M%S).sh"
 
-    if "$WGETPATH" -q -O "$MODPATH/strategy/$filename" "$url"; then
+    if "$CURLPATH" -fsSL -o "$MODPATH/strategy/$filename" "$url"; then
         chmod +x "$MODPATH/strategy/$filename"
         echo "- Saved as $filename"
     else

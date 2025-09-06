@@ -18,36 +18,20 @@ check_requirements() {
   ui_print "- iptables - DNAT: Found"
   grep -q 'DNAT' /proc/net/ip6_tables_targets || abort "! ip6tables - DNAT: Not found"
   ui_print "- ip6tables - DNAT: Found"
-  WGET_CMD=""
-  if [ -x /system/bin/wget ] && /system/bin/wget --help 2>&1 | grep -q -- "--no-check-certificate"; then
-    WGET_CMD="/system/bin/wget"
-  elif [ -x /system/xbin/wget ] && /system/xbin/wget --help 2>&1 | grep -q -- "--no-check-certificate"; then
-    WGET_CMD="/system/xbin/wget"
-  elif command -v busybox >/dev/null 2>&1 && busybox wget --help 2>&1 | grep -q -- "--no-check-certificate"; then
-    WGET_CMD="busybox wget"
-  elif [ -x /data/adb/magisk/busybox ] && /data/adb/magisk/busybox wget --help 2>&1 | grep -q -- "--no-check-certificate"; then
-    WGET_CMD="/data/adb/magisk/busybox wget"
-  elif [ -x /data/adb/ksu/bin/busybox ] && /data/adb/ksu/bin/busybox wget --help 2>&1 | grep -q -- "--no-check-certificate"; then
-    WGET_CMD="/data/adb/ksu/bin/busybox wget"
-  fi
-  if [ -z "$WGET_CMD" ]; then
-    abort "! wget: Not found"
-  else
-    ui_print "- wget: Found ($WGET_CMD)"
-  fi
 }
 binary_by_architecture() {
   ABI=$(grep_get_prop ro.product.cpu.abi)
   case "$ABI" in
-    arm64-v8a)    BINARY="nfqws-aarch64"; BINARY2="dnscrypt-proxy-arm64" ;;
-    x86_64)       BINARY="nfqws-x86_x64"; BINARY2="dnscrypt-proxy-x86_64" ;;
-    armeabi-v7a)  BINARY="nfqws-arm";     BINARY2="dnscrypt-proxy-arm" ;;
-    x86)          BINARY="nfqws-x86";     BINARY2="dnscrypt-proxy-i386" ;;
+    arm64-v8a)    BINARY="nfqws-aarch64"; BINARY2="dnscrypt-proxy-arm64"; BINARY3="curl-aarch64" ;;
+    x86_64)       BINARY="nfqws-x86_x64"; BINARY2="dnscrypt-proxy-x86_64"; BINARY3="curl-x86_64" ;;
+    armeabi-v7a)  BINARY="nfqws-arm";     BINARY2="dnscrypt-proxy-arm";     BINARY3="curl-arm" ;;
+    x86)          BINARY="nfqws-x86";     BINARY2="dnscrypt-proxy-i386";    BINARY3="curl-x86" ;;
     *)            abort "! Unsupported Architecture: $ABI" ;;
   esac
   ui_print "- Device Architecture: $ABI"
   ui_print "- Binary (Zapret): $BINARY"
   ui_print "- Binary (DNSCrypt): $BINARY2"
+  ui_print "- Binary (curl): $BINARY3"
 }
 install_tethering_app() {
   APKPATH="$1"
@@ -96,7 +80,6 @@ fi
 check_requirements
 binary_by_architecture
 mkdir -p "$MODPATH"
-echo "$WGET_CMD" > "$MODPATH/wgetpath"
 if [ -d "$MODUPDATEPATH" ]; then
   cp -an "$MODPATH/strategy/"* "$MODUPDATEPATH/strategy/"
   ui_print "- Backing up old files"
@@ -104,7 +87,6 @@ if [ -d "$MODUPDATEPATH" ]; then
   mkdir -p "$MODUPDATEPATH/.old_files"
   cp -a "$MODPATH/"* "$MODUPDATEPATH/.old_files/" 2>/dev/null
   ui_print "- Updating module"
-  cp -f "$MODPATH/wgetpath" "$MODUPDATEPATH/wgetpath"
   cp -f "$MODPATH/config" "$MODUPDATEPATH/config"
   cp -f "$MODPATH/dnscrypt/custom-cloaking-rules.txt" "$MODUPDATEPATH/dnscrypt/custom-cloaking-rules.txt"
   cp -f "$MODPATH/list/exclude.txt" "$MODUPDATEPATH/list/exclude.txt"
@@ -115,16 +97,20 @@ if [ -d "$MODUPDATEPATH" ]; then
   install_tethering_app "$APKMODUPDATEPATH"
   mv "$MODUPDATEPATH/zapret/$BINARY" "$MODUPDATEPATH/zapret/nfqws"
   mv "$MODUPDATEPATH/dnscrypt/$BINARY2" "$MODUPDATEPATH/dnscrypt/dnscrypt-proxy"
+  mv "$MODUPDATEPATH/$BINARY3" "$MODUPDATEPATH/curl"
   rm -f "$MODUPDATEPATH/zapret/nfqws-"*
   rm -f "$MODUPDATEPATH/dnscrypt/dnscrypt-proxy-"*
+  rm -f "$MODUPDATEPATH/curl-"*
   set_perm_recursive "$MODUPDATEPATH" 0 2000 0755 0755
 else
   ui_print "- Installing tethering app"
   install_tethering_app "$APKMODPATH"
   mv "$MODPATH/zapret/$BINARY" "$MODPATH/zapret/nfqws"
   mv "$MODPATH/dnscrypt/$BINARY2" "$MODPATH/dnscrypt/dnscrypt-proxy"
+  mv "$MODPATH/$BINARY3" "$MODPATH/curl"
   rm -f "$MODPATH/zapret/nfqws-"*
   rm -f "$MODPATH/dnscrypt/dnscrypt-proxy-"*
+  rm -f "$MODPATH/curl-"*
   set_perm_recursive "$MODPATH" 0 2000 0755 0755
 fi
 ui_print "- Disabling Private DNS"
