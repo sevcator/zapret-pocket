@@ -131,16 +131,18 @@ jobs:
         run: |
           export TOOLCHAIN=$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64
           export API=21
-          export CC="$TOOLCHAIN/bin/clang --target=$TARGET$API"
-          export AR=$TOOLCHAIN/bin/llvm-ar
+          export PATH=$TOOLCHAIN/bin:$PATH
+          export CC=${TARGET}${API}-clang
+          export CXX=${TARGET}${API}-clang++
+          export AR=llvm-ar
           export AS=$CC
-          export LD=$TOOLCHAIN/bin/ld
-          export RANLIB=$TOOLCHAIN/bin/llvm-ranlib
-          export STRIP=$TOOLCHAIN/bin/llvm-strip
+          export LD=ld.lld
+          export RANLIB=llvm-ranlib
+          export STRIP=llvm-strip
 
           curl -sSL https://www.openssl.org/source/openssl-3.3.0.tar.gz | tar -xz
           cd openssl-3.3.0
-          ./Configure $OPENSSL_TARGET no-shared no-tests no-dso --prefix=$PWD/../openssl-out
+          ./Configure $OPENSSL_TARGET -D__ANDROID_API__=$API no-shared no-tests no-dso --prefix=$PWD/../openssl-out
           make install_sw -j$(nproc)
           cd ..
 
