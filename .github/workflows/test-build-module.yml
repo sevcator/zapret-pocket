@@ -142,7 +142,7 @@ jobs:
 
           curl -sSL https://www.openssl.org/source/openssl-3.3.0.tar.gz | tar -xz
           cd openssl-3.3.0
-          ./Configure $OPENSSL_TARGET -D__ANDROID_API__=$API no-shared no-tests no-dso --prefix=$PWD/../openssl-out
+          ./Configure $OPENSSL_TARGET -D__ANDROID_API__=$API no-shared no-tests no-apps no-dso --prefix=$PWD/../openssl-out
           make install_sw -j$(nproc)
           cd ..
 
