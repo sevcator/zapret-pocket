@@ -290,23 +290,6 @@ jobs:
         run: |
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
-          
-      - name: Push updated files to Main branch
-        run: |
-          echo '{
-            "version": "${{ env.version }}",
-            "versionCode": "${{ env.versionCode }}",
-            "zipUrl": "https://github.com/${{ github.repository }}/releases/download/${{ env.version }}/zapret-pocket.zip",
-            "changelog": "https://raw.githubusercontent.com/${{ github.repository }}/main/CHANGELOG.md"
-          }' > update.json
-          git add update.json
-          git add module/system/app/VpnHotspot.apk
-          git add module/ipset/ipset-v4.txt
-          git add module/ipset/ipset-v6.txt
-          git add module/list/reestr.txt
-          git add module/dnscrypt/cloaking-rules.txt
-          git commit -m "Release ${{ env.version }}"
-          git push origin HEAD:main --force || echo "No changes to commit"
 
       - name: Calculate SHA-256 checksum
         id: sha256
