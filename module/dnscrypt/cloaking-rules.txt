@@ -49,7 +49,6 @@ chatgpt.com 204.12.192.222
 claude.ai 204.12.192.222
 =copilot.microsoft.com 204.12.192.222
 deepl.com 204.12.192.222
-deepl.cpm 204.12.192.222
 dell.com 204.12.192.219
 download.jetbrains.com 204.12.192.222
 dyson.com 45.95.233.23
@@ -81,6 +80,7 @@ manus.im 64.188.98.242
 =notebooklm.google 204.12.192.222
 =notebooklm.google.com 204.12.192.222
 notion.so 204.12.192.222
+ntc.party 130.255.77.28
 nvidia.com 204.12.192.220
 =o.pki.goog 204.12.192.222
 onetrust.com 204.12.192.222
