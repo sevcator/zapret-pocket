@@ -1,6 +1,6 @@
 {
-  "version": "main",
-  "versionCode": "",
+  "version": "21.0",
+  "versionCode": "210",
   "zipUrl": "https://github.com/sevcator/zapret-pocket/releases/download/main/zapret-pocket.zip",
   "changelog": "https://raw.githubusercontent.com/sevcator/zapret-pocket/main/CHANGELOG.md"
 }
