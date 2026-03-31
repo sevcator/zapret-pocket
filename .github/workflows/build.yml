@@ -100,13 +100,16 @@ jobs:
 
       - name: Build dnscrypt-proxy binaries
         run: |
-          cd dnscrypt-proxy
-          if [ -d dnscrypt-proxy ]; then
-            cd dnscrypt-proxy
+          SRC_DIR="${GITHUB_WORKSPACE}/dnscrypt-proxy"
+          if [ -d "${SRC_DIR}/dnscrypt-proxy" ]; then
+            SRC_DIR="${SRC_DIR}/dnscrypt-proxy"
           fi
+          OUTPUT_DIR="${GITHUB_WORKSPACE}/dnscrypt-proxy/binaries"
+          mkdir -p "${OUTPUT_DIR}"
+
+          cd "${SRC_DIR}"
           bash "${GITHUB_WORKSPACE}/.github/scripts/modified-ci-build.sh"
-          mkdir -p binaries
-          mv dnscrypt-proxy-* binaries/
+          mv dnscrypt-proxy-* "${OUTPUT_DIR}/"
 
       - name: Upload dnscrypt-proxy artifact
         uses: actions/upload-artifact@v4
