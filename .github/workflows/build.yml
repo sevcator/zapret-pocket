@@ -136,7 +136,7 @@ jobs:
 
       - name: Sync module assets from upstream zip
         run: |
-          python .github/scripts/generate_assets.py --root . --source-zip flowseal-upstream.zip --manifest assets.json
+          python .github/scripts/generate-assets.py --root . --source-zip flowseal-upstream.zip --manifest assets.json
 
       - name: Download nfqws armeabi-v7a
         uses: actions/download-artifact@v4
@@ -201,7 +201,7 @@ jobs:
             cd module
             zip -r ../zapret-magisk.zip .
           else
-            python .github/scripts/generate_assets.py --root . --source-zip flowseal-upstream.zip --manifest assets.json --zip-out zapret-magisk.zip
+            python .github/scripts/generate-assets.py --root . --source-zip flowseal-upstream.zip --manifest assets.json --zip-out zapret-magisk.zip
           fi
 
       - name: Upload manifest
