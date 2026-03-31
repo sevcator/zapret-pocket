@@ -132,19 +132,9 @@ jobs:
         run: |
           curl -L -o flowseal-upstream.zip https://github.com/Flowseal/zapret-discord-youtube/archive/refs/heads/main.zip
 
-      - name: Prepare module staging directory
-        run: |
-          rm -rf module
-          mkdir -p module
-          for item in action.sh customize.sh make-unkillable.sh module.prop service.sh uninstall.sh update.sh zapret.sh bin fake ipset lists strategy system .service; do
-            if [ -e "$item" ]; then
-              cp -a "$item" module/
-            fi
-          done
-
       - name: Sync module assets from upstream zip
         run: |
-          python .github/scripts/generate_assets.py --root module --source-zip flowseal-upstream.zip --manifest assets.json
+          python .github/scripts/generate-assets.py
 
       - name: Download nfqws armeabi-v7a
         uses: actions/download-artifact@v4
@@ -190,12 +180,6 @@ jobs:
         run: |
           cd module
           zip -r ../zapret-magisk.zip .
-
-      - name: Upload manifest
-        uses: actions/upload-artifact@v4
-        with:
-          name: assets-manifest
-          path: assets.json
 
       - name: Upload module zip
         uses: actions/upload-artifact@v4
