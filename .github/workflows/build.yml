@@ -112,15 +112,13 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: dnscrypt-proxy
-          path: dnscrypt-proxy/dnscrypt-proxy/binaries/*
+          path: dnscrypt-proxy/binaries/*
           if-no-files-found: error
 
   validate-and-package:
     name: Validate and package module
     runs-on: ubuntu-latest
     needs: [build-zapret, build-dnscrypt]
-    permissions:
-      contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -134,9 +132,19 @@ jobs:
         run: |
           curl -L -o flowseal-upstream.zip https://github.com/Flowseal/zapret-discord-youtube/archive/refs/heads/main.zip
 
+      - name: Prepare module staging directory
+        run: |
+          rm -rf module
+          mkdir -p module
+          for item in action.sh customize.sh make-unkillable.sh module.prop service.sh uninstall.sh update.sh zapret.sh bin fake ipset lists strategy system .service; do
+            if [ -e "$item" ]; then
+              cp -a "$item" module/
+            fi
+          done
+
       - name: Sync module assets from upstream zip
         run: |
-          python .github/scripts/generate-assets.py --root . --source-zip flowseal-upstream.zip --manifest assets.json
+          python .github/scripts/generate_assets.py --root module --source-zip flowseal-upstream.zip --manifest assets.json
 
       - name: Download nfqws armeabi-v7a
         uses: actions/download-artifact@v4
@@ -170,39 +178,18 @@ jobs:
 
       - name: Add binaries to module layout
         run: |
-          mv artifacts/nfqws-arm/nfqws-arm nfqws-arm
-          mv artifacts/nfqws-aarch64/nfqws-aarch64 nfqws-aarch64
-          mv artifacts/nfqws-x86/nfqws-x86 nfqws-x86
-          mv artifacts/nfqws-x86_x64/nfqws-x86_x64 nfqws-x86_x64
-          mkdir -p dnscrypt
-          mv artifacts/dnscrypt-proxy/* dnscrypt/
-
-      - name: Update module.prop, txt, bin, and sh files in main branch
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          # Letting git handle the double-star wildcards, splitting to prevent unmatched path errors
-          git add module.prop 2>/dev/null || true
-          git add "**/*.txt" 2>/dev/null || true
-          git add bin/ fake/ 2>/dev/null || true
-          git add "**/*.sh" 2>/dev/null || true
-          git add "**/*.bin" 2>/dev/null || true
-          
-          if ! git diff --cached --quiet; then
-            git commit -m "Auto-update module assets [skip ci]"
-            git push origin HEAD:main
-          else
-            echo "No changes to commit"
-          fi
+          mkdir -p module/zapret module/dnscrypt
+          mv artifacts/nfqws-arm/nfqws-arm module/zapret/nfqws-arm
+          mv artifacts/nfqws-aarch64/nfqws-aarch64 module/zapret/nfqws-aarch64
+          mv artifacts/nfqws-x86/nfqws-x86 module/zapret/nfqws-x86
+          mv artifacts/nfqws-x86_x64/nfqws-x86_x64 module/zapret/nfqws-x86_x64
+          mv artifacts/dnscrypt-proxy/* module/dnscrypt/
+          chmod +x module/zapret/nfqws-* module/dnscrypt/* 2>/dev/null || true
 
       - name: Package module zip
         run: |
-          if [ -d "module" ]; then
-            cd module
-            zip -r ../zapret-magisk.zip .
-          else
-            python .github/scripts/generate-assets.py --root . --source-zip flowseal-upstream.zip --manifest assets.json --zip-out zapret-magisk.zip
-          fi
+          cd module
+          zip -r ../zapret-magisk.zip .
 
       - name: Upload manifest
         uses: actions/upload-artifact@v4
