@@ -2,13 +2,23 @@
 from __future__ import annotations
 
 import re
+import shutil
 import zipfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE_ZIP = ROOT / "flowseal-upstream.zip"
-
 ARCHIVE_ROOT = "zapret-discord-youtube-main/"
+MODULE_ROOT = ROOT / "module"
+
+
+def copy_tree(src: Path, dest: Path) -> None:
+    if src.is_dir():
+        shutil.copytree(src, dest, dirs_exist_ok=True)
+    elif src.is_file():
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(src, dest)
+
 
 def zip_rel_name(entry: str) -> str | None:
     if entry.endswith("/"):
@@ -17,48 +27,41 @@ def zip_rel_name(entry: str) -> str | None:
         return None
     return entry[len(ARCHIVE_ROOT):]
 
-def copy_zip_member(zf: zipfile.ZipFile, entry: zipfile.ZipInfo, dest: Path) -> None:
-    dest.parent.mkdir(parents=True, exist_ok=True)
-    with zf.open(entry) as source:
-        dest.write_bytes(source.read())
 
 def strategy_name_from_bat_name(bat_name: str) -> str | None:
     stem = Path(bat_name).stem.strip()
-    if not stem:
-        return None
-    if stem.lower() == "service":
+    if not stem or stem.lower() == "service":
         return None
 
     stem = re.sub(r"(?i)^general\s*", "", stem).strip()
     stem = stem.replace("(", "").replace(")", "")
     stem = re.sub(r"\s+", "-", stem)
     stem = re.sub(r"-{2,}", "-", stem).strip("-")
-    if not stem:
-        stem = "general"
-    return f"{stem}.sh"
+    return f"{stem or 'general'}.sh"
+
 
 def normalize_paths(text: str) -> str:
-    text = text.replace('^!', '!')
-    text = text.replace('%~dp0', '$MODPATH/')
-    text = re.sub(r'\s*--wf-tcp=[^\s"]+', '', text, flags=re.IGNORECASE)
-    text = re.sub(r'\s*--wf-udp=[^\s"]+', '', text, flags=re.IGNORECASE)
-    text = text.replace('"%BIN%winws.exe"', '')
-    text = text.replace('%BIN%winws.exe', '')
+    text = text.replace("^!", "!")
+    text = text.replace("%~dp0", "$MODPATH/")
+    text = re.sub(r'\s*--wf-tcp=[^\s"]+', "", text, flags=re.IGNORECASE)
+    text = re.sub(r'\s*--wf-udp=[^\s"]+', "", text, flags=re.IGNORECASE)
+    text = text.replace('"%BIN%winws.exe"', "")
+    text = text.replace("%BIN%winws.exe", "")
     text = re.sub(
         r'%BIN%([^"\s]+)',
-        lambda m: '$MODPATH/fake/' + m.group(1),
+        lambda m: "$MODPATH/fake/" + m.group(1),
         text,
         flags=re.IGNORECASE,
     )
     text = re.sub(
         r'%LISTS%([^"\s]+)',
-        lambda m: '$MODPATH/list/' + m.group(1),
+        lambda m: "$MODPATH/list/" + m.group(1),
         text,
         flags=re.IGNORECASE,
     )
-    text = re.sub(r'"(\$MODPATH/(?:bin|fake|list)/[^"]+)"', r'\1', text)
-    text = text.replace('$MODPATH/lists/', '$MODPATH/list/')
+    text = text.replace("$MODPATH/lists/", "$MODPATH/list/")
     return text
+
 
 def convert_bat_to_sh(content: str) -> str:
     lines: list[str] = []
@@ -70,9 +73,7 @@ def convert_bat_to_sh(content: str) -> str:
         if not line:
             continue
         lower = line.lower()
-        if lower.startswith("call service.bat"):
-            continue
-        if lower.startswith("set "):
+        if lower.startswith("call service.bat") or lower.startswith("set "):
             continue
         if lower.startswith("start "):
             started = True
@@ -83,40 +84,31 @@ def convert_bat_to_sh(content: str) -> str:
             continue
 
         line = line.rstrip("^").strip()
-        if current:
-            current += " " + line
-        else:
-            current = line
+        current = f"{current} {line}".strip() if current else line
 
         if raw.rstrip().endswith("^"):
             continue
 
-        if current:
-            lines.append(current)
+        lines.append(current)
         current = ""
 
     if current:
         lines.append(current)
 
     config_segments: list[str] = []
-    joined = " ".join(lines)
-    for segment in joined.split("--new"):
+    for segment in " ".join(lines).split("--new"):
         segment = segment.strip()
-        if segment:
-            normalized = normalize_paths(segment)
-            if "--filter-tcp=%GameFilterTCP%" in normalized:
-                continue
-            if "--filter-udp=%GameFilterUDP%" in normalized:
-                continue
-            normalized = normalized.replace(",,", ",")
-            normalized = normalized.replace(",%", "%")
-            normalized = normalized.replace(" ,", " ")
-            config_segments.append(normalized)
+        if not segment:
+            continue
+        normalized = normalize_paths(segment)
+        if "--filter-tcp=%GameFilterTCP%" in normalized:
+            continue
+        if "--filter-udp=%GameFilterUDP%" in normalized:
+            continue
+        normalized = normalized.replace(",,", ",").replace(",%", "%").replace(" ,", " ")
+        config_segments.append(normalized)
 
-    output = ['# Zapret Configuration', '# >.<', '']
-    if not config_segments:
-        return "\n".join(output) + "\n"
-
+    output = ["# Zapret Configuration", "# >.<", ""]
     for index, segment in enumerate(config_segments):
         if index == 0:
             output.append(f'config="{segment} --new"')
@@ -126,6 +118,27 @@ def convert_bat_to_sh(content: str) -> str:
             output.append(f'config="$config {segment} --new"')
 
     return "\n".join(output) + "\n"
+
+
+def stage_repo(root: Path) -> None:
+    root.mkdir(parents=True, exist_ok=True)
+
+    for path in ROOT.glob("*.sh"):
+        copy_tree(path, root / path.name)
+
+    module_prop = ROOT / "module.prop"
+    if module_prop.exists():
+        copy_tree(module_prop, root / "module.prop")
+
+    for name in ("system", "strategy", "fake", ".service"):
+        src = ROOT / name
+        if src.exists():
+            copy_tree(src, root / name)
+
+    lists_src = ROOT / "lists"
+    if lists_src.exists():
+        copy_tree(lists_src, root / "list")
+
 
 def sync_from_zip(root: Path, archive: zipfile.ZipFile) -> None:
     archive_entries = {entry.filename: entry for entry in archive.infolist()}
@@ -137,40 +150,18 @@ def sync_from_zip(root: Path, archive: zipfile.ZipFile) -> None:
 
         path = Path(rel)
         if path.parts and path.parts[0] == ".service":
-            dest = root / rel
-            copy_zip_member(archive, entry, dest)
+            copy_zip_member(archive, entry, root / rel)
+        elif path.parts and path.parts[0] in {"lists", "list"}:
+            copy_zip_member(archive, entry, root / "list" / Path(*path.parts[1:]))
+        elif path.parts and path.parts[0] == "fake":
+            copy_zip_member(archive, entry, root / "fake" / Path(*path.parts[1:]))
+
+    root.joinpath("strategy").mkdir(parents=True, exist_ok=True)
+    for entry_name, entry in sorted(archive_entries.items()):
+        if not entry_name.startswith(ARCHIVE_ROOT) or not entry_name.lower().endswith(".bat"):
             continue
 
-        if path.parts and path.parts[0] in {"lists", "list"}:
-            dest = root / "list" / Path(*path.parts[1:])
-            copy_zip_member(archive, entry, dest)
-            continue
-
-        if path.parts and path.parts[0] == "fake":
-            dest = root / "fake" / Path(*path.parts[1:])
-            copy_zip_member(archive, entry, dest)
-            continue
-
-        if path.parts and path.parts[0] == "bin":
-            if path.suffix.lower() == ".bin":
-                dest = root / "fake" / path.name
-            else:
-                continue
-            copy_zip_member(archive, entry, dest)
-
-    bat_entries = sorted(
-        (
-            entry_name,
-            entry,
-        )
-        for entry_name, entry in archive_entries.items()
-        if entry_name.startswith(ARCHIVE_ROOT) and entry_name.lower().endswith(".bat")
-    )
-
-    (root / "strategy").mkdir(parents=True, exist_ok=True)
-    for entry_name, entry in bat_entries:
-        bat_name = Path(entry_name).name
-        target_name = strategy_name_from_bat_name(bat_name)
+        target_name = strategy_name_from_bat_name(Path(entry_name).name)
         if target_name is None:
             continue
 
@@ -178,15 +169,23 @@ def sync_from_zip(root: Path, archive: zipfile.ZipFile) -> None:
         content = archive.read(entry).decode("utf-8", errors="ignore")
         dest.write_text(convert_bat_to_sh(content), encoding="utf-8")
 
+
+def copy_zip_member(zf: zipfile.ZipFile, entry: zipfile.ZipInfo, dest: Path) -> None:
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    with zf.open(entry) as source:
+        dest.write_bytes(source.read())
+
+
 def main() -> int:
     if not SOURCE_ZIP.exists():
         raise FileNotFoundError(SOURCE_ZIP)
 
-    root = ROOT / "module"
+    stage_repo(MODULE_ROOT)
     with zipfile.ZipFile(SOURCE_ZIP) as archive:
-        sync_from_zip(root, archive)
+        sync_from_zip(MODULE_ROOT, archive)
 
     return 0
+
 
 if __name__ == "__main__":
     raise SystemExit(main())
