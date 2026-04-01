@@ -28,7 +28,7 @@ command_info() {
     echo "  restart                  - Restart the zapret service"
     echo "  status                   - Print service status"
     echo "  discordtoggle            - Toggle Discord bypass for strategies"
-    echo "  strategy [name]          - Show or set the current strategy"
+    echo "  strategy                 - Show strategies and prompt for selection"
     echo "  custom <entry>           - Add/remove custom list/ipset entry"
     echo "  exclude <entry>          - Add/remove exclude list/ipset entry"
     echo "  blocked-names <url|none> - Set/clear dnscrypt blocked-names source"
@@ -48,22 +48,33 @@ list_strategies() {
 }
 
 strategy_command() {
-    case "$1" in
-        ""|current|show)
-            echo "! Current strategy: $(current_strategy)"
-            echo "- Available strategies:"
-            list_strategies
-            return 0
-            ;;
-    esac
+    current="$(current_strategy)"
+    echo "! Current strategy: $current"
+    echo "- Available strategies:"
+    list_strategies
 
-    if [ -f "$STRATEGY_DIR/$1.sh" ]; then
-        printf '%s\n' "$1" > "$CURRENT_STRATEGY_FILE"
-        echo "- Strategy set to $1"
+    if [ -n "$1" ]; then
+        echo "! strategy takes no arguments"
+        echo "! Use the interactive prompt instead"
+        return 1
+    fi
+
+    printf '%s' "Select strategy name: " >&2
+    IFS= read -r selected || selected=""
+    selected="$(printf '%s' "$selected" | tr -d '\r' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+
+    [ -n "$selected" ] || {
+        echo "! No strategy selected"
+        return 1
+    }
+
+    if [ -f "$STRATEGY_DIR/$selected.sh" ]; then
+        printf '%s\n' "$selected" > "$CURRENT_STRATEGY_FILE"
+        echo "- Strategy set to $selected"
         return 0
     fi
 
-    echo "! Strategy not found: $1"
+    echo "! Strategy not found: $selected"
     return 1
 }
 
