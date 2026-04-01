@@ -175,7 +175,36 @@ jobs:
 
       - name: Validate tracked module sources
         run: |
-          python .github/scripts/check-module-source.py
+          set -euo pipefail
+          blocked_names='^(module/dnscrypt/dnscrypt-proxy-(arm|arm64|i386|x86_64))$'
+          blocked_exts='\.(apk|bin|dll|exe|so|sys)$'
+          violations=""
+
+          while IFS= read -r path; do
+            [ -n "$path" ] || continue
+
+            if printf '%s\n' "$path" | grep -Eq "$blocked_names"; then
+              violations="${violations}${path}\n"
+              continue
+            fi
+
+            if printf '%s\n' "$path" | grep -Eqi "$blocked_exts"; then
+              violations="${violations}${path}\n"
+              continue
+            fi
+
+            if git show "HEAD:$path" | LC_ALL=C grep -q $'\x00'; then
+              violations="${violations}${path}\n"
+            fi
+          done < <(git ls-files module)
+
+          if [ -n "$violations" ]; then
+            printf 'Blocked binary files found in tracked module sources:\n' >&2
+            printf '%b' "$violations" | sed 's/^/ - /' >&2
+            exit 1
+          fi
+
+          echo "Module source tree contains no tracked binaries."
 
       - name: Download upstream archive
         run: |
