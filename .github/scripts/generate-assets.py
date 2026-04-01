@@ -15,6 +15,8 @@ DISCORD_MARKERS = (
     "--hostlist-domains=discord.media",
 )
 DISCORD_FLAG_CHECK = 'if [ "$(cat "$MODPATH/config/bypass-discord" 2>/dev/null || echo 0)" = "1" ]; then'
+IPSET_BASE_TOKEN = "--ipset-exclude=$MODPATH/ipset/ipset-exclude.txt"
+IPSET_USER_TOKEN = "--ipset-exclude=$MODPATH/ipset/ipset-exclude-user.txt"
 
 
 def copy_tree(src: Path, dest: Path) -> None:
@@ -33,9 +35,13 @@ def copy_glob(src_dir: Path, dest_dir: Path, patterns: tuple[str, ...]) -> None:
 
 
 def normalize_strategy_script(text: str) -> str:
-    text = text.replace("ipset-exclude-user.txt", "ipset-exclude.txt")
-    duplicate_token = "--ipset-exclude=$MODPATH/list/ipset-exclude.txt"
-    text = dedupe_exact_token(text, duplicate_token)
+    text = text.replace("%LISTS%ipset-exclude.txt", "$MODPATH/ipset/ipset-exclude.txt")
+    text = text.replace("%LISTS%ipset-exclude-user.txt", "$MODPATH/ipset/ipset-exclude-user.txt")
+    text = text.replace("$MODPATH/list/ipset-exclude.txt", "$MODPATH/ipset/ipset-exclude.txt")
+    text = text.replace("$MODPATH/list/ipset-exclude-user.txt", "$MODPATH/ipset/ipset-exclude-user.txt")
+    text = text.replace(IPSET_BASE_TOKEN, f"{IPSET_BASE_TOKEN} {IPSET_USER_TOKEN}")
+    text = dedupe_exact_token(text, IPSET_BASE_TOKEN)
+    text = dedupe_exact_token(text, IPSET_USER_TOKEN)
     text = re.sub(r'(?m)^config="\s+', 'config="', text)
     text = re.sub(
         r'(--[A-Za-z0-9_-]+)="(\$MODPATH/[^"]+)"',
@@ -81,7 +87,6 @@ def prune_legacy_paths(root: Path) -> None:
         root / "lists",
         root / "list" / "custom.txt",
         root / "list" / "exclude.txt",
-        root / "list" / "ipset-exclude-user.txt",
         root / ".service" / "hosts",
         root / ".service" / "version.txt",
         root / "dnscrypt" / "custom-files.sh",
@@ -136,6 +141,8 @@ def normalize_paths(text: str) -> str:
         flags=re.IGNORECASE,
     )
     text = text.replace("$MODPATH/lists/", "$MODPATH/list/")
+    text = text.replace("$MODPATH/list/ipset-exclude.txt", "$MODPATH/ipset/ipset-exclude.txt")
+    text = text.replace("$MODPATH/list/ipset-exclude-user.txt", "$MODPATH/ipset/ipset-exclude-user.txt")
     return text
 
 
@@ -233,6 +240,13 @@ def stage_repo(root: Path) -> None:
         if src.exists():
             copy_tree(src, root / name)
 
+    ipset_root = root / "ipset"
+    ipset_root.mkdir(parents=True, exist_ok=True)
+    for name in ("ipset-exclude.txt", "ipset-exclude-user.txt"):
+        src = ROOT / "list" / name
+        if src.exists():
+            copy_tree(src, ipset_root / name)
+
     zapret_src = ROOT / "zapret"
     if zapret_src.exists():
         for path in zapret_src.glob("*.sh"):
@@ -263,6 +277,8 @@ def sync_from_zip(root: Path, archive: zipfile.ZipFile) -> None:
             copy_zip_member(archive, entry, root / rel)
         elif path.parts and path.parts[0] in {"lists", "list"}:
             copy_zip_member(archive, entry, root / "list" / Path(*path.parts[1:]))
+        elif path.parts and path.parts[0] == "bin" and path.suffix.lower() == ".bin":
+            copy_zip_member(archive, entry, root / "fake" / Path(*path.parts[1:]))
         elif path.parts and path.parts[0] == "fake":
             copy_zip_member(archive, entry, root / "fake" / Path(*path.parts[1:]))
 

@@ -61,6 +61,7 @@ import_updated_lists() {
   cp -af "$MODUPDATEPATH/config/." "$CONFIG_DIR/" 2>/dev/null || true
   cp -af "$MODUPDATEPATH/list/." "$LIST_DIR/" 2>/dev/null || true
   cp -af "$MODUPDATEPATH/lists/." "$LIST_DIR/" 2>/dev/null || true
+  cp -af "$MODUPDATEPATH/ipset/." "$IPSET_DIR/" 2>/dev/null || true
 }
 
 install_tethering_app() {

@@ -11,8 +11,14 @@ mkdir -p "$MODPATH/ipset"
 for file in \
     "$LIST_DIR/custom.txt" \
     "$LIST_DIR/exclude.txt" \
+    "$LIST_DIR/list-general-user.txt" \
+    "$LIST_DIR/list-exclude-user.txt" \
+    "$LIST_DIR/ipset-exclude.txt" \
+    "$LIST_DIR/ipset-exclude-user.txt" \
     "$MODPATH/ipset/custom.txt" \
     "$MODPATH/ipset/exclude.txt" \
+    "$MODPATH/ipset/ipset-exclude.txt" \
+    "$MODPATH/ipset/ipset-exclude-user.txt" \
     "$DNSCRYPT_DIR/cloaking-rules.txt" \
     "$DNSCRYPT_DIR/blocked-names.txt" \
     "$DNSCRYPT_DIR/blocked-ips.txt" \

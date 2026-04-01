@@ -4,6 +4,7 @@ MODPATH="${MODPATH:-/data/adb/modules/zapret}"
 CONFIG_DIR="${CONFIG_DIR:-$MODPATH/config}"
 LIST_DIR="${LIST_DIR:-$MODPATH/list}"
 LEGACY_LIST_DIR="${LEGACY_LIST_DIR:-$MODPATH/lists}"
+IPSET_DIR="${IPSET_DIR:-$MODPATH/ipset}"
 STRATEGY_DIR="${STRATEGY_DIR:-$MODPATH/zapret}"
 LEGACY_STRATEGY_DIR="${LEGACY_STRATEGY_DIR:-$MODPATH/strategy}"
 LEGACY_STRATEGIES_DIR="${LEGACY_STRATEGIES_DIR:-$MODPATH/strategies}"
@@ -79,7 +80,7 @@ copy_tree_if_needed() {
 }
 
 ensure_layout() {
-    mkdir -p "$CONFIG_DIR" "$LIST_DIR" "$STRATEGY_DIR" "$DNSCRYPT_DIR" "$FAKE_DIR" "$BIN_DIR" "$RUN_DIR" "$STATE_DIR"
+    mkdir -p "$CONFIG_DIR" "$LIST_DIR" "$IPSET_DIR" "$STRATEGY_DIR" "$DNSCRYPT_DIR" "$FAKE_DIR" "$BIN_DIR" "$RUN_DIR" "$STATE_DIR"
 
     if [ -d "$LEGACY_LIST_DIR" ]; then
         copy_tree_if_needed "$LEGACY_LIST_DIR" "$LIST_DIR"
@@ -108,6 +109,10 @@ ensure_default_config() {
     set_default_file "$LIST_DIR/custom.txt" ""
     set_default_file "$LIST_DIR/exclude.txt" ""
     set_default_file "$LIST_DIR/ipset-exclude.txt" ""
+    set_default_file "$LIST_DIR/list-general-user.txt" ""
+    set_default_file "$LIST_DIR/list-exclude-user.txt" ""
+    set_default_file "$IPSET_DIR/ipset-exclude.txt" ""
+    set_default_file "$IPSET_DIR/ipset-exclude-user.txt" ""
     set_default_file "$DNSCRYPT_DIR/custom-cloaking-rules.txt" ""
     set_default_file "$DNSCRYPT_DIR/custom-blocked-names.txt" ""
     set_default_file "$DNSCRYPT_DIR/custom-blocked-ips.txt" ""

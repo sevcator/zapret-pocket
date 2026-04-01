@@ -5,7 +5,7 @@ MODPATH="/data/adb/modules/zapret"
 
 LIST_GENERAL_USER="$LIST_DIR/list-general-user.txt"
 LIST_EXCLUDE_USER="$LIST_DIR/list-exclude-user.txt"
-IPSET_EXCLUDE="$LIST_DIR/ipset-exclude.txt"
+IPSET_EXCLUDE="$IPSET_DIR/ipset-exclude.txt"
 IPSET_FILE="$LIST_DIR/ipset-all.txt"
 IPSET_BACKUP="$LIST_DIR/ipset-all.txt.bak"
 IPSET_BACKUP_LEGACY="$LIST_DIR/ipset-all.txt.backup"
@@ -315,7 +315,7 @@ custom() {
         *)       target_file="$LIST_GENERAL_USER" ;;
     esac
 
-    for file in "$LIST_DIR"/*.txt; do
+    for file in "$LIST_DIR"/*.txt "$IPSET_DIR"/*.txt; do
         [ -f "$file" ] || continue
         [ "$file" = "$target_file" ] && continue
         if grep -Fxq "$entry" "$file" 2>/dev/null; then
