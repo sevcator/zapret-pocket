@@ -161,6 +161,22 @@ jobs:
                       continue
                   if stripped == 'export API=21':
                       out.append('export API="${API:-21}"')
+                      if path.name == 'compile-openssl.sh':
+                          out.append('case "$ARCH" in')
+                          out.append('\tandroid-arm) TARGET_TRIPLE=armv7a-linux-androideabi ;;')
+                          out.append('\tandroid-x86) TARGET_TRIPLE=i686-linux-android ;;')
+                          out.append('\tandroid-arm64) TARGET_TRIPLE=aarch64-linux-android ;;')
+                          out.append('\tandroid-x86_64) TARGET_TRIPLE=x86_64-linux-android ;;')
+                          out.append('\t*) TARGET_TRIPLE="$ARCH" ;;')
+                          out.append('esac')
+                          out.append('export CC="$TOOLCHAIN/clang --target=$TARGET_TRIPLE$API"')
+                          out.append('export CXX="$TOOLCHAIN/clang++ --target=$TARGET_TRIPLE$API"')
+                      continue
+                  if stripped == 'export CC=$TOOLCHAIN/$TARGET$API-clang':
+                      out.append('export CC="$TOOLCHAIN/clang --target=$TARGET$API"')
+                      continue
+                  if stripped == 'export CXX=$TOOLCHAIN/$TARGET$API-clang++':
+                      out.append('export CXX="$TOOLCHAIN/clang++ --target=$TARGET$API"')
                       continue
                   if stripped == 'export CFLAGS="--sysroot=$SYSROOT $CFLAGS"':
                       out.append('export CFLAGS="--sysroot=$SYSROOT -Wno-error $CFLAGS"')
