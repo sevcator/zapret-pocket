@@ -14,6 +14,7 @@ BIN_DIR="${BIN_DIR:-$MODPATH/bin}"
 RUN_DIR="${RUN_DIR:-$MODPATH/.run}"
 STATE_DIR="${STATE_DIR:-$RUN_DIR/state}"
 CURLPATH="${CURLPATH:-$MODPATH/curl}"
+DNSCRYPT_PORT="${DNSCRYPT_PORT:-5253}"
 
 DEBUG_FILE="$CONFIG_DIR/debug"
 DEBUG_LOG="$CONFIG_DIR/debug.log"
@@ -267,12 +268,6 @@ ensure_dnscrypt_firewall_base() {
         insert_unique_jump iptables nat OUTPUT "$CHAIN_DNSCRYPT_REDIRECT"
     fi
 
-    if iptables_supported ip6tables nat; then
-        ensure_chain ip6tables nat "$CHAIN_DNSCRYPT_REDIRECT" || true
-        insert_unique_jump ip6tables nat PREROUTING "$CHAIN_DNSCRYPT_REDIRECT"
-        insert_unique_jump ip6tables nat OUTPUT "$CHAIN_DNSCRYPT_REDIRECT"
-    fi
-
     if iptables_supported iptables filter; then
         ensure_chain iptables filter "$CHAIN_DNSCRYPT_OUTPUT" || true
         ensure_chain iptables filter "$CHAIN_DNSCRYPT_FORWARD" || true
@@ -291,8 +286,6 @@ ensure_dnscrypt_firewall_base() {
 cleanup_dnscrypt_firewall() {
     remove_chain iptables nat PREROUTING "$CHAIN_DNSCRYPT_REDIRECT"
     remove_chain iptables nat OUTPUT "$CHAIN_DNSCRYPT_REDIRECT"
-    remove_chain ip6tables nat PREROUTING "$CHAIN_DNSCRYPT_REDIRECT"
-    remove_chain ip6tables nat OUTPUT "$CHAIN_DNSCRYPT_REDIRECT"
     remove_chain iptables filter OUTPUT "$CHAIN_DNSCRYPT_OUTPUT"
     remove_chain iptables filter FORWARD "$CHAIN_DNSCRYPT_FORWARD"
     remove_chain ip6tables filter OUTPUT "$CHAIN_DNSCRYPT_OUTPUT"

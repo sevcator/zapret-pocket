@@ -12,28 +12,15 @@ setup_firewall() {
 
     if iptables_supported iptables nat; then
         for proto in udp tcp; do
-            append_unique_rule iptables nat "$CHAIN_DNSCRYPT_REDIRECT" -p "$proto" --dport 53 -j DNAT --to-destination 127.0.0.1:5253
-        done
-    fi
-
-    if iptables_supported ip6tables nat; then
-        for proto in udp tcp; do
-            append_unique_rule ip6tables nat "$CHAIN_DNSCRYPT_REDIRECT" -p "$proto" --dport 53 -j REDIRECT --to-ports 5253
-        done
-    fi
-
-    if iptables_supported iptables filter; then
-        for proto in udp tcp; do
-            append_unique_rule iptables filter "$CHAIN_DNSCRYPT_OUTPUT" -p "$proto" --dport 853 -j DROP
-            append_unique_rule iptables filter "$CHAIN_DNSCRYPT_FORWARD" -p "$proto" --dport 853 -j DROP
+            for dport in 53 853; do
+                append_unique_rule iptables nat "$CHAIN_DNSCRYPT_REDIRECT" -p "$proto" --dport "$dport" -j DNAT --to-destination 127.0.0.1:"$DNSCRYPT_PORT"
+            done
         done
     fi
 
     if iptables_supported ip6tables filter; then
-        for proto in udp tcp; do
-            append_unique_rule ip6tables filter "$CHAIN_DNSCRYPT_OUTPUT" -p "$proto" --dport 853 -j DROP
-            append_unique_rule ip6tables filter "$CHAIN_DNSCRYPT_FORWARD" -p "$proto" --dport 853 -j DROP
-        done
+        append_unique_rule ip6tables filter "$CHAIN_DNSCRYPT_OUTPUT" -j DROP
+        append_unique_rule ip6tables filter "$CHAIN_DNSCRYPT_FORWARD" -j DROP
     fi
 }
 
