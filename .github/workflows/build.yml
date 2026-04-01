@@ -39,6 +39,7 @@ jobs:
         env:
           ABI: ${{ matrix.abi }}
           TARGET: ${{ matrix.target }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           DEPS_DIR=$GITHUB_WORKSPACE/deps
           export TOOLCHAIN=$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64
@@ -54,7 +55,7 @@ jobs:
           curl -sSL https://www.netfilter.org/pub/libnfnetlink/libnfnetlink-1.0.2.tar.bz2 | tar -xj
           curl -sSL https://www.netfilter.org/pub/libmnl/libmnl-1.0.5.tar.bz2 | tar -xj
           curl -sSL https://www.netfilter.org/pub/libnetfilter_queue/libnetfilter_queue-1.0.5.tar.bz2 | tar -xj
-          curl -sSL https://raw.githubusercontent.com/bol-van/zapret/master/.github/workflows/libnetfilter_queue-android.patch | patch -p1 -d libnetfilter_queue-1.0.5
+          patch -p1 -d libnetfilter_queue-1.0.5 -i zapret/.github/workflows/libnetfilter_queue-android.patch
 
           for i in libmnl libnfnetlink libnetfilter_queue; do
             (
@@ -69,6 +70,11 @@ jobs:
           CFLAGS="-DZAPRET_GH_VER=${{ github.ref_name }} -DZAPRET_GH_HASH=${{ github.sha }} -I$DEPS_DIR/include" \
           LDFLAGS="-L$DEPS_DIR/lib" \
           make -C zapret android -j$(nproc)
+
+          ELFCLEANER_TAG="$(gh api repos/termux/termux-elf-cleaner/releases/latest --jq '.tag_name')"
+          curl -fsSL -o elf-cleaner "https://github.com/termux/termux-elf-cleaner/releases/download/${ELFCLEANER_TAG}/termux-elf-cleaner"
+          chmod +x elf-cleaner
+          ./elf-cleaner --api-level 21 zapret/binaries/my/*
           mv zapret/binaries/my/nfqws "$PWD/${{ matrix.output }}"
 
       - name: Upload nfqws artifact
@@ -133,7 +139,43 @@ jobs:
           set -e
           cd curl-android
           git submodule update --init --recursive
-          sed -i 's/APP_ABI=(armeabi-v7a arm64-v8a x86-64)/APP_ABI=(armeabi-v7a arm64-v8a x86 x86-64)/' build_for_android.sh
+          python - <<'PY'
+          from pathlib import Path
+
+          ABI_API = {
+              'armeabi-v7a)': '19',
+              'x86)': '19',
+              'arm64-v8a)': '21',
+              'x86-64)': '21',
+          }
+
+          def patch_file(path: Path) -> None:
+              original = path.read_text(encoding='utf-8')
+              lines = original.splitlines()
+              out: list[str] = []
+
+              for line in lines:
+                  stripped = line.strip()
+                  if stripped == 'APP_ABI=(armeabi-v7a arm64-v8a x86-64)':
+                      out.append('APP_ABI=(armeabi-v7a arm64-v8a x86 x86-64)')
+                      continue
+                  if stripped == 'export API=21':
+                      out.append('export API="${API:-21}"')
+                      continue
+
+                  out.append(line)
+                  if stripped in ABI_API:
+                      out.append(f'\t\tAPI={ABI_API[stripped]}')
+
+              path.write_text(
+                  '\n'.join(out) + ('\n' if original.endswith('\n') else ''),
+                  encoding='utf-8',
+              )
+
+          patch_file(Path('jni/compile-zlib.sh'))
+          patch_file(Path('jni/compile-openssl.sh'))
+          patch_file(Path('build_for_android.sh'))
+          PY
           export NDK_ROOT="$ANDROID_NDK_HOME"
           export PATH="$PATH:$NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin"
           chmod +x build_for_android.sh

@@ -27,14 +27,14 @@ command_info() {
     echo "  stop                     - Stop the zapret service"
     echo "  restart                  - Restart the zapret service"
     echo "  status                   - Print service status"
-    echo "  toggle discord [on|off]  - Toggle Discord bypass for strategies"
+    echo "  discordtoggle            - Toggle Discord bypass for strategies"
     echo "  strategy [name]          - Show or set the current strategy"
     echo "  custom <entry>           - Add/remove custom list/ipset entry"
     echo "  exclude <entry>          - Add/remove exclude list/ipset entry"
     echo "  blocked-names <url|none> - Set/clear dnscrypt blocked-names source"
     echo "  cloaking-rules <url|none>- Set/clear dnscrypt cloaking-rules source"
     echo "  general <url|none>       - Set/clear list-general source"
-    echo "  ipset-filter [mode]      - Set/cycle ipset-all mode"
+    echo "  ipset-filter             - Cycle ipset-all mode"
     echo "  import-strategy <url>    - Download a strategy script"
 }
 
@@ -233,6 +233,12 @@ import_strategy() {
     filename="${url%%\?*}"
     filename="${filename##*/}"
     [ "${filename##*.}" = "sh" ] || filename="downloaded-$(date +%Y%m%d%H%M%S).sh"
+    case "$filename" in
+        zapret.sh|make-unkillable.sh)
+            echo "! Reserved filename"
+            return 1
+            ;;
+    esac
 
     downloader="$CURLPATH"
     [ -x "$downloader" ] || downloader="$(command -v curl 2>/dev/null)"
@@ -268,40 +274,25 @@ toggle_entry() {
     return 0
 }
 
-toggle_config_flag() {
-    file="$1"
-    desired="$2"
-    current="$(config_value "$file" "0")"
+discordtoggle() {
+    [ -n "$1" ] && {
+        echo "! discordtoggle takes no arguments"
+        return 1
+    }
 
-    case "$desired" in
-        on|enable|1) desired="1" ;;
-        off|disable|0) desired="0" ;;
-        ""|toggle)
-            if [ "$current" = "1" ]; then
-                desired="0"
-            else
-                desired="1"
-            fi
-            ;;
-        *)
-            echo "! Use on, off, or no argument to toggle"
-            return 1
-            ;;
-    esac
-
-    printf '%s\n' "$desired" > "$file"
-    echo "- Discord bypass $( [ "$desired" = "1" ] && echo enabled || echo disabled )"
-    return 0
-}
-
-toggle_discord() {
-    if toggle_config_flag "$BYPASS_DISCORD_FILE" "$1"; then
-        if service_is_running; then
-            echo "! Restart zapret to apply the Discord bypass strategy"
-        fi
-        return 0
+    current="$(config_value "$BYPASS_DISCORD_FILE" "0")"
+    if [ "$current" = "1" ]; then
+        desired="0"
+    else
+        desired="1"
     fi
-    return 1
+
+    printf '%s\n' "$desired" > "$BYPASS_DISCORD_FILE"
+    echo "- Discord bypass $( [ "$desired" = "1" ] && echo enabled || echo disabled )"
+    if service_is_running; then
+        echo "! Restart zapret to apply the Discord toggle"
+    fi
+    return 0
 }
 
 custom() {
@@ -350,16 +341,12 @@ general_link() {
 }
 
 ipset_filter() {
-    case "$1" in
-        ""|cycle) cycle_ipset_filter ;;
-        none) set_ipset_filter_none ;;
-        loaded) set_ipset_filter_loaded ;;
-        any) set_ipset_filter_any ;;
-        *)
-            echo "! ipset-filter accepts none, loaded, any, or no argument to cycle"
-            return 1
-            ;;
-    esac
+    [ -n "$1" ] && {
+        echo "! ipset-filter takes no arguments"
+        return 1
+    }
+
+    cycle_ipset_filter
 }
 
 case "$1" in
@@ -377,14 +364,6 @@ case "$1" in
     general) general_link "$2" ;;
     ipset-filter) ipset_filter "$2" ;;
     import-strategy) import_strategy "$2" ;;
-    toggle)
-        case "$2" in
-            discord) toggle_discord "$3" ;;
-            *)
-                echo "! toggle accepts: discord"
-                exit 1
-                ;;
-        esac
-        ;;
+    discordtoggle) discordtoggle "$2" ;;
     *) command_info ;;
 esac

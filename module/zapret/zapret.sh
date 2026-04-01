@@ -134,13 +134,6 @@ run_strategy() {
     }
 }
 
-apply_feature_overrides() {
-    if config_enabled "$BYPASS_DISCORD_FILE" "0"; then
-        config="$config --filter-udp=19294-19344,50000-50100 --filter-l7=discord,stun --dpi-desync=fake --dpi-desync-repeats=6 --new"
-        config="$config --filter-tcp=2053,2083,2087,2096,8443 --hostlist-domains=discord.media --dpi-desync=hostfakesplit --dpi-desync-repeats=4 --dpi-desync-fooling=ts --dpi-desync-hostfakesplit-mod=host=www.google.com --new"
-    fi
-}
-
 derive_ports() {
     tcp_ports="$(printf '%s\n' "$config" | grep -oE 'filter-tcp=[0-9,-]+' | sed -e 's/.*=//g' -e 's/,/\n/g' | sort -un)"
     udp_ports="$(printf '%s\n' "$config" | grep -oE 'filter-udp=[0-9,-]+' | sed -e 's/.*=//g' -e 's/,/\n/g' | sort -un)"
@@ -282,7 +275,6 @@ main() {
     refresh_linked_lists
     validate_preflight || exit 1
     run_strategy || exit 1
-    apply_feature_overrides
     [ "$DEBUG_ENABLE" = "1" ] && config="$config --debug=1"
     derive_ports
     apply_firewall_rules

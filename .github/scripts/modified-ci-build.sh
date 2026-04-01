@@ -14,15 +14,16 @@ build_android() {
     CC=$2
     CXX=$3
     GOARCH=$4
+    GOARM=$5
 
     go clean
-    env CC=${CC} CXX=${CXX} CGO_ENABLED=1 GOOS=android GOARCH=${GOARCH} go build -mod vendor -ldflags="-s -w"
+    env CC=${CC} CXX=${CXX} CGO_ENABLED=1 GOOS=android GOARCH=${GOARCH} GOARM=${GOARM} go build -mod vendor -ldflags="-s -w"
     mv dnscrypt-proxy dnscrypt-proxy-${ARCH}
 }
 
-build_android "arm" "armv7a-linux-androideabi19-clang" "armv7a-linux-androideabi19-clang++" "arm"
-build_android "arm64" "aarch64-linux-android21-clang" "aarch64-linux-android21-clang++" "arm64"
-build_android "i386" "i686-linux-android19-clang" "i686-linux-android19-clang++" "386"
-build_android "x86_64" "x86_64-linux-android21-clang" "x86_64-linux-android21-clang++" "amd64"
+build_android "arm" "armv7a-linux-androideabi19-clang" "armv7a-linux-androideabi19-clang++" "arm" "7"
+build_android "arm64" "aarch64-linux-android21-clang" "aarch64-linux-android21-clang++" "arm64" ""
+build_android "i386" "i686-linux-android19-clang" "i686-linux-android19-clang++" "386" ""
+build_android "x86_64" "x86_64-linux-android21-clang" "x86_64-linux-android21-clang++" "amd64" ""
 
 rm -rf ${NDK_TOOLS}

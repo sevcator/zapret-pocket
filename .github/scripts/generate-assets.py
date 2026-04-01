@@ -10,6 +10,11 @@ ROOT = Path(__file__).resolve().parents[2]
 SOURCE_ZIP = ROOT / "flowseal-upstream.zip"
 ARCHIVE_ROOT = "zapret-discord-youtube-main/"
 MODULE_ROOT = ROOT / "module"
+DISCORD_MARKERS = (
+    "--filter-l7=discord",
+    "--hostlist-domains=discord.media",
+)
+DISCORD_FLAG_CHECK = 'if [ "$(cat "$MODPATH/config/bypass-discord" 2>/dev/null || echo 0)" = "1" ]; then'
 
 
 def copy_tree(src: Path, dest: Path) -> None:
@@ -30,14 +35,7 @@ def copy_glob(src_dir: Path, dest_dir: Path, patterns: tuple[str, ...]) -> None:
 def normalize_strategy_script(text: str) -> str:
     text = text.replace("ipset-exclude-user.txt", "ipset-exclude.txt")
     duplicate_token = "--ipset-exclude=$MODPATH/list/ipset-exclude.txt"
-    duplicate_pattern = re.compile(
-        rf'({re.escape(duplicate_token)})(?:\s+{re.escape(duplicate_token)})+'
-    )
-    while True:
-        new_text = duplicate_pattern.sub(r"\1", text)
-        if new_text == text:
-            break
-        text = new_text
+    text = dedupe_exact_token(text, duplicate_token)
     text = re.sub(r'(?m)^config="\s+', 'config="', text)
     text = re.sub(
         r'(--[A-Za-z0-9_-]+)="(\$MODPATH/[^"]+)"',
@@ -45,6 +43,34 @@ def normalize_strategy_script(text: str) -> str:
         text,
     )
     return text
+
+
+def dedupe_exact_token(text: str, token: str) -> str:
+    if token not in text:
+        return text
+
+    lines: list[str] = []
+    for line in text.splitlines():
+        if token not in line:
+            lines.append(line)
+            continue
+
+        pieces = re.findall(r"\s+|\S+", line)
+        seen = False
+        rebuilt: list[str] = []
+        for piece in pieces:
+            if not piece.isspace() and piece == token:
+                if seen:
+                    continue
+                seen = True
+            rebuilt.append(piece)
+        lines.append("".join(rebuilt).rstrip())
+
+    return "\n".join(lines) + ("\n" if text.endswith("\n") else "")
+
+
+def segment_has_discord_markers(segment: str) -> bool:
+    return any(marker in segment for marker in DISCORD_MARKERS)
 
 
 def prune_legacy_paths(root: Path) -> None:
@@ -113,7 +139,7 @@ def normalize_paths(text: str) -> str:
     return text
 
 
-def convert_bat_to_sh(content: str) -> str:
+def convert_bat_to_sh(content: str) -> str | None:
     lines: list[str] = []
     current = ""
     started = False
@@ -158,19 +184,35 @@ def convert_bat_to_sh(content: str) -> str:
         normalized = normalized.replace(",,", ",").replace(",%", "%").replace(" ,", " ")
         config_segments.append(normalized)
 
+    if not any(segment_has_discord_markers(segment) for segment in config_segments):
+        return None
+
     output = ["# Zapret Configuration", "# >.<", ""]
-    for index, segment in enumerate(config_segments):
+    emitted_config = False
+    discord_block_open = False
+
+    for segment in config_segments:
+        is_discord = segment_has_discord_markers(segment)
+
+        if is_discord and not discord_block_open:
+            output.append(DISCORD_FLAG_CHECK)
+            discord_block_open = True
+        elif not is_discord and discord_block_open:
+            output.append("fi")
+            discord_block_open = False
+
+        prefix = 'config="' if not emitted_config else 'config="$config '
+        indent = "    " if is_discord else ""
         segment = re.sub(
             r'(--[A-Za-z0-9_-]+)="(\$MODPATH/[^"]+)"',
             lambda m: f'{m.group(1)}={m.group(2)}',
             segment,
         )
-        if index == 0:
-            output.append(f'config="{segment} --new"')
-        elif index == len(config_segments) - 1 and not segment.endswith("--new"):
-            output.append(f'config="$config {segment}"')
-        else:
-            output.append(f'config="$config {segment} --new"')
+        output.append(f'{indent}{prefix}{segment} --new"')
+        emitted_config = True
+
+    if discord_block_open:
+        output.append("fi")
 
     return "\n".join(output) + "\n"
 
@@ -235,7 +277,12 @@ def sync_from_zip(root: Path, archive: zipfile.ZipFile) -> None:
 
         dest = root / "zapret" / target_name
         content = archive.read(entry).decode("utf-8", errors="ignore")
-        dest.write_text(normalize_strategy_script(convert_bat_to_sh(content)), encoding="utf-8")
+        converted = convert_bat_to_sh(content)
+        if converted is None:
+            if dest.exists():
+                dest.unlink()
+            continue
+        dest.write_text(normalize_strategy_script(converted), encoding="utf-8")
 
 
 def copy_zip_member(zf: zipfile.ZipFile, entry: zipfile.ZipInfo, dest: Path) -> None:
