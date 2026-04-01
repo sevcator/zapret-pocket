@@ -1,0 +1,5 @@
+module/bin/
+module/dnscrypt/dnscrypt-proxy-arm
+module/dnscrypt/dnscrypt-proxy-arm64
+module/dnscrypt/dnscrypt-proxy-i386
+module/dnscrypt/dnscrypt-proxy-x86_64

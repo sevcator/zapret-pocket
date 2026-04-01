@@ -173,6 +173,10 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Validate tracked module sources
+        run: |
+          python .github/scripts/check-module-source.py
+
       - name: Download upstream archive
         run: |
           curl -L -o flowseal-upstream.zip https://github.com/Flowseal/zapret-discord-youtube/archive/refs/heads/main.zip
