@@ -175,36 +175,60 @@ jobs:
 
       - name: Validate tracked module sources
         run: |
-          set -euo pipefail
-          blocked_names='^(module/dnscrypt/dnscrypt-proxy-(arm|arm64|i386|x86_64))$'
-          blocked_exts='\.(apk|bin|dll|exe|so|sys)$'
-          violations=""
+          python - <<'PY'
+          from __future__ import annotations
 
-          while IFS= read -r path; do
-            [ -n "$path" ] || continue
+          import subprocess
+          import sys
+          from pathlib import Path
 
-            if printf '%s\n' "$path" | grep -Eq "$blocked_names"; then
-              violations="${violations}${path}\n"
-              continue
-            fi
+          root = Path.cwd()
+          blocked_names = {
+              "dnscrypt-proxy-arm",
+              "dnscrypt-proxy-arm64",
+              "dnscrypt-proxy-i386",
+              "dnscrypt-proxy-x86_64",
+          }
+          blocked_exts = {".apk", ".bin", ".dll", ".exe", ".so", ".sys"}
 
-            if printf '%s\n' "$path" | grep -Eqi "$blocked_exts"; then
-              violations="${violations}${path}\n"
-              continue
-            fi
+          result = subprocess.run(
+              ["git", "ls-files", "module"],
+              check=True,
+              capture_output=True,
+              text=True,
+          )
 
-            if git show "HEAD:$path" | LC_ALL=C grep -q $'\x00'; then
-              violations="${violations}${path}\n"
-            fi
-          done < <(git ls-files module)
+          violations: list[str] = []
 
-          if [ -n "$violations" ]; then
-            printf 'Blocked binary files found in tracked module sources:\n' >&2
-            printf '%b' "$violations" | sed 's/^/ - /' >&2
-            exit 1
-          fi
+          for rel in [line.strip() for line in result.stdout.splitlines() if line.strip()]:
+              path = Path(rel)
+              if path.name in blocked_names or path.suffix.lower() in blocked_exts:
+                  violations.append(rel)
+                  continue
 
-          echo "Module source tree contains no tracked binaries."
+              blob = subprocess.run(
+                  ["git", "show", f"HEAD:{rel}"],
+                  check=True,
+                  capture_output=True,
+              ).stdout
+
+              if b"\x00" in blob:
+                  violations.append(rel)
+                  continue
+
+              try:
+                  blob.decode("utf-8")
+              except UnicodeDecodeError:
+                  violations.append(rel)
+
+          if violations:
+              print("Blocked binary files found in tracked module sources:", file=sys.stderr)
+              for rel in violations:
+                  print(f" - {rel}", file=sys.stderr)
+              sys.exit(1)
+
+          print("Module source tree contains no tracked binaries.")
+          PY
 
       - name: Download upstream archive
         run: |
