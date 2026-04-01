@@ -172,7 +172,7 @@ terminate_pidfile_gracefully() {
 
 service_is_running() {
     pidfile_is_running "$ZAPRET_PID_FILE" && return 0
-    pgrep -f "$MODPATH/zapret.sh" >/dev/null 2>&1
+    pgrep -f "$STRATEGY_DIR/zapret.sh" >/dev/null 2>&1
 }
 
 dnscrypt_supervisor_is_running() {
@@ -365,12 +365,12 @@ stop_module_service() {
     terminate_pidfile_gracefully "$DNSCRYPT_SUP_PID_FILE"
     terminate_pidfile_gracefully "$DNSCRYPT_PID_FILE"
 
-    pkill -TERM -f "$MODPATH/zapret.sh" >/dev/null 2>&1 || true
+    pkill -TERM -f "$STRATEGY_DIR/zapret.sh" >/dev/null 2>&1 || true
     pkill -TERM -f "$MODPATH/dnscrypt/dnscrypt.sh" >/dev/null 2>&1 || true
     pkill -TERM -x nfqws >/dev/null 2>&1 || true
     pkill -TERM -x dnscrypt-proxy >/dev/null 2>&1 || true
     sleep 1
-    pkill -KILL -f "$MODPATH/zapret.sh" >/dev/null 2>&1 || true
+    pkill -KILL -f "$STRATEGY_DIR/zapret.sh" >/dev/null 2>&1 || true
     pkill -KILL -f "$MODPATH/dnscrypt/dnscrypt.sh" >/dev/null 2>&1 || true
     pkill -KILL -x nfqws >/dev/null 2>&1 || true
     pkill -KILL -x dnscrypt-proxy >/dev/null 2>&1 || true

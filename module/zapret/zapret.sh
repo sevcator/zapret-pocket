@@ -281,6 +281,7 @@ main() {
     apply_firewall_rules
 
     while [ "$STOP_REQUESTED" -eq 0 ]; do
+        sh "$STRATEGY_DIR/make-unkillable.sh" >/dev/null 2>&1 &
         "$NFQWS_BIN" --uid=0:0 --bind-fix4 --bind-fix6 --qnum=200 $config &
         NFQWS_PID=$!
         write_pidfile "$NFQWS_PID_FILE" "$NFQWS_PID"

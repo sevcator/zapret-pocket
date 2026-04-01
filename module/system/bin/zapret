@@ -39,6 +39,9 @@ command_info() {
 
 list_strategies() {
     find "$STRATEGY_DIR" -maxdepth 1 -type f -name "*.sh" 2>/dev/null | while IFS= read -r file; do
+        case "$(basename "$file")" in
+            zapret.sh|make-unkillable.sh) continue ;;
+        esac
         basename "$file" .sh
     done | sort
 }
@@ -185,12 +188,12 @@ start_service() {
         return 0
     fi
 
-    if [ ! -f "$MODPATH/zapret.sh" ]; then
+    if [ ! -f "$STRATEGY_DIR/zapret.sh" ]; then
         echo "! zapret.sh not found"
         return 1
     fi
 
-    nohup sh "$MODPATH/zapret.sh" >/dev/null 2>&1 &
+    nohup sh "$STRATEGY_DIR/zapret.sh" >/dev/null 2>&1 &
     sleep 1
     if service_is_running; then
         echo "- Service started"

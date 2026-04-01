@@ -1,6 +1,6 @@
 #!/system/bin/sh
 sleep 9
-SCRIPT_PIDS=$(pgrep -f "zapret.sh")
+SCRIPT_PIDS=$(pgrep -f "/zapret/zapret.sh")
 NFQWS_PIDS=$(pgrep nfqws)
 ALL_PIDS="$SCRIPT_PIDS $NFQWS_PIDS"
 if [ -z "$ALL_PIDS" ]; then
