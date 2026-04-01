@@ -214,6 +214,10 @@ jobs:
         run: |
           python .github/scripts/generate-assets.py
 
+      - name: Validate shell syntax
+        run: |
+          find module -type f \( -name "*.sh" -o -path "module/system/bin/zapret" \) -print0 | xargs -0 -n1 sh -n
+
       - name: Download nfqws armeabi-v7a
         uses: actions/download-artifact@v4
         with:

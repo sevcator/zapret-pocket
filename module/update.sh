@@ -1,44 +1,25 @@
 #!/system/bin/sh
 
-MODPATH=/data/adb/modules/zapret
+MODPATH="/data/adb/modules/zapret"
+. "$MODPATH/common.sh"
 
-mkdir -p \
-    "$MODPATH/config" \
-    "$MODPATH/list" \
-    "$MODPATH/ipset" \
-    "$MODPATH/dnscrypt" \
-    "$MODPATH/strategy" \
-    "$MODPATH/fake" \
-    "$MODPATH/bin"
+ensure_layout
+ensure_default_config
 
-if [ -d "$MODPATH/strategies" ] && [ ! -d "$MODPATH/strategy" ]; then
-    mv "$MODPATH/strategies" "$MODPATH/strategy"
-fi
+mkdir -p "$MODPATH/ipset"
 
-for FILE in \
-    "$MODPATH/list/custom.txt" \
-    "$MODPATH/list/exclude.txt" \
+for file in \
+    "$LIST_DIR/custom.txt" \
+    "$LIST_DIR/exclude.txt" \
     "$MODPATH/ipset/custom.txt" \
     "$MODPATH/ipset/exclude.txt" \
-    "$MODPATH/config/debug" \
-    "$MODPATH/dnscrypt/dnscrypt-proxy-arm" \
-    "$MODPATH/dnscrypt/dnscrypt-proxy-arm64" \
-    "$MODPATH/dnscrypt/dnscrypt-proxy-i386" \
-    "$MODPATH/dnscrypt/dnscrypt-proxy-x86_64" \
-    "$MODPATH/dnscrypt/cloaking-rules.txt" \
-    "$MODPATH/dnscrypt/custom-cloaking-rules.txt" \
-    "$MODPATH/dnscrypt/blocked-names.txt" \
-    "$MODPATH/dnscrypt/blocked-ips.txt" \
-    "$MODPATH/dnscrypt/custom-blocked-names.txt" \
-    "$MODPATH/dnscrypt/custom-blocked-ips.txt" \
-    "$MODPATH/dnscrypt/custom-allowed-names.txt" \
-    "$MODPATH/dnscrypt/custom-allowed-ips.txt"; do
-    case "$FILE" in
-        "$MODPATH/config/debug")
-            [ -e "$FILE" ] || printf '1\n' > "$FILE"
-            ;;
-        *)
-            [ -e "$FILE" ] || : > "$FILE"
-            ;;
-    esac
+    "$DNSCRYPT_DIR/cloaking-rules.txt" \
+    "$DNSCRYPT_DIR/blocked-names.txt" \
+    "$DNSCRYPT_DIR/blocked-ips.txt" \
+    "$DNSCRYPT_DIR/custom-cloaking-rules.txt" \
+    "$DNSCRYPT_DIR/custom-blocked-names.txt" \
+    "$DNSCRYPT_DIR/custom-blocked-ips.txt" \
+    "$DNSCRYPT_DIR/custom-allowed-names.txt" \
+    "$DNSCRYPT_DIR/custom-allowed-ips.txt"; do
+    [ -e "$file" ] || : > "$file"
 done

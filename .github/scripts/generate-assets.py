@@ -43,6 +43,7 @@ def prune_legacy_paths(root: Path) -> None:
         root / "ipset",
         root / "strategy",
         root / "strategies",
+        root / "lists",
         root / "list" / "custom.txt",
         root / "list" / "exclude.txt",
         root / "list" / "ipset-exclude-user.txt",

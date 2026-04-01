@@ -1,46 +1,94 @@
 #!/system/bin/sh
 
 MODPATH="/data/adb/modules/zapret"
-REFRESH=$(cat "$MODPATH/config/dnscrypt-rules-fix" 2>/dev/null || echo "0")
+. "$MODPATH/common.sh"
 
-setup() {
-  echo 1 >/proc/sys/net/ipv4/conf/all/route_localnet
-  for chain in PREROUTING OUTPUT FORWARD; do
-    for proto in udp tcp; do
-      iptables -t nat -C "$chain" -p $proto --dport 53 -j DNAT --to-destination 127.0.0.1:5253 2>/dev/null || iptables -t nat -A "$chain" -p $proto --dport 53 -j DNAT --to-destination 127.0.0.1:5253
-      ip6tables -t nat -C "$chain" -p $proto --dport 53 -j REDIRECT --to-ports 5253 2>/dev/null || ip6tables -t nat -A "$chain" -p $proto --dport 53 -j REDIRECT --to-ports 5253
+REFRESH="$(config_value "$DNSCRYPT_REFRESH_FILE" "0")"
+STOP_REQUESTED=0
+DNSCRYPT_PID=""
+
+setup_firewall() {
+    ensure_dnscrypt_firewall_base
+
+    if iptables_supported iptables nat; then
+        for proto in udp tcp; do
+            append_unique_rule iptables nat "$CHAIN_DNSCRYPT_REDIRECT" -p "$proto" --dport 53 -j DNAT --to-destination 127.0.0.1:5253
+        done
+    fi
+
+    if iptables_supported ip6tables nat; then
+        for proto in udp tcp; do
+            append_unique_rule ip6tables nat "$CHAIN_DNSCRYPT_REDIRECT" -p "$proto" --dport 53 -j REDIRECT --to-ports 5253
+        done
+    fi
+
+    if iptables_supported iptables filter; then
+        for proto in udp tcp; do
+            append_unique_rule iptables filter "$CHAIN_DNSCRYPT_OUTPUT" -p "$proto" --dport 853 -j DROP
+            append_unique_rule iptables filter "$CHAIN_DNSCRYPT_FORWARD" -p "$proto" --dport 853 -j DROP
+        done
+    fi
+
+    if iptables_supported ip6tables filter; then
+        for proto in udp tcp; do
+            append_unique_rule ip6tables filter "$CHAIN_DNSCRYPT_OUTPUT" -p "$proto" --dport 853 -j DROP
+            append_unique_rule ip6tables filter "$CHAIN_DNSCRYPT_FORWARD" -p "$proto" --dport 853 -j DROP
+        done
+    fi
+}
+
+terminate_child() {
+    pid="$1"
+    [ -n "$pid" ] || return 0
+    kill -TERM "$pid" 2>/dev/null || true
+    wait_for_exit "$pid" 5 || kill -KILL "$pid" 2>/dev/null || true
+    remove_pidfile "$DNSCRYPT_PID_FILE"
+}
+
+on_signal() {
+    STOP_REQUESTED=1
+    terminate_child "$DNSCRYPT_PID"
+}
+
+cleanup_runtime() {
+    terminate_child "$DNSCRYPT_PID"
+    cleanup_dnscrypt_firewall
+    restore_dnscrypt_runtime_tweaks
+    remove_pidfile "$DNSCRYPT_SUP_PID_FILE"
+}
+
+main() {
+    ensure_layout
+    ensure_default_config
+
+    if pidfile_is_running "$DNSCRYPT_SUP_PID_FILE"; then
+        echo "- dnscrypt supervisor already running"
+        exit 0
+    fi
+
+    [ -x "$DNSCRYPT_DIR/dnscrypt-proxy" ] || {
+        echo "! dnscrypt-proxy not found" >&2
+        exit 1
+    }
+
+    write_pidfile "$DNSCRYPT_SUP_PID_FILE" "$$"
+    trap on_signal INT TERM
+    trap cleanup_runtime EXIT
+
+    apply_dnscrypt_runtime_tweaks
+    setup_firewall
+
+    while [ "$STOP_REQUESTED" -eq 0 ]; do
+        [ "$REFRESH" = "1" ] && setup_firewall
+        "$DNSCRYPT_DIR/dnscrypt-proxy" >/dev/null 2>&1 &
+        DNSCRYPT_PID=$!
+        write_pidfile "$DNSCRYPT_PID_FILE" "$DNSCRYPT_PID"
+        wait "$DNSCRYPT_PID"
+        remove_pidfile "$DNSCRYPT_PID_FILE"
+        DNSCRYPT_PID=""
+        [ "$STOP_REQUESTED" -eq 1 ] && break
+        sleep 5
     done
-  done
-  for chain in OUTPUT FORWARD; do
-    for proto in udp tcp; do
-      iptables -t filter -C $chain -p $proto --dport 853 -j DROP 2>/dev/null || iptables -t filter -A $chain -p $proto --dport 853 -j DROP
-      ip6tables -t filter -C $chain -p $proto --dport 853 -j DROP 2>/dev/null || ip6tables -t filter -A $chain -p $proto --dport 853 -j DROP
-    done
-  done
 }
 
-start_bg(){
-  [ -x "$MODPATH/dnscrypt/make-unkillable.sh" ] && nohup sh "$MODPATH/dnscrypt/make-unkillable.sh" >/dev/null 2>&1 &
-  [ -x "$MODPATH/dnscrypt/dnscrypt-proxy" ] || { echo "dnscrypt-proxy not found" >&2; exit 1; }
-  pgrep -x dnscrypt-proxy >/dev/null || "$MODPATH/dnscrypt/dnscrypt-proxy" >/dev/null 2>&1 &
-}
-
-start_fg(){
-  [ -x "$MODPATH/dnscrypt/make-unkillable.sh" ] && nohup sh "$MODPATH/dnscrypt/make-unkillable.sh" >/dev/null 2>&1 &
-  [ -x "$MODPATH/dnscrypt/dnscrypt-proxy" ] || { echo "dnscrypt-proxy not found" >&2; exit 1; }
-  "$MODPATH/dnscrypt/dnscrypt-proxy" >/dev/null 2>&1
-}
-
-if [ "$REFRESH" = "1" ]; then
-  while true; do
-    setup
-    start_bg
-    sleep 5
-  done
-else
-  while true; do
-    setup
-    start_fg
-    sleep 5
-  done
-fi
+main "$@"
