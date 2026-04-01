@@ -4,8 +4,18 @@ MODPATH="/data/adb/modules/zapret"
 MODUPDATEPATH="/data/adb/modules_update/zapret"
 APKMODPATH="$MODPATH/system/app/VpnHotspot.apk"
 PACKAGENAME="be.mygod.vpnhotspot"
+SCRIPT_DIR="${0%/*}"
+COMMON_SH=""
 
-. "$MODPATH/common.sh"
+if [ -f "$SCRIPT_DIR/common.sh" ]; then
+  COMMON_SH="$SCRIPT_DIR/common.sh"
+elif [ -f "$MODPATH/common.sh" ]; then
+  COMMON_SH="$MODPATH/common.sh"
+else
+  abort "! common.sh not found"
+fi
+
+. "$COMMON_SH"
 
 ui_log() {
   ui_print "$1"
