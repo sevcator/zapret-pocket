@@ -1,6 +1,7 @@
 #!/system/bin/sh
 
-MODPATH="/data/adb/modules/zapret"
+MODPATH="${MODPATH:-/data/adb/modules/zapret}"
+FINALMODPATH="/data/adb/modules/zapret"
 MODUPDATEPATH="/data/adb/modules_update/zapret"
 APKMODPATH="$MODPATH/system/app/VpnHotspot.apk"
 PACKAGENAME="be.mygod.vpnhotspot"
@@ -106,6 +107,9 @@ sanitize_scripts() {
 }
 
 prepare_binaries() {
+  [ -f "$STRATEGY_DIR/$BINARY" ] || abort "! Missing zapret binary: $STRATEGY_DIR/$BINARY"
+  [ -f "$DNSCRYPT_DIR/$BINARY2" ] || abort "! Missing dnscrypt binary: $DNSCRYPT_DIR/$BINARY2"
+  [ -f "$MODPATH/$BINARY3" ] || abort "! Missing curl binary: $MODPATH/$BINARY3"
   mv "$STRATEGY_DIR/$BINARY" "$STRATEGY_DIR/nfqws"
   mv "$DNSCRYPT_DIR/$BINARY2" "$DNSCRYPT_DIR/dnscrypt-proxy"
   mv "$MODPATH/$BINARY3" "$MODPATH/curl"
@@ -117,12 +121,13 @@ prepare_binaries() {
 APKPATH="$APKMODPATH"
 ui_log "- Mounting /data"
 mount -o remount,rw /data >/dev/null 2>&1 || true
+ui_log "- Install path: $MODPATH"
 
 ensure_layout
 ensure_default_config
 sanitize_scripts
 
-if [ -f "$MODPATH/uninstall.sh" ]; then
+if [ "$MODPATH" = "$FINALMODPATH" ] && [ -f "$MODPATH/uninstall.sh" ]; then
   "$MODPATH/uninstall.sh" >/dev/null 2>&1 || true
 fi
 
