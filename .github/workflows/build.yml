@@ -55,7 +55,7 @@ jobs:
           curl -sSL https://www.netfilter.org/pub/libnfnetlink/libnfnetlink-1.0.2.tar.bz2 | tar -xj
           curl -sSL https://www.netfilter.org/pub/libmnl/libmnl-1.0.5.tar.bz2 | tar -xj
           curl -sSL https://www.netfilter.org/pub/libnetfilter_queue/libnetfilter_queue-1.0.5.tar.bz2 | tar -xj
-          patch -p1 -d libnetfilter_queue-1.0.5 -i zapret/.github/workflows/libnetfilter_queue-android.patch
+          patch -p1 -d libnetfilter_queue-1.0.5 -i "$GITHUB_WORKSPACE/zapret/.github/workflows/libnetfilter_queue-android.patch"
 
           for i in libmnl libnfnetlink libnetfilter_queue; do
             (
@@ -161,6 +161,12 @@ jobs:
                       continue
                   if stripped == 'export API=21':
                       out.append('export API="${API:-21}"')
+                      continue
+                  if stripped == 'export CFLAGS="--sysroot=$SYSROOT $CFLAGS"':
+                      out.append('export CFLAGS="--sysroot=$SYSROOT -Wno-error $CFLAGS"')
+                      continue
+                  if stripped == 'export CFLAGS="-I$SYSROOT/usr/include --sysroot=$SYSROOT $CFLAGS"':
+                      out.append('export CFLAGS="-I$SYSROOT/usr/include --sysroot=$SYSROOT -Wno-error $CFLAGS"')
                       continue
 
                   out.append(line)
