@@ -29,6 +29,15 @@ def copy_glob(src_dir: Path, dest_dir: Path, patterns: tuple[str, ...]) -> None:
 
 def normalize_strategy_script(text: str) -> str:
     text = text.replace("ipset-exclude-user.txt", "ipset-exclude.txt")
+    duplicate_token = "--ipset-exclude=$MODPATH/list/ipset-exclude.txt"
+    duplicate_pattern = re.compile(
+        rf'({re.escape(duplicate_token)})(?:\s+{re.escape(duplicate_token)})+'
+    )
+    while True:
+        new_text = duplicate_pattern.sub(r"\1", text)
+        if new_text == text:
+            break
+        text = new_text
     text = re.sub(r'(?m)^config="\s+', 'config="', text)
     text = re.sub(
         r'(--[A-Za-z0-9_-]+)="(\$MODPATH/[^"]+)"',

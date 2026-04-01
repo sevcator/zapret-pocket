@@ -27,6 +27,7 @@ command_info() {
     echo "  stop                     - Stop the zapret service"
     echo "  restart                  - Restart the zapret service"
     echo "  status                   - Print service status"
+    echo "  toggle discord [on|off]  - Toggle Discord bypass for strategies"
     echo "  strategy [name]          - Show or set the current strategy"
     echo "  custom <entry>           - Add/remove custom list/ipset entry"
     echo "  exclude <entry>          - Add/remove exclude list/ipset entry"
@@ -267,6 +268,42 @@ toggle_entry() {
     return 0
 }
 
+toggle_config_flag() {
+    file="$1"
+    desired="$2"
+    current="$(config_value "$file" "0")"
+
+    case "$desired" in
+        on|enable|1) desired="1" ;;
+        off|disable|0) desired="0" ;;
+        ""|toggle)
+            if [ "$current" = "1" ]; then
+                desired="0"
+            else
+                desired="1"
+            fi
+            ;;
+        *)
+            echo "! Use on, off, or no argument to toggle"
+            return 1
+            ;;
+    esac
+
+    printf '%s\n' "$desired" > "$file"
+    echo "- Discord bypass $( [ "$desired" = "1" ] && echo enabled || echo disabled )"
+    return 0
+}
+
+toggle_discord() {
+    if toggle_config_flag "$BYPASS_DISCORD_FILE" "$1"; then
+        if service_is_running; then
+            echo "! Restart zapret to apply the Discord bypass strategy"
+        fi
+        return 0
+    fi
+    return 1
+}
+
 custom() {
     entry="$1"
     [ -z "$entry" ] && echo "! No domain/IP/CIDR provided" && return 1
@@ -340,5 +377,14 @@ case "$1" in
     general) general_link "$2" ;;
     ipset-filter) ipset_filter "$2" ;;
     import-strategy) import_strategy "$2" ;;
+    toggle)
+        case "$2" in
+            discord) toggle_discord "$3" ;;
+            *)
+                echo "! toggle accepts: discord"
+                exit 1
+                ;;
+        esac
+        ;;
     *) command_info ;;
 esac

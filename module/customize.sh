@@ -1,6 +1,6 @@
 #!/system/bin/sh
 
-MODPATH="${MODPATH:-/data/adb/modules/zapret}"
+MODPATH="${MODPATH:-$PWD}"
 FINALMODPATH="/data/adb/modules/zapret"
 MODUPDATEPATH="/data/adb/modules_update/zapret"
 APKMODPATH="$MODPATH/system/app/VpnHotspot.apk"
