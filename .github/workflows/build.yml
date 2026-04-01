@@ -181,6 +181,26 @@ jobs:
           patch_file(Path('jni/compile-zlib.sh'))
           patch_file(Path('jni/compile-openssl.sh'))
           patch_file(Path('build_for_android.sh'))
+
+          zlib_configure = Path('jni/zlib/configure')
+          if zlib_configure.exists():
+              text = zlib_configure.read_text(encoding='utf-8')
+              old = (
+                  'echo "Checking for obsessive-compulsive compiler options..." >> configure.log\n'
+                  'if try $CC -c $CFLAGS $test.c; then\n'
+                  '  :\n'
+                  'else\n'
+                  '  echo "Compiler error reporting is too harsh for $0 (perhaps remove -Werror)." | tee -a configure.log\n'
+                  '  leave 1\n'
+                  'fi\n'
+              )
+              new = (
+                  'echo "Checking for obsessive-compulsive compiler options..." >> configure.log\n'
+                  ': # Android NDK toolchains inject warning-as-error flags that zlib\'s probe rejects\n'
+              )
+              if old in text:
+                  text = text.replace(old, new, 1)
+                  zlib_configure.write_text(text, encoding='utf-8')
           PY
           export NDK_ROOT="$ANDROID_NDK_HOME"
           export PATH="$PATH:$NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin"
