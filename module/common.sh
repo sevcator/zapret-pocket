@@ -226,6 +226,11 @@ dnscrypt_is_running() {
     pgrep -x dnscrypt-proxy >/dev/null 2>&1
 }
 
+nfqws_is_running() {
+    pidfile_is_running "$NFQWS_PID_FILE" && return 0
+    pgrep -x nfqws >/dev/null 2>&1
+}
+
 iptables_supported() {
     tool="$1"
     table="$2"

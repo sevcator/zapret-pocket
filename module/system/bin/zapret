@@ -207,28 +207,56 @@ set_boolean_file() {
     esac
 }
 
+module_stack_is_running() {
+    service_is_running || return 1
+    nfqws_is_running || return 1
+    dnscrypt_supervisor_is_running || return 1
+    dnscrypt_is_running || return 1
+    return 0
+}
+
 start_service() {
     ensure_layout
     ensure_default_config
 
-    if service_is_running; then
-        echo "- Service already running"
-        return 0
-    fi
+    started_any=0
 
     if [ ! -f "$STRATEGY_DIR/zapret.sh" ]; then
         echo "! zapret.sh not found"
         return 1
     fi
 
-    nohup sh "$STRATEGY_DIR/zapret.sh" >/dev/null 2>&1 &
-    sleep 1
-    if service_is_running; then
-        echo "- Service started"
+    if [ ! -f "$DNSCRYPT_DIR/dnscrypt.sh" ]; then
+        echo "! dnscrypt.sh not found"
+        return 1
+    fi
+
+    if [ ! -x "$DNSCRYPT_DIR/dnscrypt-proxy" ]; then
+        echo "! dnscrypt-proxy not found"
+        return 1
+    fi
+
+    if ! service_is_running; then
+        nohup sh "$STRATEGY_DIR/zapret.sh" >/dev/null 2>&1 &
+        started_any=1
+    fi
+
+    if ! dnscrypt_supervisor_is_running || ! dnscrypt_is_running; then
+        nohup sh "$DNSCRYPT_DIR/dnscrypt.sh" >/dev/null 2>&1 &
+        started_any=1
+    fi
+
+    sleep 2
+    if module_stack_is_running; then
+        if [ "$started_any" = "1" ]; then
+            echo "- Service started"
+        else
+            echo "- Service already running"
+        fi
         return 0
     fi
 
-    echo "! Failed to start service"
+    echo "! Failed to start module stack"
     return 1
 }
 
@@ -244,9 +272,14 @@ restart_service() {
 }
 
 status_service() {
-    if service_is_running; then
+    if module_stack_is_running; then
         echo "running"
         return 0
+    fi
+
+    if service_is_running || nfqws_is_running || dnscrypt_supervisor_is_running || dnscrypt_is_running; then
+        echo "degraded"
+        return 1
     fi
 
     echo "stopped"
@@ -331,7 +364,7 @@ case "$1" in
     stop) stop_service ;;
     restart) restart_service ;;
     status) status_service ;;
-    running) service_is_running ;;
+    running) module_stack_is_running ;;
     strategy) strategy_command "$2" ;;
     import-strategy) import_strategy "$2" ;;
     setup) setup_command "$2" "$3" "$4" ;;
