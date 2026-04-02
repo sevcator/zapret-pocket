@@ -10,17 +10,10 @@ setup_firewall() {
     ensure_dnscrypt_firewall_base
 
     if iptables_supported iptables nat; then
-        append_unique_rule iptables nat "$CHAIN_DNSCRYPT_REDIRECT" -p udp --dport 53 -j DNAT --to-destination 127.0.0.1:"$DNSCRYPT_PORT"
-        append_unique_rule iptables nat "$CHAIN_DNSCRYPT_REDIRECT" -p tcp --dport 53 -j DNAT --to-destination 127.0.0.1:"$DNSCRYPT_PORT"
-    fi
-
-    if iptables_supported ip6tables filter; then
-        for proto in udp tcp; do
-            for dport in 53 853; do
-                append_unique_rule ip6tables filter "$CHAIN_DNSCRYPT_OUTPUT" -p "$proto" --dport "$dport" -j DROP
-                append_unique_rule ip6tables filter "$CHAIN_DNSCRYPT_FORWARD" -p "$proto" --dport "$dport" -j DROP
-            done
-        done
+        append_unique_rule iptables nat OUTPUT -p udp --dport 53 -j DNAT --to-destination 127.0.0.1:"$DNSCRYPT_PORT"
+        append_unique_rule iptables nat OUTPUT -p tcp --dport 53 -j DNAT --to-destination 127.0.0.1:"$DNSCRYPT_PORT"
+        insert_unique_rule iptables nat OUTPUT -p udp --dport 53 -j REDIRECT --to-ports "$DNSCRYPT_PORT"
+        insert_unique_rule iptables nat OUTPUT -p tcp --dport 53 -j REDIRECT --to-ports "$DNSCRYPT_PORT"
     fi
 }
 
@@ -66,7 +59,7 @@ main() {
     setup_firewall
 
     while [ "$STOP_REQUESTED" -eq 0 ]; do
-        "$DNSCRYPT_DIR/dnscrypt-proxy" >/dev/null 2>&1 &
+        "$DNSCRYPT_DIR/dnscrypt-proxy" --config "$DNSCRYPT_DIR/dnscrypt-proxy.toml" >/dev/null 2>&1 &
         DNSCRYPT_PID=$!
         write_pidfile "$DNSCRYPT_PID_FILE" "$DNSCRYPT_PID"
         wait "$DNSCRYPT_PID"

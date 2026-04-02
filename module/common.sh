@@ -14,7 +14,7 @@ BIN_DIR="${BIN_DIR:-$MODPATH/bin}"
 RUN_DIR="${RUN_DIR:-$MODPATH/.run}"
 STATE_DIR="${STATE_DIR:-$RUN_DIR/state}"
 CURLPATH="${CURLPATH:-$MODPATH/curl}"
-DNSCRYPT_PORT="${DNSCRYPT_PORT:-5253}"
+DNSCRYPT_PORT="${DNSCRYPT_PORT:-65353}"
 
 DEBUG_FILE="$CONFIG_DIR/debug"
 DEBUG_LOG="$RUN_DIR/debug.log"
@@ -246,6 +246,14 @@ append_unique_rule() {
     "$tool" -t "$table" -C "$chain" "$@" >/dev/null 2>&1 || "$tool" -t "$table" -A "$chain" "$@" >/dev/null 2>&1
 }
 
+insert_unique_rule() {
+    tool="$1"
+    table="$2"
+    chain="$3"
+    shift 3
+    "$tool" -t "$table" -C "$chain" "$@" >/dev/null 2>&1 || "$tool" -t "$table" -I "$chain" "$@" >/dev/null 2>&1
+}
+
 insert_unique_jump() {
     tool="$1"
     table="$2"
@@ -278,6 +286,19 @@ remove_chain() {
     "$tool" -t "$table" -X "$chain" >/dev/null 2>&1 || true
 }
 
+delete_rule_if_present() {
+    tool="$1"
+    table="$2"
+    chain="$3"
+    shift 3
+    if ! iptables_supported "$tool" "$table"; then
+        return 0
+    fi
+    while "$tool" -t "$table" -C "$chain" "$@" >/dev/null 2>&1; do
+        "$tool" -t "$table" -D "$chain" "$@" >/dev/null 2>&1 || break
+    done
+}
+
 ensure_zapret_firewall_base() {
     ensure_chain iptables mangle "$CHAIN_ZAPRET_POST" || return 0
     ensure_chain iptables mangle "$CHAIN_ZAPRET_PRE" || return 0
@@ -300,21 +321,16 @@ cleanup_zapret_firewall() {
 }
 
 ensure_dnscrypt_firewall_base() {
-    if iptables_supported iptables nat; then
-        ensure_chain iptables nat "$CHAIN_DNSCRYPT_REDIRECT" || true
-        insert_unique_jump iptables nat OUTPUT "$CHAIN_DNSCRYPT_REDIRECT"
-    fi
-
-    if iptables_supported ip6tables filter; then
-        ensure_chain ip6tables filter "$CHAIN_DNSCRYPT_OUTPUT" || true
-        ensure_chain ip6tables filter "$CHAIN_DNSCRYPT_FORWARD" || true
-        insert_unique_jump ip6tables filter OUTPUT "$CHAIN_DNSCRYPT_OUTPUT"
-        insert_unique_jump ip6tables filter FORWARD "$CHAIN_DNSCRYPT_FORWARD"
-    fi
+    iptables_supported iptables nat
 }
 
 cleanup_dnscrypt_firewall() {
+    delete_rule_if_present iptables nat OUTPUT -p udp --dport 53 -j DNAT --to-destination 127.0.0.1:"$DNSCRYPT_PORT"
+    delete_rule_if_present iptables nat OUTPUT -p tcp --dport 53 -j DNAT --to-destination 127.0.0.1:"$DNSCRYPT_PORT"
+    delete_rule_if_present iptables nat OUTPUT -p udp --dport 53 -j REDIRECT --to-ports "$DNSCRYPT_PORT"
+    delete_rule_if_present iptables nat OUTPUT -p tcp --dport 53 -j REDIRECT --to-ports "$DNSCRYPT_PORT"
     remove_chain iptables nat OUTPUT "$CHAIN_DNSCRYPT_REDIRECT"
+    remove_chain iptables nat PREROUTING "$CHAIN_DNSCRYPT_REDIRECT"
     remove_chain ip6tables filter OUTPUT "$CHAIN_DNSCRYPT_OUTPUT"
     remove_chain ip6tables filter FORWARD "$CHAIN_DNSCRYPT_FORWARD"
 }
