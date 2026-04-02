@@ -11,6 +11,7 @@
 <h1 align="center">zapret Pocket</h1>
 
 <div align="center">
+  Inspired by <a href="https://github.com/Flowseal/zapret-discord-youtube">zapret-discord-youtube</a>
   <a href="https://t.me/sevcator/921">📢 Telegram Channel</a> | 
   <a href="https://t.me/sevcator/909">💸 Donate</a>
 </div>
