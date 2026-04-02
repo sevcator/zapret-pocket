@@ -310,15 +310,65 @@ jobs:
           name: curl-binaries
           path: artifacts/curl
 
+      - name: Download latest VpnHotspot APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python - <<'PY'
+          from __future__ import annotations
+
+          import json
+          import os
+          from pathlib import Path
+          from urllib.request import Request, urlopen
+
+          api_url = "https://api.github.com/repos/Mygod/VPNHotspot/releases"
+          headers = {
+              "Accept": "application/vnd.github+json",
+              "Authorization": f"Bearer {os.environ['GH_TOKEN']}",
+              "X-GitHub-Api-Version": "2022-11-28",
+          }
+
+          request = Request(api_url, headers=headers)
+          with urlopen(request) as response:
+              releases = json.load(response)
+
+          asset = None
+          for release in releases:
+              if release.get("draft") or release.get("prerelease"):
+                  continue
+              for candidate in release.get("assets", []):
+                  name = candidate.get("name", "")
+                  if name.startswith("vpnhotspot-v") and name.endswith(".apk"):
+                      asset = candidate
+                      break
+              if asset is not None:
+                  break
+
+          if asset is None:
+              raise SystemExit("Stable VpnHotspot APK asset was not found")
+
+          output_dir = Path("artifacts") / "vpnhotspot"
+          output_dir.mkdir(parents=True, exist_ok=True)
+          output_path = output_dir / "VpnHotspot.apk"
+
+          download_request = Request(asset["browser_download_url"], headers=headers)
+          with urlopen(download_request) as response:
+              output_path.write_bytes(response.read())
+
+          print(f"Downloaded {asset['name']} from {asset['browser_download_url']}")
+          PY
+
       - name: Add binaries to module layout
         run: |
-          mkdir -p module/zapret module/dnscrypt
+          mkdir -p module/zapret module/dnscrypt module/system/app
           mv artifacts/nfqws-arm/nfqws-arm module/zapret/nfqws-arm
           mv artifacts/nfqws-aarch64/nfqws-aarch64 module/zapret/nfqws-aarch64
           mv artifacts/nfqws-x86/nfqws-x86 module/zapret/nfqws-x86
           mv artifacts/nfqws-x86_x64/nfqws-x86_x64 module/zapret/nfqws-x86_x64
           mv artifacts/dnscrypt-proxy/* module/dnscrypt/
           mv artifacts/curl/* module/
+          mv artifacts/vpnhotspot/VpnHotspot.apk module/system/app/VpnHotspot.apk
           chmod +x module/zapret/*.sh module/zapret/nfqws-* module/dnscrypt/dnscrypt-proxy-* module/dnscrypt/*.sh module/curl-* 2>/dev/null || true
 
       - name: Package module zip

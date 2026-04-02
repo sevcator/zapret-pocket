@@ -88,9 +88,9 @@ refresh_linked_file() {
 }
 
 refresh_linked_lists() {
-    refresh_linked_file "$DNSCRYPT_DIR/cloaking-rules.txt" "$DNSCRYPT_CLOAKING_LINK" "$DNSCRYPT_CLOAKING_LINK_LEGACY" || true
-    refresh_linked_file "$DNSCRYPT_DIR/blocked-names.txt" "$DNSCRYPT_BLOCKED_NAMES_LINK" "$DNSCRYPT_BLOCKED_NAMES_LINK_LEGACY" || true
-    refresh_linked_file "$LIST_DIR/list-general.txt" "$LIST_GENERAL_LINK" "$LIST_GENERAL_LINK_LEGACY" || true
+    refresh_linked_file "$DNSCRYPT_DIR/cloaking-rules.txt" "$DNSCRYPT_CLOAKING_LINK" || true
+    refresh_linked_file "$DNSCRYPT_DIR/blocked-names.txt" "$DNSCRYPT_BLOCKED_NAMES_LINK" || true
+    refresh_linked_file "$LIST_DIR/list-general.txt" "$LIST_GENERAL_LINK" || true
 }
 
 detect_ipv6() {

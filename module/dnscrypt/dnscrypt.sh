@@ -3,7 +3,6 @@
 MODPATH="/data/adb/modules/zapret"
 . "$MODPATH/common.sh"
 
-REFRESH="$(config_value "$DNSCRYPT_REFRESH_FILE" "0")"
 STOP_REQUESTED=0
 DNSCRYPT_PID=""
 
@@ -66,7 +65,6 @@ main() {
     setup_firewall
 
     while [ "$STOP_REQUESTED" -eq 0 ]; do
-        [ "$REFRESH" = "1" ] && setup_firewall
         "$DNSCRYPT_DIR/dnscrypt-proxy" >/dev/null 2>&1 &
         DNSCRYPT_PID=$!
         write_pidfile "$DNSCRYPT_PID_FILE" "$DNSCRYPT_PID"

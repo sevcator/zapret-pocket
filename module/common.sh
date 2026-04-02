@@ -17,22 +17,18 @@ CURLPATH="${CURLPATH:-$MODPATH/curl}"
 DNSCRYPT_PORT="${DNSCRYPT_PORT:-5253}"
 
 DEBUG_FILE="$CONFIG_DIR/debug"
-DEBUG_LOG="$CONFIG_DIR/debug.log"
-DNSCRYPT_REFRESH_FILE="$CONFIG_DIR/dnscrypt-rules-fix"
-OPT_DISABLE_PRIVATE_DNS="$CONFIG_DIR/disable-private-dns"
-OPT_DISABLE_TETHER_OFFLOAD="$CONFIG_DIR/disable-tether-offload"
-OPT_DISABLE_IPV6="$CONFIG_DIR/disable-ipv6"
-OPT_RELAX_NETWORK="$CONFIG_DIR/relax-network"
-OPT_INSTALL_VPNHOTSPOT="$CONFIG_DIR/install-vpnhotspot"
-BYPASS_DISCORD_FILE="$CONFIG_DIR/bypass-discord"
-
+DEBUG_LOG="$RUN_DIR/debug.log"
+BYPASS_CALLS_FILE="$CONFIG_DIR/bypass-calls"
 CURRENT_STRATEGY_FILE="$CONFIG_DIR/current-strategy"
+IPSET_FILTER_STATE="$CONFIG_DIR/ipset-filter"
 LIST_GENERAL_LINK="$CONFIG_DIR/list-general-link"
 LIST_GENERAL_LINK_LEGACY="$CONFIG_DIR/custom-list-general-url"
 DNSCRYPT_BLOCKED_NAMES_LINK="$CONFIG_DIR/dnscrypt-blocked-names-link"
 DNSCRYPT_BLOCKED_NAMES_LINK_LEGACY="$CONFIG_DIR/custom-blocked-names-url"
 DNSCRYPT_CLOAKING_LINK="$CONFIG_DIR/dnscrypt-cloaking-rules-link"
 DNSCRYPT_CLOAKING_LINK_LEGACY="$CONFIG_DIR/custom-cloaking-rules-url"
+BYPASS_CALLS_LEGACY_FILE="$CONFIG_DIR/bypass-discord"
+DEBUG_LOG_LEGACY="$CONFIG_DIR/debug.log"
 
 ZAPRET_PID_FILE="$RUN_DIR/zapret.pid"
 NFQWS_PID_FILE="$RUN_DIR/nfqws.pid"
@@ -80,6 +76,55 @@ copy_tree_if_needed() {
     cp -af "$src"/. "$dst"/ 2>/dev/null || true
 }
 
+migrate_file_if_missing() {
+    src="$1"
+    dst="$2"
+    [ -f "$src" ] || return 0
+    mkdir -p "$(dirname "$dst")"
+    if [ ! -e "$dst" ]; then
+        mv "$src" "$dst"
+        return 0
+    fi
+    rm -f "$src"
+}
+
+cleanup_deprecated_layout() {
+    rm -f \
+        "$LIST_DIR/custom.txt" \
+        "$LIST_DIR/exclude.txt" \
+        "$MODPATH/ipset/custom.txt" \
+        "$MODPATH/ipset/exclude.txt" \
+        "$DNSCRYPT_DIR/custom-cloaking-rules.txt" \
+        "$DNSCRYPT_DIR/custom-blocked-names.txt" \
+        "$DNSCRYPT_DIR/custom-blocked-ips.txt" \
+        "$DNSCRYPT_DIR/custom-allowed-names.txt" \
+        "$DNSCRYPT_DIR/custom-allowed-ips.txt" \
+        "$CONFIG_DIR/dnscrypt-rules-fix" \
+        "$CONFIG_DIR/disable-private-dns" \
+        "$CONFIG_DIR/disable-tether-offload" \
+        "$CONFIG_DIR/disable-ipv6" \
+        "$CONFIG_DIR/relax-network" \
+        "$CONFIG_DIR/install-vpnhotspot"
+}
+
+migrate_legacy_config() {
+    migrate_file_if_missing "$BYPASS_CALLS_LEGACY_FILE" "$BYPASS_CALLS_FILE"
+    migrate_file_if_missing "$LIST_GENERAL_LINK_LEGACY" "$LIST_GENERAL_LINK"
+    migrate_file_if_missing "$DNSCRYPT_BLOCKED_NAMES_LINK_LEGACY" "$DNSCRYPT_BLOCKED_NAMES_LINK"
+    migrate_file_if_missing "$DNSCRYPT_CLOAKING_LINK_LEGACY" "$DNSCRYPT_CLOAKING_LINK"
+
+    if [ -f "$DEBUG_LOG_LEGACY" ]; then
+        mkdir -p "$(dirname "$DEBUG_LOG")"
+        if [ ! -e "$DEBUG_LOG" ]; then
+            mv "$DEBUG_LOG_LEGACY" "$DEBUG_LOG"
+        else
+            rm -f "$DEBUG_LOG_LEGACY"
+        fi
+    fi
+
+    cleanup_deprecated_layout
+}
+
 ensure_layout() {
     mkdir -p "$CONFIG_DIR" "$LIST_DIR" "$IPSET_DIR" "$STRATEGY_DIR" "$DNSCRYPT_DIR" "$FAKE_DIR" "$BIN_DIR" "$RUN_DIR" "$STATE_DIR"
 
@@ -98,27 +143,15 @@ ensure_layout() {
 
 ensure_default_config() {
     ensure_layout
+    migrate_legacy_config
     set_default_file "$DEBUG_FILE" "0"
-    set_default_file "$DNSCRYPT_REFRESH_FILE" "0"
-    set_default_file "$OPT_DISABLE_PRIVATE_DNS" "0"
-    set_default_file "$OPT_DISABLE_TETHER_OFFLOAD" "0"
-    set_default_file "$OPT_DISABLE_IPV6" "0"
-    set_default_file "$OPT_RELAX_NETWORK" "0"
-    set_default_file "$OPT_INSTALL_VPNHOTSPOT" "0"
-    set_default_file "$BYPASS_DISCORD_FILE" "0"
+    set_default_file "$BYPASS_CALLS_FILE" "0"
     set_default_file "$CURRENT_STRATEGY_FILE" "general"
-    set_default_file "$LIST_DIR/custom.txt" ""
-    set_default_file "$LIST_DIR/exclude.txt" ""
-    set_default_file "$LIST_DIR/ipset-exclude.txt" ""
     set_default_file "$LIST_DIR/list-general-user.txt" ""
     set_default_file "$LIST_DIR/list-exclude-user.txt" ""
     set_default_file "$IPSET_DIR/ipset-exclude.txt" ""
     set_default_file "$IPSET_DIR/ipset-exclude-user.txt" ""
-    set_default_file "$DNSCRYPT_DIR/custom-cloaking-rules.txt" ""
-    set_default_file "$DNSCRYPT_DIR/custom-blocked-names.txt" ""
-    set_default_file "$DNSCRYPT_DIR/custom-blocked-ips.txt" ""
-    set_default_file "$DNSCRYPT_DIR/custom-allowed-names.txt" ""
-    set_default_file "$DNSCRYPT_DIR/custom-allowed-ips.txt" ""
+    cleanup_deprecated_layout
 }
 
 pid_is_running() {
@@ -329,26 +362,11 @@ restore_managed_sysctl() {
 }
 
 apply_optional_network_tweaks() {
-    if config_enabled "$OPT_RELAX_NETWORK" "0"; then
-        apply_managed_sysctl "nf_conntrack_tcp_be_liberal" "net.netfilter.nf_conntrack_tcp_be_liberal" "1" || true
-        apply_managed_sysctl "nf_conntrack_checksum" "net.netfilter.nf_conntrack_checksum" "0" || true
-        apply_managed_sysctl "tcp_timestamps" "net.ipv4.tcp_timestamps" "0" || true
-    fi
-
-    if config_enabled "$OPT_DISABLE_IPV6" "0"; then
-        apply_managed_sysctl "ipv6_all_disable" "net.ipv6.conf.all.disable_ipv6" "1" || true
-        apply_managed_sysctl "ipv6_default_disable" "net.ipv6.conf.default.disable_ipv6" "1" || true
-        apply_managed_sysctl "ipv6_lo_disable" "net.ipv6.conf.lo.disable_ipv6" "1" || true
-    fi
+    return 0
 }
 
 restore_optional_network_tweaks() {
-    restore_managed_sysctl "nf_conntrack_tcp_be_liberal" "net.netfilter.nf_conntrack_tcp_be_liberal"
-    restore_managed_sysctl "nf_conntrack_checksum" "net.netfilter.nf_conntrack_checksum"
-    restore_managed_sysctl "tcp_timestamps" "net.ipv4.tcp_timestamps"
-    restore_managed_sysctl "ipv6_all_disable" "net.ipv6.conf.all.disable_ipv6"
-    restore_managed_sysctl "ipv6_default_disable" "net.ipv6.conf.default.disable_ipv6"
-    restore_managed_sysctl "ipv6_lo_disable" "net.ipv6.conf.lo.disable_ipv6"
+    return 0
 }
 
 apply_dnscrypt_runtime_tweaks() {

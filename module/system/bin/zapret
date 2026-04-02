@@ -1,15 +1,11 @@
 #!/system/bin/sh
 
-MODPATH="/data/adb/modules/zapret"
+MODPATH="${MODPATH:-/data/adb/modules/zapret}"
 . "$MODPATH/common.sh"
 
-LIST_GENERAL_USER="$LIST_DIR/list-general-user.txt"
-LIST_EXCLUDE_USER="$LIST_DIR/list-exclude-user.txt"
-IPSET_EXCLUDE="$IPSET_DIR/ipset-exclude.txt"
 IPSET_FILE="$LIST_DIR/ipset-all.txt"
 IPSET_BACKUP="$LIST_DIR/ipset-all.txt.bak"
 IPSET_BACKUP_LEGACY="$LIST_DIR/ipset-all.txt.backup"
-IPSET_FILTER_STATE="$CONFIG_DIR/ipset-filter"
 IPSET_PLACEHOLDER="203.0.113.113/32"
 
 ensure_layout
@@ -19,23 +15,40 @@ current_strategy() {
     config_value "$CURRENT_STRATEGY_FILE" "general"
 }
 
+current_ipset_filter() {
+    if [ -f "$IPSET_FILTER_STATE" ] && grep -Eq '^(none|loaded|any)$' "$IPSET_FILTER_STATE" 2>/dev/null; then
+        cat "$IPSET_FILTER_STATE"
+        return 0
+    fi
+
+    if [ ! -s "$IPSET_FILE" ]; then
+        echo "any"
+        return 0
+    fi
+
+    if [ "$(wc -l < "$IPSET_FILE" 2>/dev/null | tr -d ' ')" = "1" ] && grep -Fxq "$IPSET_PLACEHOLDER" "$IPSET_FILE" 2>/dev/null; then
+        echo "none"
+        return 0
+    fi
+
+    echo "loaded"
+}
+
 command_info() {
     echo "zapret Pocket"
     echo "! Current strategy: $(current_strategy)"
     echo "! Current ipset filter: $(current_ipset_filter)"
-    echo "  start                    - Start the zapret service"
-    echo "  stop                     - Stop the zapret service"
-    echo "  restart                  - Restart the zapret service"
-    echo "  status                   - Print service status"
-    echo "  discordtoggle            - Toggle Discord bypass for strategies"
-    echo "  strategy                 - Show strategies and prompt for selection"
-    echo "  custom <entry>           - Add/remove custom list/ipset entry"
-    echo "  exclude <entry>          - Add/remove exclude list/ipset entry"
-    echo "  blocked-names <url|none> - Set/clear dnscrypt blocked-names source"
-    echo "  cloaking-rules <url|none>- Set/clear dnscrypt cloaking-rules source"
-    echo "  general <url|none>       - Set/clear list-general source"
-    echo "  ipset-filter             - Cycle ipset-all mode"
-    echo "  import-strategy <url>    - Download a strategy script"
+    echo "  start                              - Start the zapret service"
+    echo "  stop                               - Stop the zapret service"
+    echo "  restart                            - Restart the zapret service"
+    echo "  status                             - Print service status"
+    echo "  strategy                           - Show strategies and prompt for selection"
+    echo "  import-strategy <url>              - Download a strategy script"
+    echo "  setup bypass-calls [1|0]           - Enable or disable bypass calls"
+    echo "  setup ipset-filter [none|loaded|any] - Set ipset-all mode"
+    echo "  setup cloaking-rules [none|url]    - Set dnscrypt cloaking-rules source"
+    echo "  setup blocked-names [none|url]     - Set dnscrypt blocked-names source"
+    echo "  setup list-general [none|url]      - Set list-general source"
 }
 
 list_strategies() {
@@ -78,25 +91,6 @@ strategy_command() {
     return 1
 }
 
-current_ipset_filter() {
-    if [ -f "$IPSET_FILTER_STATE" ] && grep -Eq '^(none|loaded|any)$' "$IPSET_FILTER_STATE" 2>/dev/null; then
-        cat "$IPSET_FILTER_STATE"
-        return 0
-    fi
-
-    if [ ! -s "$IPSET_FILE" ]; then
-        echo "any"
-        return 0
-    fi
-
-    if [ "$(wc -l < "$IPSET_FILE" 2>/dev/null | tr -d ' ')" = "1" ] && grep -Fxq "$IPSET_PLACEHOLDER" "$IPSET_FILE" 2>/dev/null; then
-        echo "none"
-        return 0
-    fi
-
-    echo "loaded"
-}
-
 write_ipset_filter_state() {
     printf '%s\n' "$1" > "$IPSET_FILTER_STATE"
 }
@@ -124,7 +118,11 @@ restore_ipset_file() {
 
 set_ipset_filter_none() {
     current="$(current_ipset_filter)"
-    [ "$current" = "none" ] && { echo "- IPSet filter already none"; return 0; }
+    if [ "$current" = "none" ]; then
+        write_ipset_filter_state "none"
+        echo "- IPSet filter already none"
+        return 0
+    fi
 
     [ "$current" = "loaded" ] && backup_ipset_file
     printf '%s\n' "$IPSET_PLACEHOLDER" > "$IPSET_FILE"
@@ -134,7 +132,11 @@ set_ipset_filter_none() {
 
 set_ipset_filter_any() {
     current="$(current_ipset_filter)"
-    [ "$current" = "any" ] && { echo "- IPSet filter already any"; return 0; }
+    if [ "$current" = "any" ]; then
+        write_ipset_filter_state "any"
+        echo "- IPSet filter already any"
+        return 0
+    fi
 
     [ "$current" = "loaded" ] && backup_ipset_file
     : > "$IPSET_FILE"
@@ -144,7 +146,11 @@ set_ipset_filter_any() {
 
 set_ipset_filter_loaded() {
     current="$(current_ipset_filter)"
-    [ "$current" = "loaded" ] && { echo "- IPSet filter already loaded"; return 0; }
+    if [ "$current" = "loaded" ]; then
+        write_ipset_filter_state "loaded"
+        echo "- IPSet filter already loaded"
+        return 0
+    fi
 
     if restore_ipset_file; then
         write_ipset_filter_state "loaded"
@@ -156,36 +162,46 @@ set_ipset_filter_loaded() {
     return 1
 }
 
-cycle_ipset_filter() {
-    case "$(current_ipset_filter)" in
-        loaded) set_ipset_filter_none ;;
-        none)   set_ipset_filter_any ;;
-        any|*)  set_ipset_filter_loaded ;;
-    esac
-}
-
 set_link_file() {
     label="$1"
     target="$2"
-    legacy="$3"
-    value="$4"
+    value="$3"
 
-    [ -n "$value" ] || { echo "! No URL provided"; return 1; }
+    [ -n "$value" ] || { echo "! No value provided"; return 1; }
 
     case "$value" in
         none)
-            rm -f "$target" "$legacy"
-            echo "- $label link removed"
+            rm -f "$target"
+            echo "- $label removed"
             return 0
             ;;
         http://*|https://*)
+            mkdir -p "$(dirname "$target")"
             printf '%s\n' "$value" > "$target"
-            rm -f "$legacy"
-            echo "- $label link saved"
+            echo "- $label saved"
             return 0
             ;;
         *)
-            echo "! URL must start with http:// or https://, or use none"
+            echo "! Value must be none or an http(s) URL"
+            return 1
+            ;;
+    esac
+}
+
+set_boolean_file() {
+    label="$1"
+    target="$2"
+    value="$3"
+
+    case "$value" in
+        0|1)
+            mkdir -p "$(dirname "$target")"
+            printf '%s\n' "$value" > "$target"
+            echo "- $label set to $value"
+            return 0
+            ;;
+        *)
+            echo "! Value must be 1 or 0"
             return 1
             ;;
     esac
@@ -265,99 +281,48 @@ import_strategy() {
     return 1
 }
 
-toggle_entry() {
-    target_file="$1"
-    entry="$2"
-    tmp_file="${target_file}.tmp"
+setup_command() {
+    key="$1"
+    value="$2"
+    extra="$3"
 
-    mkdir -p "$(dirname "$target_file")"
-    touch "$target_file"
+    [ -n "$key" ] || { command_info; return 1; }
+    [ -n "$value" ] || { echo "! Missing value for setup $key"; return 1; }
+    [ -z "$extra" ] || { echo "! Too many arguments for setup $key"; return 1; }
 
-    if grep -Fxq "$entry" "$target_file" 2>/dev/null; then
-        grep -Fvx "$entry" "$target_file" > "$tmp_file" 2>/dev/null || true
-        mv "$tmp_file" "$target_file"
-        echo "- Removed"
-        return 0
-    fi
-
-    printf '%s\n' "$entry" >> "$target_file"
-    echo "- Added"
-    return 0
-}
-
-discordtoggle() {
-    [ -n "$1" ] && {
-        echo "! discordtoggle takes no arguments"
-        return 1
-    }
-
-    current="$(config_value "$BYPASS_DISCORD_FILE" "0")"
-    if [ "$current" = "1" ]; then
-        desired="0"
-    else
-        desired="1"
-    fi
-
-    printf '%s\n' "$desired" > "$BYPASS_DISCORD_FILE"
-    echo "- Discord bypass $( [ "$desired" = "1" ] && echo enabled || echo disabled )"
-    if service_is_running; then
-        echo "! Restart zapret to apply the Discord toggle"
-    fi
-    return 0
-}
-
-custom() {
-    entry="$1"
-    [ -z "$entry" ] && echo "! No domain/IP/CIDR provided" && return 1
-
-    case "$entry" in
-        *:*|*/*) target_file="$IPSET_EXCLUDE" ;;
-        *)       target_file="$LIST_GENERAL_USER" ;;
-    esac
-
-    for file in "$LIST_DIR"/*.txt "$IPSET_DIR"/*.txt; do
-        [ -f "$file" ] || continue
-        [ "$file" = "$target_file" ] && continue
-        if grep -Fxq "$entry" "$file" 2>/dev/null; then
-            echo "! Already added in other lists, aborted"
+    case "$key" in
+        bypass-calls)
+            set_boolean_file "bypass-calls" "$BYPASS_CALLS_FILE" "$value" || return 1
+            ;;
+        ipset-filter)
+            case "$value" in
+                none) set_ipset_filter_none || return 1 ;;
+                loaded) set_ipset_filter_loaded || return 1 ;;
+                any) set_ipset_filter_any || return 1 ;;
+                *)
+                    echo "! ipset-filter must be one of: none, loaded, any"
+                    return 1
+                    ;;
+            esac
+            ;;
+        cloaking-rules)
+            set_link_file "cloaking-rules" "$DNSCRYPT_CLOAKING_LINK" "$value" || return 1
+            ;;
+        blocked-names)
+            set_link_file "blocked-names" "$DNSCRYPT_BLOCKED_NAMES_LINK" "$value" || return 1
+            ;;
+        list-general)
+            set_link_file "list-general" "$LIST_GENERAL_LINK" "$value" || return 1
+            ;;
+        *)
+            echo "! Unknown setup key: $key"
             return 1
-        fi
-    done
-
-    toggle_entry "$target_file" "$entry"
-}
-
-exclude() {
-    entry="$1"
-    [ -z "$entry" ] && echo "! No domain/IP/CIDR provided" && return 1
-
-    case "$entry" in
-        *:*|*/*) target_file="$IPSET_EXCLUDE" ;;
-        *)       target_file="$LIST_EXCLUDE_USER" ;;
+            ;;
     esac
 
-    toggle_entry "$target_file" "$entry"
-}
-
-blocked_names_link() {
-    set_link_file "blocked-names" "$DNSCRYPT_BLOCKED_NAMES_LINK" "$DNSCRYPT_BLOCKED_NAMES_LINK_LEGACY" "$1"
-}
-
-cloaking_rules_link() {
-    set_link_file "cloaking-rules" "$DNSCRYPT_CLOAKING_LINK" "$DNSCRYPT_CLOAKING_LINK_LEGACY" "$1"
-}
-
-general_link() {
-    set_link_file "general" "$LIST_GENERAL_LINK" "$LIST_GENERAL_LINK_LEGACY" "$1"
-}
-
-ipset_filter() {
-    [ -n "$1" ] && {
-        echo "! ipset-filter takes no arguments"
-        return 1
-    }
-
-    cycle_ipset_filter
+    if service_is_running; then
+        echo "! Restart zapret to apply setup changes"
+    fi
 }
 
 case "$1" in
@@ -368,13 +333,7 @@ case "$1" in
     status) status_service ;;
     running) service_is_running ;;
     strategy) strategy_command "$2" ;;
-    custom) custom "$2" ;;
-    exclude) exclude "$2" ;;
-    blocked-names) blocked_names_link "$2" ;;
-    cloaking-rules) cloaking_rules_link "$2" ;;
-    general) general_link "$2" ;;
-    ipset-filter) ipset_filter "$2" ;;
     import-strategy) import_strategy "$2" ;;
-    discordtoggle) discordtoggle "$2" ;;
+    setup) setup_command "$2" "$3" "$4" ;;
     *) command_info ;;
 esac

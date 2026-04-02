@@ -14,9 +14,10 @@ DISCORD_MARKERS = (
     "--filter-l7=discord",
     "--hostlist-domains=discord.media",
 )
-DISCORD_FLAG_CHECK = 'if [ "$(cat "$MODPATH/config/bypass-discord" 2>/dev/null || echo 0)" = "1" ]; then'
+DISCORD_FLAG_CHECK = 'if [ "$(cat "$MODPATH/config/bypass-calls" 2>/dev/null || echo 0)" = "1" ]; then'
 IPSET_BASE_TOKEN = "--ipset-exclude=$MODPATH/ipset/ipset-exclude.txt"
 IPSET_USER_TOKEN = "--ipset-exclude=$MODPATH/ipset/ipset-exclude-user.txt"
+REMOVED_LIST_FILENAMES = {"custom.txt", "exclude.txt"}
 
 
 def copy_tree(src: Path, dest: Path) -> None:
@@ -85,6 +86,10 @@ def prune_legacy_paths(root: Path) -> None:
         root / "strategy",
         root / "strategies",
         root / "lists",
+        root / "config" / "bypass-discord",
+        root / "config" / "custom-list-general-url",
+        root / "config" / "custom-blocked-names-url",
+        root / "config" / "custom-cloaking-rules-url",
         root / "list" / "custom.txt",
         root / "list" / "exclude.txt",
         root / ".service" / "hosts",
@@ -93,6 +98,8 @@ def prune_legacy_paths(root: Path) -> None:
         root / "dnscrypt" / "custom-blocked-names.txt",
         root / "dnscrypt" / "custom-blocked-ips.txt",
         root / "dnscrypt" / "custom-cloaking-rules.txt",
+        root / "dnscrypt" / "custom-allowed-names.txt",
+        root / "dnscrypt" / "custom-allowed-ips.txt",
     ]
     for path in legacy_paths:
         if path.is_dir():
@@ -276,6 +283,8 @@ def sync_from_zip(root: Path, archive: zipfile.ZipFile) -> None:
         if path.parts and path.parts[0] == ".service" and path.name == "ipset-service.txt":
             copy_zip_member(archive, entry, root / rel)
         elif path.parts and path.parts[0] in {"lists", "list"}:
+            if path.name in REMOVED_LIST_FILENAMES:
+                continue
             copy_zip_member(archive, entry, root / "list" / Path(*path.parts[1:]))
         elif path.parts and path.parts[0] == "bin" and path.suffix.lower() == ".bin":
             copy_zip_member(archive, entry, root / "fake" / Path(*path.parts[1:]))
