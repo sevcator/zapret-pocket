@@ -55,7 +55,20 @@ def normalize_strategy_script(text: str) -> str:
         lambda m: f'{m.group(1)}={m.group(2)}',
         text,
     )
+    text = enable_any_protocol_for_quic(text)
     return text
+
+
+def enable_any_protocol_for_quic(text: str) -> str:
+    lines: list[str] = []
+    for line in text.splitlines():
+        if "--dpi-desync-fake-quic=" in line and "--dpi-desync-any-protocol" not in line:
+            marker = " --dpi-desync-fake-quic="
+            idx = line.find(marker)
+            if idx != -1:
+                line = f"{line[:idx]} --dpi-desync-any-protocol=1{line[idx:]}"
+        lines.append(line)
+    return "\n".join(lines) + ("\n" if text.endswith("\n") else "")
 
 
 def dedupe_exact_token(text: str, token: str) -> str:
