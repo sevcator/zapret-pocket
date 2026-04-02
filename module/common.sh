@@ -88,23 +88,8 @@ migrate_file_if_missing() {
 }
 
 cleanup_deprecated_layout() {
-    for path in
-        "$LIST_DIR/custom.txt"
-        "$LIST_DIR/exclude.txt"
-        "$MODPATH/list/custom.txt"
-        "$MODPATH/list/exclude.txt"
-        "$DNSCRYPT_DIR/custom-cloaking-rules.txt"
-        "$DNSCRYPT_DIR/custom-blocked-names.txt"
-        "$DNSCRYPT_DIR/custom-blocked-ips.txt"
-        "$DNSCRYPT_DIR/custom-allowed-names.txt"
-        "$DNSCRYPT_DIR/custom-allowed-ips.txt"
-        "$CONFIG_DIR/dnscrypt-rules-fix"
-        "$CONFIG_DIR/disable-private-dns"
-        "$CONFIG_DIR/disable-tether-offload"
-        "$CONFIG_DIR/disable-ipv6"
-        "$CONFIG_DIR/relax-network"
-        "$CONFIG_DIR/install-vpnhotspot"
-    do
+    set -- "$LIST_DIR/custom.txt" "$LIST_DIR/exclude.txt" "$MODPATH/list/custom.txt" "$MODPATH/list/exclude.txt" "$DNSCRYPT_DIR/custom-cloaking-rules.txt" "$DNSCRYPT_DIR/custom-blocked-names.txt" "$DNSCRYPT_DIR/custom-blocked-ips.txt" "$DNSCRYPT_DIR/custom-allowed-names.txt" "$DNSCRYPT_DIR/custom-allowed-ips.txt" "$CONFIG_DIR/dnscrypt-rules-fix" "$CONFIG_DIR/disable-private-dns" "$CONFIG_DIR/disable-tether-offload" "$CONFIG_DIR/disable-ipv6" "$CONFIG_DIR/relax-network" "$CONFIG_DIR/install-vpnhotspot"
+    for path in "$@"; do
         rm -f "$path"
     done
 }
