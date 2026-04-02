@@ -256,6 +256,172 @@ jobs:
           fetch-depth: 0
           ref: ${{ github.ref_name }}
 
+      - name: Determine version info
+        id: version
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          # Determine version string from tag or generate one from commit count
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            VERSION="${GITHUB_REF_NAME}"          # e.g. v21.0
+            VERSION_BARE="${VERSION#v}"            # e.g. 21.0
+          else
+            # Not a tag push — use latest tag as base or fallback
+            LATEST_TAG="$(git describe --tags --abbrev=0 2>/dev/null || echo 'v0')"
+            COMMIT_COUNT="$(git rev-list --count HEAD)"
+            VERSION="${LATEST_TAG}-dev.${COMMIT_COUNT}"
+            VERSION_BARE="${VERSION#v}"
+          fi
+
+          # versionCode: count of all reachable commits (monotonically increasing)
+          VERSION_CODE="$(git rev-list --count HEAD)"
+
+          # Fetch repo description from GitHub API
+          DESCRIPTION="$(gh api "repos/${REPO}" --jq '.description // "Zapret module"')"
+
+          echo "version=${VERSION}"         >> "$GITHUB_OUTPUT"
+          echo "version_bare=${VERSION_BARE}" >> "$GITHUB_OUTPUT"
+          echo "version_code=${VERSION_CODE}" >> "$GITHUB_OUTPUT"
+          echo "description=${DESCRIPTION}" >> "$GITHUB_OUTPUT"
+
+          echo "Version      : ${VERSION}"
+          echo "VersionCode  : ${VERSION_CODE}"
+          echo "Description  : ${DESCRIPTION}"
+
+      - name: Patch module.prop
+        run: |
+          VERSION="${{ steps.version.outputs.version_bare }}"
+          VERSION_CODE="${{ steps.version.outputs.version_code }}"
+          DESCRIPTION="${{ steps.version.outputs.description }}"
+
+          sed -i "s|^version=.*|version=${VERSION}|" module/module.prop
+          sed -i "s|^versionCode=.*|versionCode=${VERSION_CODE}|" module/module.prop
+          sed -i "s|^description=.*|description=${DESCRIPTION}|" module/module.prop
+
+          echo "=== module.prop ==="
+          cat module/module.prop
+
+      - name: Patch update.json
+        run: |
+          VERSION="${{ steps.version.outputs.version_bare }}"
+          VERSION_CODE="${{ steps.version.outputs.version_code }}"
+          REPO="${{ github.repository }}"
+
+          # Determine the tag to use in the download URL
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            ZIP_TAG="${GITHUB_REF_NAME}"
+          else
+            ZIP_TAG="$(git describe --tags --abbrev=0 2>/dev/null || echo main)"
+          fi
+
+          cat > update.json <<EOF
+          {
+            "version": "${VERSION}",
+            "versionCode": "${VERSION_CODE}",
+            "zipUrl": "https://github.com/${REPO}/releases/download/${ZIP_TAG}/zapret-pocket.zip",
+            "changelog": "https://raw.githubusercontent.com/${REPO}/main/CHANGELOG.md"
+          }
+          EOF
+
+          echo "=== update.json ==="
+          cat update.json
+
+      - name: Generate CHANGELOG.md
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          python3 - <<'PYEOF'
+          import subprocess
+          import os
+          import json
+          import urllib.request
+
+          repo   = os.environ["REPO"]
+          token  = os.environ["GH_TOKEN"]
+          base   = f"https://api.github.com/repos/{repo}"
+          hdrs   = {
+              "Accept":               "application/vnd.github+json",
+              "Authorization":        f"Bearer {token}",
+              "X-GitHub-Api-Version": "2022-11-28",
+          }
+
+          def gh(path):
+              url = f"{base}{path}?per_page=100"
+              req = urllib.request.Request(url, headers=hdrs)
+              with urllib.request.urlopen(req) as r:
+                  return json.load(r)
+
+          # Fetch all tags sorted by creation (newest first)
+          tags_raw = subprocess.check_output(
+              ["git", "tag", "--sort=-creatordate"], text=True
+          ).splitlines()
+
+          if not tags_raw:
+              print("No tags found, writing empty changelog body.")
+              body = ""
+          else:
+              releases = {r["tag_name"]: r for r in gh("/releases")}
+              lines = []
+
+              for i, tag in enumerate(tags_raw):
+                  # Full release name (falls back to tag if no release found)
+                  rel = releases.get(tag, {})
+                  release_name = rel.get("name") or tag
+
+                  # Commit range for this tag
+                  prev_tag = tags_raw[i + 1] if i + 1 < len(tags_raw) else None
+                  if prev_tag:
+                      rev_range = f"{prev_tag}..{tag}"
+                  else:
+                      rev_range = tag
+
+                  commits_raw = subprocess.check_output(
+                      ["git", "log", rev_range, "--format=%H %s"],
+                      text=True
+                  ).splitlines()
+
+                  lines.append(f"**{release_name}**")
+                  if commits_raw:
+                      for entry in commits_raw:
+                          parts = entry.split(" ", 1)
+                          sha   = parts[0]
+                          msg   = parts[1] if len(parts) > 1 else sha
+                          short = sha[:7]
+                          url   = f"https://github.com/{repo}/commit/{sha}"
+                          lines.append(f"- [{msg} ({short})]({url})")
+                  else:
+                      lines.append("- No commits in this release")
+
+                  lines.append("")  # blank line between releases
+
+              body = "\n".join(lines).rstrip()
+
+          # Static links header (preserved from existing CHANGELOG.md)
+          header = """\
+          [📢 Telegram Channel](https://t.me/sevcator/921)
+
+          [📁 Repository](https://github.com/sevcator/zapret-pocket/)
+
+          [📖 Report Issues](https://github.com/sevcator/zapret-pocket/issues)
+
+          [💸 Donate](https://t.me/sevcator/909)
+
+          [👓 Author](https://github.com/sevcator/)
+          """
+
+          import textwrap
+          header = textwrap.dedent(header)
+
+          content = header + "\n" + body + "\n" if body else header
+          with open("CHANGELOG.md", "w", encoding="utf-8") as f:
+              f.write(content)
+
+          print("=== CHANGELOG.md ===")
+          print(content)
+          PYEOF
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -374,11 +540,61 @@ jobs:
         run: |
           cd module
           find . -type d -empty -delete
-          zip -r ../zapret-magisk.zip .
+          zip -r ../zapret-pocket.zip .
 
-      - name: Upload module zip
+      - name: Upload module zip artifact
         uses: actions/upload-artifact@v4
         with:
-          name: zapret-magisk
-          path: zapret-magisk.zip
+          name: zapret-pocket
+          path: zapret-pocket.zip
+          if-no-files-found: error
 
+      - name: Commit updated files back to repo
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add module/module.prop update.json CHANGELOG.md
+          if git diff --cached --quiet; then
+            echo "Nothing to commit."
+          else
+            git commit -m "chore: update version, changelog, update.json [skip ci]"
+            git push origin HEAD:${{ github.ref_name }} || git push origin HEAD:main
+          fi
+
+      - name: Create or update GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          VERSION="${{ steps.version.outputs.version_bare }}"
+          VERSION_CODE="${{ steps.version.outputs.version_code }}"
+
+          # Use tag if triggered by tag push, otherwise use a rolling "latest" tag
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            TAG="${GITHUB_REF_NAME}"
+            RELEASE_NAME="${TAG}"
+          else
+            TAG="latest"
+            RELEASE_NAME="Latest build ($(date -u '+%Y-%m-%d'))"
+            # Create or move the rolling tag
+            git tag -f "${TAG}"
+            git push origin -f "refs/tags/${TAG}"
+          fi
+
+          # Build release notes from CHANGELOG.md (skip the static header links)
+          NOTES="$(python3 - <<'PYEOF'
+          import re, sys
+          with open("CHANGELOG.md", encoding="utf-8") as f:
+              text = f.read()
+          # Drop the static link lines at the top
+          text = re.sub(r'^\[.*?\]\(.*?\)\n\n', '', text, flags=re.MULTILINE)
+          # Strip leading blank lines
+          text = text.lstrip('\n')
+          print(text, end='')
+          PYEOF
+          )"
+
+          # Delete existing release with this tag if present, then recreate
+          gh release delete "${TAG}" --repo "${REPO}" --yes 2>/dev/null || true
+
+          gh release create "${TAG}" --repo "${REPO}" --title "${RELEASE_NAME}" --notes "${NOTES}" zapret-pocket.zip
