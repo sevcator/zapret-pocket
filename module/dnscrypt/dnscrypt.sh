@@ -10,16 +10,17 @@ setup_firewall() {
     ensure_dnscrypt_firewall_base
 
     if iptables_supported iptables nat; then
-        for proto in udp tcp; do
-            for dport in 53 853; do
-                append_unique_rule iptables nat "$CHAIN_DNSCRYPT_REDIRECT" -p "$proto" --dport "$dport" -j DNAT --to-destination 127.0.0.1:"$DNSCRYPT_PORT"
-            done
-        done
+        append_unique_rule iptables nat "$CHAIN_DNSCRYPT_REDIRECT" -p udp --dport 53 -j DNAT --to-destination 127.0.0.1:"$DNSCRYPT_PORT"
+        append_unique_rule iptables nat "$CHAIN_DNSCRYPT_REDIRECT" -p tcp --dport 53 -j DNAT --to-destination 127.0.0.1:"$DNSCRYPT_PORT"
     fi
 
     if iptables_supported ip6tables filter; then
-        append_unique_rule ip6tables filter "$CHAIN_DNSCRYPT_OUTPUT" -j DROP
-        append_unique_rule ip6tables filter "$CHAIN_DNSCRYPT_FORWARD" -j DROP
+        for proto in udp tcp; do
+            for dport in 53 853; do
+                append_unique_rule ip6tables filter "$CHAIN_DNSCRYPT_OUTPUT" -p "$proto" --dport "$dport" -j DROP
+                append_unique_rule ip6tables filter "$CHAIN_DNSCRYPT_FORWARD" -p "$proto" --dport "$dport" -j DROP
+            done
+        done
     fi
 }
 

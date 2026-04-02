@@ -297,15 +297,7 @@ cleanup_zapret_firewall() {
 ensure_dnscrypt_firewall_base() {
     if iptables_supported iptables nat; then
         ensure_chain iptables nat "$CHAIN_DNSCRYPT_REDIRECT" || true
-        insert_unique_jump iptables nat PREROUTING "$CHAIN_DNSCRYPT_REDIRECT"
         insert_unique_jump iptables nat OUTPUT "$CHAIN_DNSCRYPT_REDIRECT"
-    fi
-
-    if iptables_supported iptables filter; then
-        ensure_chain iptables filter "$CHAIN_DNSCRYPT_OUTPUT" || true
-        ensure_chain iptables filter "$CHAIN_DNSCRYPT_FORWARD" || true
-        insert_unique_jump iptables filter OUTPUT "$CHAIN_DNSCRYPT_OUTPUT"
-        insert_unique_jump iptables filter FORWARD "$CHAIN_DNSCRYPT_FORWARD"
     fi
 
     if iptables_supported ip6tables filter; then
@@ -317,10 +309,7 @@ ensure_dnscrypt_firewall_base() {
 }
 
 cleanup_dnscrypt_firewall() {
-    remove_chain iptables nat PREROUTING "$CHAIN_DNSCRYPT_REDIRECT"
     remove_chain iptables nat OUTPUT "$CHAIN_DNSCRYPT_REDIRECT"
-    remove_chain iptables filter OUTPUT "$CHAIN_DNSCRYPT_OUTPUT"
-    remove_chain iptables filter FORWARD "$CHAIN_DNSCRYPT_FORWARD"
     remove_chain ip6tables filter OUTPUT "$CHAIN_DNSCRYPT_OUTPUT"
     remove_chain ip6tables filter FORWARD "$CHAIN_DNSCRYPT_FORWARD"
 }
