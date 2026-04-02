@@ -122,9 +122,7 @@ validate_preflight() {
 run_strategy() {
     config=""
     . "$STRATEGY_DIR/$CURRENT_STRATEGY.sh"
-    config="$(printf '%s\n' "$config" | sed \
-        -e 's/ --dpi-desync-any-protocol=1 --dpi-desync-fake-quic=/ --dpi-desync-fake-quic=/g' \
-        -e 's/ --dpi-desync-fake-quic=/ --dpi-desync-any-protocol=1 --dpi-desync-fake-quic=/g')"
+    config="$(printf '%s\n' "$config" | sed -e 's/ --dpi-desync-any-protocol=1 --dpi-desync-fake-quic=/ --dpi-desync-fake-quic=/g' -e 's/ --dpi-desync-fake-quic=/ --dpi-desync-any-protocol=1 --dpi-desync-fake-quic=/g')"
     [ -n "$config" ] || {
         echo "! Strategy produced empty config: $CURRENT_STRATEGY"
         return 1

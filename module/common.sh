@@ -4,7 +4,7 @@ MODPATH="${MODPATH:-/data/adb/modules/zapret}"
 CONFIG_DIR="${CONFIG_DIR:-$MODPATH/config}"
 LIST_DIR="${LIST_DIR:-$MODPATH/list}"
 LEGACY_LIST_DIR="${LEGACY_LIST_DIR:-$MODPATH/lists}"
-IPSET_DIR="${IPSET_DIR:-$MODPATH/ipset}"
+IPSET_DIR="${IPSET_DIR:-$MODPATH/list}"
 STRATEGY_DIR="${STRATEGY_DIR:-$MODPATH/zapret}"
 LEGACY_STRATEGY_DIR="${LEGACY_STRATEGY_DIR:-$MODPATH/strategy}"
 LEGACY_STRATEGIES_DIR="${LEGACY_STRATEGIES_DIR:-$MODPATH/strategies}"
@@ -88,22 +88,25 @@ migrate_file_if_missing() {
 }
 
 cleanup_deprecated_layout() {
-    rm -f \
-        "$LIST_DIR/custom.txt" \
-        "$LIST_DIR/exclude.txt" \
-        "$MODPATH/ipset/custom.txt" \
-        "$MODPATH/ipset/exclude.txt" \
-        "$DNSCRYPT_DIR/custom-cloaking-rules.txt" \
-        "$DNSCRYPT_DIR/custom-blocked-names.txt" \
-        "$DNSCRYPT_DIR/custom-blocked-ips.txt" \
-        "$DNSCRYPT_DIR/custom-allowed-names.txt" \
-        "$DNSCRYPT_DIR/custom-allowed-ips.txt" \
-        "$CONFIG_DIR/dnscrypt-rules-fix" \
-        "$CONFIG_DIR/disable-private-dns" \
-        "$CONFIG_DIR/disable-tether-offload" \
-        "$CONFIG_DIR/disable-ipv6" \
-        "$CONFIG_DIR/relax-network" \
+    for path in
+        "$LIST_DIR/custom.txt"
+        "$LIST_DIR/exclude.txt"
+        "$MODPATH/list/custom.txt"
+        "$MODPATH/list/exclude.txt"
+        "$DNSCRYPT_DIR/custom-cloaking-rules.txt"
+        "$DNSCRYPT_DIR/custom-blocked-names.txt"
+        "$DNSCRYPT_DIR/custom-blocked-ips.txt"
+        "$DNSCRYPT_DIR/custom-allowed-names.txt"
+        "$DNSCRYPT_DIR/custom-allowed-ips.txt"
+        "$CONFIG_DIR/dnscrypt-rules-fix"
+        "$CONFIG_DIR/disable-private-dns"
+        "$CONFIG_DIR/disable-tether-offload"
+        "$CONFIG_DIR/disable-ipv6"
+        "$CONFIG_DIR/relax-network"
         "$CONFIG_DIR/install-vpnhotspot"
+    do
+        rm -f "$path"
+    done
 }
 
 migrate_legacy_config() {

@@ -15,8 +15,8 @@ DISCORD_MARKERS = (
     "--hostlist-domains=discord.media",
 )
 DISCORD_FLAG_CHECK = 'if [ "$(cat "$MODPATH/config/bypass-calls" 2>/dev/null || echo 0)" = "1" ]; then'
-IPSET_BASE_TOKEN = "--ipset-exclude=$MODPATH/ipset/ipset-exclude.txt"
-IPSET_USER_TOKEN = "--ipset-exclude=$MODPATH/ipset/ipset-exclude-user.txt"
+IPSET_BASE_TOKEN = "--ipset-exclude=/ipset-exclude.txt"
+IPSET_USER_TOKEN = "--ipset-exclude=/ipset-exclude-user.txt"
 REMOVED_LIST_FILENAMES = {"custom.txt", "exclude.txt"}
 CLOAKING_HEADER = """################################
 #        Cloaking rules        #
@@ -43,10 +43,10 @@ def copy_glob(src_dir: Path, dest_dir: Path, patterns: tuple[str, ...]) -> None:
 
 def normalize_strategy_script(text: str) -> str:
     text = text.replace("$MODPATH/fake/", "$MODPATH/zapret/")
-    text = text.replace("%LISTS%ipset-exclude.txt", "$MODPATH/ipset/ipset-exclude.txt")
-    text = text.replace("%LISTS%ipset-exclude-user.txt", "$MODPATH/ipset/ipset-exclude-user.txt")
-    text = text.replace("$MODPATH/list/ipset-exclude.txt", "$MODPATH/ipset/ipset-exclude.txt")
-    text = text.replace("$MODPATH/list/ipset-exclude-user.txt", "$MODPATH/ipset/ipset-exclude-user.txt")
+    text = text.replace("%LISTS%ipset-exclude.txt", "/ipset-exclude.txt")
+    text = text.replace("%LISTS%ipset-exclude-user.txt", "/ipset-exclude-user.txt")
+    text = text.replace("$MODPATH/list/ipset-exclude.txt", "/ipset-exclude.txt")
+    text = text.replace("$MODPATH/list/ipset-exclude-user.txt", "/ipset-exclude-user.txt")
     text = text.replace(IPSET_BASE_TOKEN, f"{IPSET_BASE_TOKEN} {IPSET_USER_TOKEN}")
     text = dedupe_exact_token(text, IPSET_BASE_TOKEN)
     text = dedupe_exact_token(text, IPSET_USER_TOKEN)
@@ -218,8 +218,8 @@ def normalize_paths(text: str) -> str:
         flags=re.IGNORECASE,
     )
     text = text.replace("$MODPATH/lists/", "$MODPATH/list/")
-    text = text.replace("$MODPATH/list/ipset-exclude.txt", "$MODPATH/ipset/ipset-exclude.txt")
-    text = text.replace("$MODPATH/list/ipset-exclude-user.txt", "$MODPATH/ipset/ipset-exclude-user.txt")
+    text = text.replace("$MODPATH/list/ipset-exclude.txt", "/ipset-exclude.txt")
+    text = text.replace("$MODPATH/list/ipset-exclude-user.txt", "/ipset-exclude-user.txt")
     return text
 
 

@@ -63,16 +63,13 @@ jobs:
           for i in libmnl libnfnetlink libnetfilter_queue; do
             (
               cd $i-*
-              CFLAGS="-Os -flto=auto -Wno-implicit-function-declaration" \
-              ./configure --prefix= --host=$TARGET --enable-static --disable-shared --disable-dependency-tracking
+              CFLAGS="-Os -flto=auto -Wno-implicit-function-declaration" ./configure --prefix= --host=$TARGET --enable-static --disable-shared --disable-dependency-tracking
               make install -j$(nproc) DESTDIR=$DEPS_DIR
             )
             sed -i "s|^prefix=.*|prefix=$DEPS_DIR|g" $DEPS_DIR/lib/pkgconfig/$i.pc
           done
 
-          CFLAGS="-DZAPRET_GH_VER=${{ github.ref_name }} -DZAPRET_GH_HASH=${{ github.sha }} -I$DEPS_DIR/include" \
-          LDFLAGS="-L$DEPS_DIR/lib" \
-          make -C zapret android -j$(nproc)
+          CFLAGS="-DZAPRET_GH_VER=${{ github.ref_name }} -DZAPRET_GH_HASH=${{ github.sha }} -I$DEPS_DIR/include" LDFLAGS="-L$DEPS_DIR/lib" make -C zapret android -j$(nproc)
 
           ELFCLEANER_TAG="$(gh api repos/termux/termux-elf-cleaner/releases/latest --jq '.tag_name')"
           curl -fsSL -o elf-cleaner "https://github.com/termux/termux-elf-cleaner/releases/download/${ELFCLEANER_TAG}/termux-elf-cleaner"
