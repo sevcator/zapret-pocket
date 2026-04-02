@@ -42,6 +42,7 @@ def copy_glob(src_dir: Path, dest_dir: Path, patterns: tuple[str, ...]) -> None:
 
 
 def normalize_strategy_script(text: str) -> str:
+    text = text.replace("$MODPATH/fake/", "$MODPATH/zapret/")
     text = text.replace("%LISTS%ipset-exclude.txt", "$MODPATH/ipset/ipset-exclude.txt")
     text = text.replace("%LISTS%ipset-exclude-user.txt", "$MODPATH/ipset/ipset-exclude-user.txt")
     text = text.replace("$MODPATH/list/ipset-exclude.txt", "$MODPATH/ipset/ipset-exclude.txt")
@@ -105,6 +106,7 @@ def prune_legacy_paths(root: Path) -> None:
         root / "strategy",
         root / "strategies",
         root / "lists",
+        root / "fake",
         root / "config" / "bypass-discord",
         root / "config" / "custom-list-general-url",
         root / "config" / "custom-blocked-names-url",
@@ -205,7 +207,7 @@ def normalize_paths(text: str) -> str:
     text = text.replace("%BIN%winws.exe", "")
     text = re.sub(
         r'%BIN%([^"\s]+)',
-        lambda m: "$MODPATH/fake/" + m.group(1),
+        lambda m: "$MODPATH/zapret/" + m.group(1),
         text,
         flags=re.IGNORECASE,
     )
@@ -310,10 +312,15 @@ def stage_repo(root: Path) -> None:
     if module_prop.exists():
         copy_tree(module_prop, root / "module.prop")
 
-    for name in ("system", "fake", "list"):
+    for name in ("system", "list"):
         src = ROOT / name
         if src.exists():
             copy_tree(src, root / name)
+
+    fake_root = ROOT / "fake"
+    if fake_root.exists():
+        for path in fake_root.glob("*.bin"):
+            copy_tree(path, root / "zapret" / path.name)
 
     ipset_root = root / "ipset"
     ipset_root.mkdir(parents=True, exist_ok=True)
@@ -355,9 +362,9 @@ def sync_from_zip(root: Path, archive: zipfile.ZipFile) -> None:
                 continue
             copy_zip_member(archive, entry, root / "list" / Path(*path.parts[1:]))
         elif path.parts and path.parts[0] == "bin" and path.suffix.lower() == ".bin":
-            copy_zip_member(archive, entry, root / "fake" / Path(*path.parts[1:]))
+            copy_zip_member(archive, entry, root / "zapret" / Path(*path.parts[1:]))
         elif path.parts and path.parts[0] == "fake":
-            copy_zip_member(archive, entry, root / "fake" / Path(*path.parts[1:]))
+            copy_zip_member(archive, entry, root / "zapret" / Path(*path.parts[1:]))
 
     root.joinpath("zapret").mkdir(parents=True, exist_ok=True)
     for entry_name, entry in sorted(archive_entries.items()):

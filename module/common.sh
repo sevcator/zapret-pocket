@@ -9,10 +9,9 @@ STRATEGY_DIR="${STRATEGY_DIR:-$MODPATH/zapret}"
 LEGACY_STRATEGY_DIR="${LEGACY_STRATEGY_DIR:-$MODPATH/strategy}"
 LEGACY_STRATEGIES_DIR="${LEGACY_STRATEGIES_DIR:-$MODPATH/strategies}"
 DNSCRYPT_DIR="${DNSCRYPT_DIR:-$MODPATH/dnscrypt}"
-FAKE_DIR="${FAKE_DIR:-$MODPATH/fake}"
-BIN_DIR="${BIN_DIR:-$MODPATH/bin}"
-RUN_DIR="${RUN_DIR:-$MODPATH/.run}"
-STATE_DIR="${STATE_DIR:-$RUN_DIR/state}"
+SERVICE_DIR="${SERVICE_DIR:-$MODPATH/.service}"
+RUN_DIR="${RUN_DIR:-$SERVICE_DIR}"
+STATE_DIR="${STATE_DIR:-$SERVICE_DIR/state}"
 CURLPATH="${CURLPATH:-$MODPATH/curl}"
 DNSCRYPT_PORT="${DNSCRYPT_PORT:-5253}"
 
@@ -126,7 +125,11 @@ migrate_legacy_config() {
 }
 
 ensure_layout() {
-    mkdir -p "$CONFIG_DIR" "$LIST_DIR" "$IPSET_DIR" "$STRATEGY_DIR" "$DNSCRYPT_DIR" "$FAKE_DIR" "$BIN_DIR" "$RUN_DIR" "$STATE_DIR"
+    mkdir -p "$CONFIG_DIR" "$LIST_DIR" "$IPSET_DIR" "$STRATEGY_DIR" "$DNSCRYPT_DIR" "$SERVICE_DIR" "$STATE_DIR"
+
+    if [ -d "$MODPATH/.run" ] && [ "$MODPATH/.run" != "$SERVICE_DIR" ]; then
+        copy_tree_if_needed "$MODPATH/.run" "$SERVICE_DIR"
+    fi
 
     if [ -d "$LEGACY_LIST_DIR" ]; then
         copy_tree_if_needed "$LEGACY_LIST_DIR" "$LIST_DIR"

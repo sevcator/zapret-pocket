@@ -51,6 +51,19 @@ case "$ABI" in
 esac
 ui_print "- Device architecture: $ABI"
 
+preserve_user_data_for_update() {
+  [ -d "$MODUPDATEPATH" ] || return 0
+  [ -d "$FINALMODPATH" ] || return 0
+
+  mkdir -p "$MODUPDATEPATH/config" "$MODUPDATEPATH/list"
+
+  cp -af "$FINALMODPATH/config/." "$MODUPDATEPATH/config/" 2>/dev/null || true
+  cp -af "$FINALMODPATH/list/list-general-user.txt" "$MODUPDATEPATH/list/list-exclude-user.txt" 2>/dev/null || true
+  cp -af "$FINALMODPATH/list/list-exclude-user.txt" "$MODUPDATEPATH/list/list-exclude-user.txt" 2>/dev/null || true
+  cp -af "$FINALMODPATH/list/ipset-exclude-user.txt" "$MODUPDATEPATH/list/ipset-exclude-user.txt" 2>/dev/null || true
+}
+preserve_user_data_for_update
+
 import_updated_lists() {
   [ -d "$MODUPDATEPATH" ] || return 0
   mkdir -p "$CONFIG_DIR" "$LIST_DIR"

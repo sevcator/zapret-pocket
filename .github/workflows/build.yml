@@ -264,10 +264,6 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Validate tracked module sources
-        run: |
-          python .github/scripts/check-module-sources.py
-
       - name: Download upstream archive
         run: |
           curl -L -o flowseal-upstream.zip https://github.com/Flowseal/zapret-discord-youtube/archive/refs/heads/main.zip
@@ -380,6 +376,7 @@ jobs:
       - name: Package module zip
         run: |
           cd module
+          find . -type d -empty -delete
           zip -r ../zapret-magisk.zip .
 
       - name: Upload module zip
@@ -388,22 +385,3 @@ jobs:
           name: zapret-magisk
           path: zapret-magisk.zip
 
-      - name: Stage generated repository sources
-        if: github.ref_type == 'branch' && (github.ref_name == 'main' || github.ref_name == 'master')
-        run: |
-          python .github/scripts/stage-generated-sources.py
-
-      - name: Commit generated repository sources
-        if: github.ref_type == 'branch' && (github.ref_name == 'main' || github.ref_name == 'master')
-        run: |
-          if git diff --cached --quiet; then
-            echo "No generated source changes to commit"
-            exit 0
-          fi
-
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "Update generated module sources [skip ci]"
-          git fetch origin "${GITHUB_REF_NAME}"
-          git rebase "origin/${GITHUB_REF_NAME}"
-          git push origin HEAD:${GITHUB_REF_NAME}
