@@ -12,6 +12,9 @@
 
 <div align="center">
   Inspired by <a href="https://github.com/Flowseal/zapret-discord-youtube">zapret-discord-youtube</a>
+</div>
+
+<div align="center">
   <a href="https://t.me/sevcator/921">📢 Telegram Channel</a> | 
   <a href="https://t.me/sevcator/909">💸 Donate</a>
 </div>
