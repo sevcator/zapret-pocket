@@ -18,6 +18,12 @@ DISCORD_FLAG_CHECK = 'if [ "$(cat "$MODPATH/config/bypass-calls" 2>/dev/null || 
 IPSET_BASE_TOKEN = "--ipset-exclude=$MODPATH/ipset/ipset-exclude.txt"
 IPSET_USER_TOKEN = "--ipset-exclude=$MODPATH/ipset/ipset-exclude-user.txt"
 REMOVED_LIST_FILENAMES = {"custom.txt", "exclude.txt"}
+CLOAKING_HEADER = """################################
+#        Cloaking rules        #
+################################
+
+# Generated from upstream hosts file during packaging
+"""
 
 
 def copy_tree(src: Path, dest: Path) -> None:
@@ -126,6 +132,55 @@ def strategy_name_from_bat_name(bat_name: str) -> str | None:
     stem = re.sub(r"\s+", "-", stem)
     stem = re.sub(r"-{2,}", "-", stem).strip("-")
     return f"{stem or 'general'}.sh"
+
+
+def find_hosts_entry(archive: zipfile.ZipFile) -> zipfile.ZipInfo | None:
+    for entry in archive.infolist():
+        rel = zip_rel_name(entry.filename)
+        if rel is None:
+            continue
+        path = Path(rel)
+        if path.name == "hosts":
+            return entry
+    return None
+
+
+def convert_hosts_to_cloaking_rules(content: str) -> str:
+    seen: set[tuple[str, str]] = set()
+    lines: list[str] = [line.rstrip() for line in CLOAKING_HEADER.strip().splitlines()]
+
+    for raw in content.splitlines():
+        line = raw.strip()
+        if not line or line.startswith("#"):
+            continue
+
+        tokens = line.split()
+        if len(tokens) < 2:
+            continue
+
+        ip = tokens[0]
+        for domain in tokens[1:]:
+            if domain.startswith("#"):
+                break
+            normalized_domain = domain[1:] if domain.startswith("=") else domain
+            pair = (normalized_domain, ip)
+            if pair in seen:
+                continue
+            seen.add(pair)
+            lines.append(f"={normalized_domain} {ip}")
+
+    return "\n".join(lines) + "\n"
+
+
+def write_cloaking_rules_from_hosts(root: Path, archive: zipfile.ZipFile) -> None:
+    entry = find_hosts_entry(archive)
+    if entry is None:
+        return
+
+    content = archive.read(entry).decode("utf-8", errors="ignore")
+    dest = root / "dnscrypt" / "cloaking-rules.txt"
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    dest.write_text(convert_hosts_to_cloaking_rules(content), encoding="utf-8")
 
 
 def normalize_paths(text: str) -> str:
@@ -308,6 +363,8 @@ def sync_from_zip(root: Path, archive: zipfile.ZipFile) -> None:
                 dest.unlink()
             continue
         dest.write_text(normalize_strategy_script(converted), encoding="utf-8")
+
+    write_cloaking_rules_from_hosts(root, archive)
 
 
 def copy_zip_member(zf: zipfile.ZipFile, entry: zipfile.ZipInfo, dest: Path) -> None:
