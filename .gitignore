@@ -1,5 +1,14 @@
 module/bin/
+module/curl-arm
+module/curl-aarch64
+module/curl-x86
+module/curl-x86_64
 module/dnscrypt/dnscrypt-proxy-arm
 module/dnscrypt/dnscrypt-proxy-arm64
 module/dnscrypt/dnscrypt-proxy-i386
 module/dnscrypt/dnscrypt-proxy-x86_64
+module/system/app/*.apk
+module/zapret/nfqws-arm
+module/zapret/nfqws-aarch64
+module/zapret/nfqws-x86
+module/zapret/nfqws-x86_x64

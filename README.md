@@ -20,3 +20,6 @@ This project is licensed. See the [LICENSE](https://github.com/sevcator/zapret-p
 
 # Contributing
 Feel free to contribute to this project by submitting issues or pull requests.
+
+# Repository rules
+Tracked files inside `module/` must stay text-only. Android binaries are built in CI and injected only during packaging.
