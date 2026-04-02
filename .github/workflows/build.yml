@@ -582,19 +582,18 @@ jobs:
           fi
 
           # Build release notes from CHANGELOG.md (skip the static header links)
-          NOTES="$(python3 - <<'PYEOF'
-          import re, sys
+          # Write to a file to avoid "Argument list too long" when passing via --notes
+          python3 - <<'PYEOF'
+          import re
           with open("CHANGELOG.md", encoding="utf-8") as f:
               text = f.read()
-          # Drop the static link lines at the top
           text = re.sub(r'^\[.*?\]\(.*?\)\n\n', '', text, flags=re.MULTILINE)
-          # Strip leading blank lines
           text = text.lstrip('\n')
-          print(text, end='')
+          with open("/tmp/release_notes.md", "w", encoding="utf-8") as out:
+              out.write(text)
           PYEOF
-          )"
 
           # Delete existing release with this tag if present, then recreate
           gh release delete "${TAG}" --repo "${REPO}" --yes 2>/dev/null || true
 
-          gh release create "${TAG}" --repo "${REPO}" --title "${RELEASE_NAME}" --notes "${NOTES}" zapret-pocket.zip
+          gh release create "${TAG}" --repo "${REPO}" --title "${RELEASE_NAME}" --notes-file /tmp/release_notes.md zapret-pocket.zip
