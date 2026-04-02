@@ -1,5 +1,8 @@
 name: Build Module
 
+permissions:
+  contents: write
+
 on:
   workflow_dispatch:
   push:
@@ -252,6 +255,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.ref_name }}
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -381,3 +387,23 @@ jobs:
         with:
           name: zapret-magisk
           path: zapret-magisk.zip
+
+      - name: Stage generated repository sources
+        if: github.ref_type == 'branch' && (github.ref_name == 'main' || github.ref_name == 'master')
+        run: |
+          python .github/scripts/stage-generated-sources.py
+
+      - name: Commit generated repository sources
+        if: github.ref_type == 'branch' && (github.ref_name == 'main' || github.ref_name == 'master')
+        run: |
+          if git diff --cached --quiet; then
+            echo "No generated source changes to commit"
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Update generated module sources [skip ci]"
+          git fetch origin "${GITHUB_REF_NAME}"
+          git rebase "origin/${GITHUB_REF_NAME}"
+          git push origin HEAD:${GITHUB_REF_NAME}
