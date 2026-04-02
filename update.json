@@ -1,6 +1,6 @@
 {
-  "version": "0-dev.36",
-  "versionCode": "36",
-  "zipUrl": "https://github.com/sevcator/zapret-pocket/releases/download/main/zapret-pocket.zip",
+  "version": "latest-dev.38",
+  "versionCode": "38",
+  "zipUrl": "https://github.com/sevcator/zapret-pocket/releases/download/latest/zapret-pocket.zip",
   "changelog": "https://raw.githubusercontent.com/sevcator/zapret-pocket/main/CHANGELOG.md"
 }
