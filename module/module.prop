@@ -1,6 +1,6 @@
 id=zapret
 name=zapret
-version=1.0
-versionCode=1
+version=0-dev.36
+versionCode=36
 author=sevcator
-description=Zapret module
+description=⚡ Bypass censorship via zapret on rooted Android devices
