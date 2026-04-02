@@ -2,7 +2,7 @@
 #         For github.com/sevcator/zapret-pocket        #
 ########################################################
 
-listen_addresses = ['127.0.0.1:65353']
+listen_addresses = ['127.0.0.1:5253']
 
 server_names = ['google']
 
