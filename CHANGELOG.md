@@ -9,6 +9,8 @@
 [👓 Author](https://github.com/sevcator/)
 
 **latest**
+- [chore: update version, changelog, update.json [skip ci] (fcc5885)](https://github.com/sevcator/zapret-pocket/commit/fcc5885310edda277b32b01fe36be01fbcbc1d9d)
+- [Update build.yml (1d811fc)](https://github.com/sevcator/zapret-pocket/commit/1d811fc9bd8fc4abd59ba14813114274cc06b7ab)
 - [chore: update version, changelog, update.json [skip ci] (1ca9422)](https://github.com/sevcator/zapret-pocket/commit/1ca9422526844bdc7155207dced1b7160b5a80c6)
 - [Update build.yml (e4eb4e1)](https://github.com/sevcator/zapret-pocket/commit/e4eb4e1831c057d65a3664ac613974b27b51da16)
 - [Update generate-assets.py (1ae5f6e)](https://github.com/sevcator/zapret-pocket/commit/1ae5f6e7c91beef93555b1a1d9ca76ccd83800ee)
