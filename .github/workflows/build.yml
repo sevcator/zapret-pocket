@@ -8,17 +8,66 @@ env:
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
-      - master
-    tags:
-      - "v*"
+  schedule:
+    - cron: '*/30 * * * *'
 
 jobs:
+  check-upstream:
+    name: Check upstream for changes
+    runs-on: ubuntu-latest
+    outputs:
+      should_build: ${{ steps.check.outputs.should_build }}
+    steps:
+      - name: Get upstream latest commit SHA
+        id: upstream
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          SHA=$(curl -s -H "Authorization: Bearer $GH_TOKEN" \
+            "https://api.github.com/repos/Flowseal/zapret-discord-youtube/commits/main" \
+            | jq -r '.sha')
+          echo "sha=$SHA" >> "$GITHUB_OUTPUT"
+          echo "Upstream SHA: $SHA"
+
+      - name: Restore cached upstream SHA
+        if: github.event_name == 'schedule'
+        id: cache
+        uses: actions/cache/restore@v4
+        with:
+          path: upstream-sha.txt
+          key: upstream-sha-${{ steps.upstream.outputs.sha }}
+          restore-keys: upstream-sha-
+
+      - name: Decide whether to build
+        id: check
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "should_build=true" >> "$GITHUB_OUTPUT"
+            echo "workflow_dispatch: always build"
+          elif [ "${{ steps.cache.outputs.cache-hit }}" = "true" ]; then
+            echo "should_build=false" >> "$GITHUB_OUTPUT"
+            echo "Upstream unchanged, skipping build"
+          else
+            echo "should_build=true" >> "$GITHUB_OUTPUT"
+            echo "Upstream changed, triggering build"
+          fi
+
+      - name: Write SHA file for cache
+        if: steps.check.outputs.should_build == 'true'
+        run: echo "${{ steps.upstream.outputs.sha }}" > upstream-sha.txt
+
+      - name: Save upstream SHA to cache
+        if: steps.check.outputs.should_build == 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: upstream-sha.txt
+          key: upstream-sha-${{ steps.upstream.outputs.sha }}
+
   build-zapret:
     name: zapret for Android ${{ matrix.abi }}
     runs-on: ubuntu-latest
+    needs: [check-upstream]
+    if: needs.check-upstream.outputs.should_build == 'true'
     strategy:
       matrix:
         include:
@@ -90,6 +139,8 @@ jobs:
   build-dnscrypt:
     name: dnscrypt-proxy for Android
     runs-on: ubuntu-latest
+    needs: [check-upstream]
+    if: needs.check-upstream.outputs.should_build == 'true'
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -130,6 +181,8 @@ jobs:
   build-curl:
     name: curl for Android
     runs-on: ubuntu-latest
+    needs: [check-upstream]
+    if: needs.check-upstream.outputs.should_build == 'true'
     steps:
       - name: Checkout curl-android
         uses: actions/checkout@v4
@@ -215,7 +268,7 @@ jobs:
               )
               new = (
                   'echo "Checking for obsessive-compulsive compiler options..." >> configure.log\n'
-                  ': # Android NDK toolchains inject warning-as-error flags that zlib\'s probe rejects\n'
+                  ': # Android NDK toolchains inject warning-as-error flags that zlib' + "'" + 's probe rejects\n'
               )
               if old in text:
                   text = text.replace(old, new, 1)
@@ -251,7 +304,8 @@ jobs:
   validate-and-package:
     name: Validate and package module
     runs-on: ubuntu-latest
-    needs: [build-zapret, build-dnscrypt, build-curl]
+    needs: [check-upstream, build-zapret, build-dnscrypt, build-curl]
+    if: needs.check-upstream.outputs.should_build == 'true'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -265,36 +319,31 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
         run: |
-          # Determine version string from tag or generate one from commit count
-          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
-            VERSION="${GITHUB_REF_NAME}"          # e.g. v21.0
-            VERSION_BARE="${VERSION#v}"            # e.g. 21.0
-          else
-            # Not a tag push — use latest tag as base or fallback
-            LATEST_TAG="$(git describe --tags --abbrev=0 2>/dev/null || echo 'v0')"
-            COMMIT_COUNT="$(git rev-list --count HEAD)"
-            VERSION="${LATEST_TAG}-dev.${COMMIT_COUNT}"
-            VERSION_BARE="${VERSION#v}"
-          fi
-
-          # versionCode: count of all reachable commits (monotonically increasing)
-          VERSION_CODE="$(git rev-list --count HEAD)"
+          # Generate timestamp in Moscow time (UTC+3)
+          BUILD_TIME=$(TZ='Europe/Moscow' date '+%d-%m-%y %H:%M:%S')
+          VERSION="build at ${BUILD_TIME}"
+          VERSION_CODE=$(TZ='Europe/Moscow' date '+%d%m%y%H%M%S')
+          RELEASE_NAME="${BUILD_TIME}"
+          TAG="${VERSION_CODE}"
 
           # Fetch repo description from GitHub API
           DESCRIPTION="$(gh api "repos/${REPO}" --jq '.description // "Zapret module"')"
 
-          echo "version=${VERSION}"         >> "$GITHUB_OUTPUT"
-          echo "version_bare=${VERSION_BARE}" >> "$GITHUB_OUTPUT"
+          echo "version=${VERSION}"           >> "$GITHUB_OUTPUT"
           echo "version_code=${VERSION_CODE}" >> "$GITHUB_OUTPUT"
-          echo "description=${DESCRIPTION}" >> "$GITHUB_OUTPUT"
+          echo "description=${DESCRIPTION}"   >> "$GITHUB_OUTPUT"
+          echo "release_name=${RELEASE_NAME}" >> "$GITHUB_OUTPUT"
+          echo "tag=${TAG}"                   >> "$GITHUB_OUTPUT"
 
           echo "Version      : ${VERSION}"
           echo "VersionCode  : ${VERSION_CODE}"
+          echo "Release Name : ${RELEASE_NAME}"
+          echo "Tag          : ${TAG}"
           echo "Description  : ${DESCRIPTION}"
 
       - name: Patch module.prop
         run: |
-          VERSION="${{ steps.version.outputs.version_bare }}"
+          VERSION="${{ steps.version.outputs.version }}"
           VERSION_CODE="${{ steps.version.outputs.version_code }}"
           DESCRIPTION="${{ steps.version.outputs.description }}"
 
@@ -307,22 +356,16 @@ jobs:
 
       - name: Patch update.json
         run: |
-          VERSION="${{ steps.version.outputs.version_bare }}"
+          VERSION="${{ steps.version.outputs.version }}"
           VERSION_CODE="${{ steps.version.outputs.version_code }}"
+          TAG="${{ steps.version.outputs.tag }}"
           REPO="${{ github.repository }}"
-
-          # Determine the tag to use in the download URL
-          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
-            ZIP_TAG="${GITHUB_REF_NAME}"
-          else
-            ZIP_TAG="$(git describe --tags --abbrev=0 2>/dev/null || echo main)"
-          fi
 
           cat > update.json <<EOF
           {
             "version": "${VERSION}",
             "versionCode": "${VERSION_CODE}",
-            "zipUrl": "https://github.com/${REPO}/releases/download/${ZIP_TAG}/zapret-pocket.zip",
+            "zipUrl": "https://github.com/${REPO}/releases/download/${TAG}/zapret-pocket.zip",
             "changelog": "https://raw.githubusercontent.com/${REPO}/main/CHANGELOG.md"
           }
           EOF
@@ -334,90 +377,46 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
+          RELEASE_NAME: ${{ steps.version.outputs.release_name }}
         run: |
           python3 - <<'PYEOF'
           import subprocess
           import os
-          import json
-          import urllib.request
+          import textwrap
 
-          repo   = os.environ["REPO"]
-          token  = os.environ["GH_TOKEN"]
-          base   = f"https://api.github.com/repos/{repo}"
-          hdrs   = {
-              "Accept":               "application/vnd.github+json",
-              "Authorization":        f"Bearer {token}",
-              "X-GitHub-Api-Version": "2022-11-28",
-          }
+          repo = os.environ["REPO"]
+          release_name = os.environ["RELEASE_NAME"]
 
-          def gh(path):
-              url = f"{base}{path}?per_page=100"
-              req = urllib.request.Request(url, headers=hdrs)
-              with urllib.request.urlopen(req) as r:
-                  return json.load(r)
-
-          # Fetch all tags sorted by creation (newest first)
-          tags_raw = subprocess.check_output(
-              ["git", "tag", "--sort=-creatordate"], text=True
+          # Get all commits
+          commits_raw = subprocess.check_output(
+              ["git", "log", "--format=%h %s"],
+              text=True
           ).splitlines()
 
-          if not tags_raw:
-              print("No tags found, writing empty changelog body.")
-              body = ""
-          else:
-              releases = {r["tag_name"]: r for r in gh("/releases")}
-              lines = []
+          lines = []
+          lines.append(release_name)
+          for entry in commits_raw:
+              parts = entry.split(" ", 1)
+              short_sha = parts[0]
+              msg = parts[1] if len(parts) > 1 else short_sha
+              lines.append(f"- {msg} {short_sha}")
 
-              for i, tag in enumerate(tags_raw):
-                  # Full release name (falls back to tag if no release found)
-                  rel = releases.get(tag, {})
-                  release_name = rel.get("name") or tag
+          body = "\n".join(lines)
 
-                  # Commit range for this tag
-                  prev_tag = tags_raw[i + 1] if i + 1 < len(tags_raw) else None
-                  if prev_tag:
-                      rev_range = f"{prev_tag}..{tag}"
-                  else:
-                      rev_range = tag
+          # Static links header
+          header = textwrap.dedent("""\
+          [Telegram Channel](https://t.me/sevcator/921)
 
-                  commits_raw = subprocess.check_output(
-                      ["git", "log", rev_range, "--format=%H %s"],
-                      text=True
-                  ).splitlines()
+          [Repository](https://github.com/sevcator/zapret-pocket/)
 
-                  lines.append(f"**{release_name}**")
-                  if commits_raw:
-                      for entry in commits_raw:
-                          parts = entry.split(" ", 1)
-                          sha   = parts[0]
-                          msg   = parts[1] if len(parts) > 1 else sha
-                          short = sha[:7]
-                          url   = f"https://github.com/{repo}/commit/{sha}"
-                          lines.append(f"- [{msg} ({short})]({url})")
-                  else:
-                      lines.append("- No commits in this release")
+          [Report Issues](https://github.com/sevcator/zapret-pocket/issues)
 
-                  lines.append("")  # blank line between releases
+          [Donate](https://t.me/sevcator/909)
 
-              body = "\n".join(lines).rstrip()
+          [Author](https://github.com/sevcator/)
+          """)
 
-          # Static links header (preserved from existing CHANGELOG.md)
-          header = """\
-          [📢 Telegram Channel](https://t.me/sevcator/921)
-
-          [📁 Repository](https://github.com/sevcator/zapret-pocket/)
-
-          [📖 Report Issues](https://github.com/sevcator/zapret-pocket/issues)
-
-          [💸 Donate](https://t.me/sevcator/909)
-
-          [👓 Author](https://github.com/sevcator/)
-          """
-
-          import textwrap
-          header = textwrap.dedent(header)
-
-          content = header + "\n" + body + "\n" if body else header
+          content = header + "\n" + body + "\n"
           with open("CHANGELOG.md", "w", encoding="utf-8") as f:
               f.write(content)
 
@@ -554,8 +553,8 @@ jobs:
 
       - name: Commit updated files back to repo
         run: |
-          git config user.name  "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name  "sevcator"
+          git config user.email "68725282+sevcator@users.noreply.github.com"
           git add module/module.prop update.json CHANGELOG.md
           if git diff --cached --quiet; then
             echo "Nothing to commit."
@@ -564,48 +563,49 @@ jobs:
             git push origin HEAD:${{ github.ref_name }} || git push origin HEAD:main
           fi
 
-      - name: Create or update GitHub Release
+      - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
+          RELEASE_NAME: ${{ steps.version.outputs.release_name }}
         run: |
-          VERSION="${{ steps.version.outputs.version_bare }}"
-          VERSION_CODE="${{ steps.version.outputs.version_code }}"
+          TAG="${{ steps.version.outputs.tag }}"
 
-          # Use tag if triggered by tag push, otherwise use a rolling "latest" tag
-          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
-            TAG="${GITHUB_REF_NAME}"
-            RELEASE_NAME="${TAG}"
-          else
-            TAG="latest"
-            RELEASE_NAME="Latest build ($(date -u '+%Y-%m-%d'))"
-            # Create or move the rolling tag
-            git tag -f "${TAG}"
-            git push origin -f "refs/tags/${TAG}"
-          fi
-
-          # Build release notes from CHANGELOG.md (skip the static header links)
-          # Write to a file to avoid "Argument list too long" when passing via --notes
+          # Generate release notes: simple format
           python3 - <<'PYEOF'
-          import re
+          import subprocess
+          import os
 
-          MAX_RELEASE_NOTES_BYTES = 120000
+          release_name = os.environ.get("RELEASE_NAME", "")
 
-          with open("CHANGELOG.md", encoding="utf-8") as f:
-              text = f.read()
+          # Get all commits
+          commits_raw = subprocess.check_output(
+              ["git", "log", "--format=%h %s"],
+              text=True
+          ).splitlines()
 
-          text = re.sub(r'^\[.*?\]\(.*?\)\n\n', '', text, flags=re.MULTILINE).lstrip('\n')
-          encoded = text.encode("utf-8")
-          if len(encoded) > MAX_RELEASE_NOTES_BYTES:
-              clipped = encoded[:MAX_RELEASE_NOTES_BYTES]
-              text = clipped.decode("utf-8", errors="ignore").rstrip()
-              text += "\n\n_Release notes truncated due to GitHub size limit._\n"
+          lines = []
+          lines.append(release_name)
+          for entry in commits_raw:
+              parts = entry.split(" ", 1)
+              short_sha = parts[0]
+              msg = parts[1] if len(parts) > 1 else short_sha
+              lines.append(f"- {msg} {short_sha}")
 
+          text = "\n".join(lines) + "\n"
           with open("/tmp/release_notes.md", "w", encoding="utf-8") as out:
               out.write(text)
+
+          print("=== Release Notes ===")
+          print(text)
           PYEOF
 
-          # Delete existing release with this tag if present, then recreate
+          # Create tag
+          git tag -f "${TAG}"
+          git push origin -f "refs/tags/${TAG}"
+
+          # Delete existing release with this tag if present
           gh release delete "${TAG}" --repo "${REPO}" --yes 2>/dev/null || true
 
+          # Create release
           gh release create "${TAG}" --repo "${REPO}" --title "${RELEASE_NAME}" --notes-file /tmp/release_notes.md zapret-pocket.zip
