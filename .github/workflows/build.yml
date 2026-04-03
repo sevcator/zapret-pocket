@@ -3,6 +3,9 @@ name: Build Module
 permissions:
   contents: write
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
 on:
   workflow_dispatch:
   push:
@@ -585,10 +588,19 @@ jobs:
           # Write to a file to avoid "Argument list too long" when passing via --notes
           python3 - <<'PYEOF'
           import re
+
+          MAX_RELEASE_NOTES_BYTES = 120000
+
           with open("CHANGELOG.md", encoding="utf-8") as f:
               text = f.read()
-          text = re.sub(r'^\[.*?\]\(.*?\)\n\n', '', text, flags=re.MULTILINE)
-          text = text.lstrip('\n')
+
+          text = re.sub(r'^\[.*?\]\(.*?\)\n\n', '', text, flags=re.MULTILINE).lstrip('\n')
+          encoded = text.encode("utf-8")
+          if len(encoded) > MAX_RELEASE_NOTES_BYTES:
+              clipped = encoded[:MAX_RELEASE_NOTES_BYTES]
+              text = clipped.decode("utf-8", errors="ignore").rstrip()
+              text += "\n\n_Release notes truncated due to GitHub size limit._\n"
+
           with open("/tmp/release_notes.md", "w", encoding="utf-8") as out:
               out.write(text)
           PYEOF
