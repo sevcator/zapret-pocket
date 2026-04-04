@@ -8,6 +8,9 @@
 
 [Author](https://github.com/sevcator/)
 
+- Fix cloaking link parsing and skip downloads by Content-Length a625f44
+- Fix linked list refresh for cloaking, blocked names and general list 5ca1f47
+- chore: update version, changelog, update.json [skip ci] 3dba21a
 - Add updateJson URL to module metadata 3d01e4c
 - chore: update version, changelog, update.json [skip ci] 9e5084c
 - Fix release notes format and deduplicate changelog entries f3b6c4a
