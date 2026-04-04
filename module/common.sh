@@ -381,32 +381,64 @@ read_link_file() {
             value="$(printf '%s' "$line" | tr -d '\r' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
             case "$value" in
                 ""|\#*) continue ;;
+                http://*|https://*)
+                    printf '%s\n' "$value"
+                    return 0
+                    ;;
             esac
-            printf '%s\n' "$value"
-            return 0
+
+            extracted_url="$(printf '%s\n' "$value" | sed -n 's/.*\(https\{0,1\}:\/\/[^[:space:]]*\).*/\1/p')"
+            case "$extracted_url" in
+                http://*|https://*)
+                    printf '%s\n' "$extracted_url"
+                    return 0
+                    ;;
+            esac
         done < "$file"
     done
     return 1
+}
+
+file_size_bytes() {
+    target="$1"
+    [ -f "$target" ] || return 1
+    wc -c < "$target" 2>/dev/null | tr -d '[:space:]'
+}
+
+remote_content_length() {
+    url="$1"
+    [ -x "$CURLPATH" ] || return 1
+
+    size="$("$CURLPATH" -fsSIL --retry 3 --retry-delay 1 -o /dev/null -w '%{content_length_download}' "$url" 2>/dev/null)" || return 1
+    size="$(printf '%s' "$size" | tr -d '\r' | sed 's/\..*$//')"
+
+    case "$size" in
+        ''|-1|*[!0-9]*) return 1 ;;
+    esac
+
+    printf '%s\n' "$size"
+}
+
+should_skip_download() {
+    url="$1"
+    target="$2"
+
+    [ -f "$target" ] || return 1
+    remote_size="$(remote_content_length "$url")" || return 1
+    local_size="$(file_size_bytes "$target")" || return 1
+    [ "$local_size" = "$remote_size" ]
 }
 
 download_file() {
     url="$1"
     output="$2"
     tmp="${output}.tmp"
-    downloader=""
 
     [ -n "$url" ] || return 1
     [ -n "$output" ] || return 1
+    [ -x "$CURLPATH" ] || return 1
 
-    if [ -x "$CURLPATH" ]; then
-        downloader="$CURLPATH"
-    elif command -v curl >/dev/null 2>&1; then
-        downloader="$(command -v curl)"
-    else
-        return 1
-    fi
-
-    if "$downloader" -fsSL --retry 3 --retry-delay 1 -o "$tmp" "$url" >/dev/null 2>&1; then
+    if "$CURLPATH" -fsSL --retry 3 --retry-delay 1 -o "$tmp" "$url" >/dev/null 2>&1; then
         mv "$tmp" "$output"
         return 0
     fi
@@ -431,6 +463,7 @@ refresh_linked_file() {
     url="$(read_link_file "$@")" || url=""
     case "$url" in
         http://*|https://*)
+            should_skip_download "$url" "$target" && return 0
             [ -f "$bak" ] || backup_file "$target"
             download_file "$url" "$target" || return 1
             ;;
