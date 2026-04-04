@@ -377,7 +377,6 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
-          RELEASE_NAME: ${{ steps.version.outputs.release_name }}
         run: |
           python3 - <<'PYEOF'
           import subprocess
@@ -385,16 +384,22 @@ jobs:
           import textwrap
 
           repo = os.environ["REPO"]
-          release_name = os.environ["RELEASE_NAME"]
 
-          # Get all commits
-          commits_raw = subprocess.check_output(
-              ["git", "log", "--format=%h %s"],
-              text=True
+          tags_raw = subprocess.check_output(
+              ["git", "tag", "--list", "--sort=-creatordate"],
+              text=True,
           ).splitlines()
+          prev_tag = next((tag for tag in tags_raw if tag.isdigit()), "")
+
+          log_cmd = ["git", "log", "--format=%h %s"]
+          if prev_tag:
+              log_cmd = ["git", "log", f"{prev_tag}..HEAD", "--format=%h %s"]
+
+          commits_raw = subprocess.check_output(log_cmd, text=True).splitlines()
+          if not commits_raw:
+              commits_raw = [subprocess.check_output(["git", "log", "-1", "--format=%h %s"], text=True).strip()]
 
           lines = []
-          lines.append(release_name)
           for entry in commits_raw:
               parts = entry.split(" ", 1)
               short_sha = parts[0]
@@ -576,16 +581,21 @@ jobs:
           import subprocess
           import os
 
-          release_name = os.environ.get("RELEASE_NAME", "")
-
-          # Get all commits
-          commits_raw = subprocess.check_output(
-              ["git", "log", "--format=%h %s"],
-              text=True
+          tags_raw = subprocess.check_output(
+              ["git", "tag", "--list", "--sort=-creatordate"],
+              text=True,
           ).splitlines()
+          prev_tag = next((tag for tag in tags_raw if tag.isdigit()), "")
+
+          log_cmd = ["git", "log", "--format=%h %s"]
+          if prev_tag:
+              log_cmd = ["git", "log", f"{prev_tag}..HEAD", "--format=%h %s"]
+
+          commits_raw = subprocess.check_output(log_cmd, text=True).splitlines()
+          if not commits_raw:
+              commits_raw = [subprocess.check_output(["git", "log", "-1", "--format=%h %s"], text=True).strip()]
 
           lines = []
-          lines.append(release_name)
           for entry in commits_raw:
               parts = entry.split(" ", 1)
               short_sha = parts[0]
