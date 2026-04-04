@@ -145,6 +145,18 @@ ensure_default_config() {
     cleanup_deprecated_layout
 }
 
+ensure_runtime_files() {
+    for file in "$LIST_DIR/list-general-user.txt" \
+                "$LIST_DIR/list-exclude-user.txt" \
+                "$IPSET_DIR/ipset-exclude.txt" \
+                "$IPSET_DIR/ipset-exclude-user.txt" \
+                "$DNSCRYPT_DIR/cloaking-rules.txt" \
+                "$DNSCRYPT_DIR/blocked-names.txt" \
+                "$DNSCRYPT_DIR/blocked-ips.txt"; do
+        [ -e "$file" ] || : > "$file"
+    done
+}
+
 pid_is_running() {
     [ -n "$1" ] && kill -0 "$1" 2>/dev/null
 }
@@ -365,10 +377,14 @@ restore_dnscrypt_runtime_tweaks() {
 read_link_file() {
     for file in "$@"; do
         [ -f "$file" ] || continue
-        if grep -q '[^[:space:]]' "$file" 2>/dev/null; then
-            cat "$file"
+        while IFS= read -r line || [ -n "$line" ]; do
+            value="$(printf '%s' "$line" | tr -d '\r' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+            case "$value" in
+                ""|\#*) continue ;;
+            esac
+            printf '%s\n' "$value"
             return 0
-        fi
+        done < "$file"
     done
     return 1
 }
@@ -425,9 +441,9 @@ refresh_linked_file() {
 }
 
 refresh_linked_lists() {
-    refresh_linked_file "$DNSCRYPT_DIR/cloaking-rules.txt" "$DNSCRYPT_CLOAKING_LINK" || true
-    refresh_linked_file "$DNSCRYPT_DIR/blocked-names.txt" "$DNSCRYPT_BLOCKED_NAMES_LINK" || true
-    refresh_linked_file "$LIST_DIR/list-general.txt" "$LIST_GENERAL_LINK" || true
+    refresh_linked_file "$DNSCRYPT_DIR/cloaking-rules.txt" "$DNSCRYPT_CLOAKING_LINK" "$DNSCRYPT_CLOAKING_LINK_LEGACY" || true
+    refresh_linked_file "$DNSCRYPT_DIR/blocked-names.txt" "$DNSCRYPT_BLOCKED_NAMES_LINK" "$DNSCRYPT_BLOCKED_NAMES_LINK_LEGACY" || true
+    refresh_linked_file "$LIST_DIR/list-general.txt" "$LIST_GENERAL_LINK" "$LIST_GENERAL_LINK_LEGACY" || true
 }
 
 stop_module_service() {

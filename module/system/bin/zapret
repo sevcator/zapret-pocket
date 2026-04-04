@@ -218,6 +218,8 @@ module_stack_is_running() {
 start_service() {
     ensure_layout
     ensure_default_config
+    ensure_runtime_files
+    refresh_linked_lists
 
     started_any=0
 
