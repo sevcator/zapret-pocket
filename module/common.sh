@@ -362,6 +362,74 @@ restore_dnscrypt_runtime_tweaks() {
     restore_managed_sysctl "route_localnet" "net.ipv4.conf.all.route_localnet"
 }
 
+read_link_file() {
+    for file in "$@"; do
+        [ -f "$file" ] || continue
+        if grep -q '[^[:space:]]' "$file" 2>/dev/null; then
+            cat "$file"
+            return 0
+        fi
+    done
+    return 1
+}
+
+download_file() {
+    url="$1"
+    output="$2"
+    tmp="${output}.tmp"
+    downloader=""
+
+    [ -n "$url" ] || return 1
+    [ -n "$output" ] || return 1
+
+    if [ -x "$CURLPATH" ]; then
+        downloader="$CURLPATH"
+    elif command -v curl >/dev/null 2>&1; then
+        downloader="$(command -v curl)"
+    else
+        return 1
+    fi
+
+    if "$downloader" -fsSL --retry 3 --retry-delay 1 -o "$tmp" "$url" >/dev/null 2>&1; then
+        mv "$tmp" "$output"
+        return 0
+    fi
+
+    rm -f "$tmp"
+    return 1
+}
+
+backup_file() {
+    target="$1"
+    bak="${target}.bak"
+
+    [ -f "$target" ] || return 0
+    [ -f "$bak" ] && return 0
+    cp -p "$target" "$bak" >/dev/null 2>&1
+}
+
+refresh_linked_file() {
+    target="$1"
+    shift
+    bak="${target}.bak"
+    url="$(read_link_file "$@")" || url=""
+    case "$url" in
+        http://*|https://*)
+            [ -f "$bak" ] || backup_file "$target"
+            download_file "$url" "$target" || return 1
+            ;;
+        *)
+            rm -f "$bak"
+            ;;
+    esac
+}
+
+refresh_linked_lists() {
+    refresh_linked_file "$DNSCRYPT_DIR/cloaking-rules.txt" "$DNSCRYPT_CLOAKING_LINK" || true
+    refresh_linked_file "$DNSCRYPT_DIR/blocked-names.txt" "$DNSCRYPT_BLOCKED_NAMES_LINK" || true
+    refresh_linked_file "$LIST_DIR/list-general.txt" "$LIST_GENERAL_LINK" || true
+}
+
 stop_module_service() {
     terminate_pidfile_gracefully "$ZAPRET_PID_FILE"
     terminate_pidfile_gracefully "$NFQWS_PID_FILE"
