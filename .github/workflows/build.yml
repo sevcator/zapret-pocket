@@ -179,126 +179,70 @@ jobs:
           if-no-files-found: error
 
   build-curl:
-    name: curl for Android
+    name: curl from Termux packages
     runs-on: ubuntu-latest
     needs: [check-upstream]
     if: needs.check-upstream.outputs.should_build == 'true'
     steps:
-      - name: Checkout curl-android
-        uses: actions/checkout@v4
-        with:
-          repository: ibaoger/libcurl-android
-          path: curl-android
-
-      - name: Build curl binaries
+      - name: Download and extract curl binaries from Termux .deb packages
         run: |
           set -e
-          cd curl-android
-          git submodule update --init --recursive
-          python - <<'PY'
-          from pathlib import Path
+          BASE_URL="https://packages.termux.dev/apt/termux-main/pool/main/c/curl"
+          mkdir -p curl-debs curl-work binaries
 
-          ABI_API = {
-              'armeabi-v7a)': '21',
-              'x86)': '21',
-              'arm64-v8a)': '21',
-              'x86-64)': '21',
+          curl -fsSL "$BASE_URL/" -o curl-index.html
+          mapfile -t debs < <(grep -oE 'curl_[^"<>[:space:]]+_(aarch64|arm|i686|x86_64)\.deb' curl-index.html | sort -u)
+
+          [ "${#debs[@]}" -eq 4 ] || {
+            echo "! Expected 4 curl .deb files, got ${#debs[@]}"
+            printf '%s\n' "${debs[@]}"
+            exit 1
           }
 
-          def patch_file(path: Path) -> None:
-              original = path.read_text(encoding='utf-8')
-              lines = original.splitlines()
-              out: list[str] = []
+          for deb in "${debs[@]}"; do
+            echo "Downloading $deb"
+            curl -fsSL "$BASE_URL/$deb" -o "curl-debs/$deb"
 
-              for line in lines:
-                  stripped = line.strip()
-                  if stripped == 'APP_ABI=(armeabi-v7a arm64-v8a x86-64)':
-                      out.append('APP_ABI=(armeabi-v7a arm64-v8a x86 x86-64)')
-                      continue
-                  if stripped == 'export API=21':
-                      out.append('export API="${API:-21}"')
-                      if path.name == 'compile-openssl.sh':
-                          out.append('case "$ARCH" in')
-                          out.append('\tandroid-arm) TARGET_TRIPLE=armv7a-linux-androideabi ;;')
-                          out.append('\tandroid-x86) TARGET_TRIPLE=i686-linux-android ;;')
-                          out.append('\tandroid-arm64) TARGET_TRIPLE=aarch64-linux-android ;;')
-                          out.append('\tandroid-x86_64) TARGET_TRIPLE=x86_64-linux-android ;;')
-                          out.append('\t*) TARGET_TRIPLE="$ARCH" ;;')
-                          out.append('esac')
-                          out.append('export CC="$TOOLCHAIN/clang --target=$TARGET_TRIPLE$API"')
-                          out.append('export CXX="$TOOLCHAIN/clang++ --target=$TARGET_TRIPLE$API"')
-                      continue
-                  if stripped == 'export CC=$TOOLCHAIN/$TARGET$API-clang':
-                      out.append('export CC="$TOOLCHAIN/clang --target=$TARGET$API"')
-                      continue
-                  if stripped == 'export CXX=$TOOLCHAIN/$TARGET$API-clang++':
-                      out.append('export CXX="$TOOLCHAIN/clang++ --target=$TARGET$API"')
-                      continue
-                  if stripped == 'export CFLAGS="--sysroot=$SYSROOT $CFLAGS"':
-                      out.append('export CFLAGS="--sysroot=$SYSROOT -Wno-error $CFLAGS"')
-                      continue
-                  if stripped == 'export CFLAGS="-I$SYSROOT/usr/include --sysroot=$SYSROOT $CFLAGS"':
-                      out.append('export CFLAGS="-I$SYSROOT/usr/include --sysroot=$SYSROOT -Wno-error $CFLAGS"')
-                      continue
+            pkg_dir="curl-work/${deb%.deb}"
+            root_dir="$pkg_dir/root"
+            mkdir -p "$pkg_dir" "$root_dir"
 
-                  out.append(line)
-                  if stripped in ABI_API:
-                      out.append(f'\t\tAPI={ABI_API[stripped]}')
+            (
+              cd "$pkg_dir"
+              ar x "../../curl-debs/$deb"
+            )
 
-              path.write_text(
-                  '\n'.join(out) + ('\n' if original.endswith('\n') else ''),
-                  encoding='utf-8',
-              )
+            data_archive="$(find "$pkg_dir" -maxdepth 1 -type f \( -name 'data.tar.xz' -o -name 'data.tar.gz' -o -name 'data.tar.zst' -o -name 'data.tar' \) | head -n1)"
+            [ -n "$data_archive" ] || { echo "! data archive not found in $deb"; exit 1; }
 
-          patch_file(Path('jni/compile-zlib.sh'))
-          patch_file(Path('jni/compile-openssl.sh'))
-          patch_file(Path('build_for_android.sh'))
-
-          zlib_configure = Path('jni/zlib/configure')
-          if zlib_configure.exists():
-              text = zlib_configure.read_text(encoding='utf-8')
-              old = (
-                  'echo "Checking for obsessive-compulsive compiler options..." >> configure.log\n'
-                  'if try $CC -c $CFLAGS $test.c; then\n'
-                  '  :\n'
-                  'else\n'
-                  '  echo "Compiler error reporting is too harsh for $0 (perhaps remove -Werror)." | tee -a configure.log\n'
-                  '  leave 1\n'
-                  'fi\n'
-              )
-              new = (
-                  'echo "Checking for obsessive-compulsive compiler options..." >> configure.log\n'
-                  ': # Android NDK toolchains inject warning-as-error flags that zlib' + "'" + 's probe rejects\n'
-              )
-              if old in text:
-                  text = text.replace(old, new, 1)
-                  zlib_configure.write_text(text, encoding='utf-8')
-          PY
-          export NDK_ROOT="$ANDROID_NDK_HOME"
-          export PATH="$PATH:$NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin"
-          chmod +x build_for_android.sh
-          ./build_for_android.sh
-          mkdir -p binaries
-          find jni/build/curl libs -type f -name curl 2>/dev/null | while IFS= read -r file; do
-            abi="$(basename "$(dirname "$file")")"
-            if [ "$abi" = bin ]; then
-              abi="$(basename "$(dirname "$(dirname "$file")")")"
-            fi
-            case "$abi" in
-              arm|armeabi-v7a|armv7a) name="curl-arm" ;;
-              arm64|arm64-v8a|aarch64) name="curl-aarch64" ;;
-              i386|x86) name="curl-x86" ;;
-              x86-64|x86_64|amd64) name="curl-x86_64" ;;
-              *) continue ;;
+            case "$data_archive" in
+              *.tar.xz) tar -xJf "$data_archive" -C "$root_dir" ;;
+              *.tar.gz) tar -xzf "$data_archive" -C "$root_dir" ;;
+              *.tar.zst) tar --zstd -xf "$data_archive" -C "$root_dir" ;;
+              *.tar) tar -xf "$data_archive" -C "$root_dir" ;;
+              *) echo "! Unsupported archive format: $data_archive"; exit 1 ;;
             esac
-            cp "$file" "binaries/$name"
+
+            bin_path="$(find "$root_dir" -type f -path '*/data/data/com.termux/files/usr/bin/curl' | head -n1)"
+            [ -n "$bin_path" ] || { echo "! curl binary not found inside $deb"; exit 1; }
+
+            case "$deb" in
+              *_aarch64.deb) out_name="curl-aarch64" ;;
+              *_arm.deb) out_name="curl-arm" ;;
+              *_i686.deb) out_name="curl-x86" ;;
+              *_x86_64.deb) out_name="curl-x86_64" ;;
+              *) echo "! Unknown ABI for $deb"; exit 1 ;;
+            esac
+
+            install -m 0755 "$bin_path" "binaries/$out_name"
+            file "binaries/$out_name" || true
           done
 
       - name: Upload curl artifact
         uses: actions/upload-artifact@v4
         with:
           name: curl-binaries
-          path: curl-android/binaries/*
+          path: binaries/*
           if-no-files-found: error
 
   validate-and-package:
@@ -322,7 +266,10 @@ jobs:
           # Generate timestamp in Moscow time (UTC+3)
           BUILD_TIME=$(TZ='Europe/Moscow' date '+%d-%m-%y %H:%M:%S')
           VERSION="build at ${BUILD_TIME}"
-          VERSION_CODE=$(TZ='Europe/Moscow' date '+%d%m%y%H%M%S')
+
+          RELEASE_COUNT="$(gh api "repos/${REPO}/releases" --paginate --jq 'length' | awk '{s+=$1} END {print s+0}')"
+          VERSION_CODE=$((RELEASE_COUNT + 1))
+
           RELEASE_NAME="${BUILD_TIME}"
           TAG="${VERSION_CODE}"
 
@@ -337,6 +284,7 @@ jobs:
 
           echo "Version      : ${VERSION}"
           echo "VersionCode  : ${VERSION_CODE}"
+          echo "ReleaseCount : ${RELEASE_COUNT}"
           echo "Release Name : ${RELEASE_NAME}"
           echo "Tag          : ${TAG}"
           echo "Description  : ${DESCRIPTION}"
