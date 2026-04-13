@@ -4,9 +4,7 @@ MODPATH="/data/adb/modules/zapret"
 . "$MODPATH/common.sh"
 
 # Wait for boot to complete before doing anything
-while [ -z "$(getprop sys.boot_completed)" ]; do
-    sleep 2
-done
+wait_for_boot_complete
 
 # Start services
 if [ -f "$MODPATH/system/bin/zapret" ]; then

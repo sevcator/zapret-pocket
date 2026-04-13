@@ -20,6 +20,7 @@ DEBUG_LOG="$RUN_DIR/debug.log"
 BYPASS_CALLS_FILE="$CONFIG_DIR/bypass-calls"
 CURRENT_STRATEGY_FILE="$CONFIG_DIR/current-strategy"
 IPSET_FILTER_STATE="$CONFIG_DIR/ipset-filter"
+IPSET_LINK_FILE="$CONFIG_DIR/ipset-link"
 LIST_GENERAL_LINK="$CONFIG_DIR/list-general-link"
 LIST_GENERAL_LINK_LEGACY="$CONFIG_DIR/custom-list-general-url"
 DNSCRYPT_BLOCKED_NAMES_LINK="$CONFIG_DIR/dnscrypt-blocked-names-link"
@@ -33,6 +34,25 @@ ZAPRET_PID_FILE="$RUN_DIR/zapret.pid"
 NFQWS_PID_FILE="$RUN_DIR/nfqws.pid"
 DNSCRYPT_SUP_PID_FILE="$RUN_DIR/dnscrypt-supervisor.pid"
 DNSCRYPT_PID_FILE="$RUN_DIR/dnscrypt.pid"
+
+debug_enabled() {
+    [ "${CLI_DEBUG:-0}" = "1" ]
+}
+
+debug_log() {
+    debug_enabled || return 0
+    printf '[zapret][debug] %s\n' "$*" >&2
+}
+
+boot_completed() {
+    [ "$(getprop sys.boot_completed 2>/dev/null)" = "1" ]
+}
+
+wait_for_boot_complete() {
+    while ! boot_completed; do
+        sleep 2
+    done
+}
 
 CHAIN_ZAPRET_POST="ZAPRET_POST"
 CHAIN_ZAPRET_PRE="ZAPRET_PRE"
@@ -90,6 +110,11 @@ migrate_file_if_missing() {
 cleanup_deprecated_layout() {
     set -- "$LIST_DIR/custom.txt" "$LIST_DIR/exclude.txt" "$MODPATH/list/custom.txt" "$MODPATH/list/exclude.txt" "$DNSCRYPT_DIR/custom-cloaking-rules.txt" "$DNSCRYPT_DIR/custom-blocked-names.txt" "$DNSCRYPT_DIR/custom-blocked-ips.txt" "$DNSCRYPT_DIR/custom-allowed-names.txt" "$DNSCRYPT_DIR/custom-allowed-ips.txt" "$CONFIG_DIR/dnscrypt-rules-fix" "$CONFIG_DIR/disable-private-dns" "$CONFIG_DIR/disable-tether-offload" "$CONFIG_DIR/disable-ipv6" "$CONFIG_DIR/relax-network" "$CONFIG_DIR/install-vpnhotspot"
     for path in "$@"; do
+        rm -f "$path"
+    done
+
+    for path in "$LIST_DIR"/*.bak "$LIST_DIR"/*.backup; do
+        [ -e "$path" ] || continue
         rm -f "$path"
     done
 }
@@ -407,9 +432,15 @@ file_size_bytes() {
 
 remote_content_length() {
     url="$1"
-    [ -x "$CURLPATH" ] || return 1
+    downloader="$(resolve_downloader)" || return 1
+    url="$(normalize_download_url "$url")"
+    debug_log "HEAD $url via $downloader"
 
-    size="$("$CURLPATH" -fsSIL --retry 3 --retry-delay 1 -o /dev/null -w '%{content_length_download}' "$url" 2>/dev/null)" || return 1
+    if debug_enabled; then
+        size="$("$downloader" -fsSIL --http1.1 --retry 3 --retry-delay 1 -o /dev/null -w '%{content_length_download}' "$url")" || return 1
+    else
+        size="$("$downloader" -fsSIL --http1.1 --retry 3 --retry-delay 1 -o /dev/null -w '%{content_length_download}' "$url" 2>/dev/null)" || return 1
+    fi
     size="$(printf '%s' "$size" | tr -d '\r' | sed 's/\..*$//')"
 
     case "$size" in
@@ -417,6 +448,91 @@ remote_content_length() {
     esac
 
     printf '%s\n' "$size"
+}
+
+normalize_download_url() {
+    url="$1"
+
+    case "$url" in
+        https://raw.githubusercontent.com/*/refs/heads/*)
+            printf '%s\n' "$url" | sed 's#^https://raw\.githubusercontent\.com/\([^/]*\)/\([^/]*\)/refs/heads/\([^/]*\)/#https://raw.githubusercontent.com/\1/\2/\3/#'
+            return 0
+            ;;
+        https://github.com/*/raw/refs/heads/*)
+            printf '%s\n' "$url" | sed 's#^https://github\.com/\([^/]*\)/\([^/]*\)/raw/refs/heads/\([^/]*\)/#https://raw.githubusercontent.com/\1/\2/\3/#'
+            return 0
+            ;;
+    esac
+
+    printf '%s\n' "$url"
+}
+
+resolve_downloader() {
+    if [ -x "$CURLPATH" ]; then
+        printf '%s\n' "$CURLPATH"
+        return 0
+    fi
+
+    downloader="$(command -v curl 2>/dev/null)"
+    [ -n "$downloader" ] || return 1
+    printf '%s\n' "$downloader"
+}
+
+resolve_wget() {
+    downloader="$(command -v wget 2>/dev/null)"
+    [ -n "$downloader" ] || return 1
+    printf '%s\n' "$downloader"
+}
+
+download_with_curl() {
+    downloader="$1"
+    url="$2"
+    output="$3"
+
+    [ -n "$downloader" ] || return 1
+    [ -n "$url" ] || return 1
+    [ -n "$output" ] || return 1
+
+    debug_log "curl download: $url -> $output via $downloader"
+    if debug_enabled; then
+        "$downloader" -fSL -v --http1.1 --retry 3 --retry-delay 1 --connect-timeout 15 -o "$output" "$url"
+    else
+        "$downloader" -fsSL --http1.1 --retry 3 --retry-delay 1 --connect-timeout 15 -o "$output" "$url" >/dev/null 2>&1
+    fi
+}
+
+download_with_wget() {
+    downloader="$1"
+    url="$2"
+    output="$3"
+
+    [ -n "$downloader" ] || return 1
+    [ -n "$url" ] || return 1
+    [ -n "$output" ] || return 1
+
+    debug_log "wget download: $url -> $output via $downloader"
+    if debug_enabled; then
+        "$downloader" -S -O "$output" "$url"
+    else
+        "$downloader" -q -O "$output" "$url" >/dev/null 2>&1
+    fi
+}
+
+alternate_download_url() {
+    url="$1"
+
+    case "$url" in
+        https://raw.githubusercontent.com/*)
+            printf '%s\n' "$url" | sed 's#^https://raw\.githubusercontent\.com/\([^/]*\)/\([^/]*\)/\([^/]*\)/#https://github.com/\1/\2/raw/refs/heads/\3/#'
+            return 0
+            ;;
+        https://github.com/*/raw/refs/heads/*)
+            printf '%s\n' "$url" | sed 's#^https://github\.com/\([^/]*\)/\([^/]*\)/raw/refs/heads/\([^/]*\)/#https://raw.githubusercontent.com/\1/\2/\3/#'
+            return 0
+            ;;
+    esac
+
+    return 1
 }
 
 should_skip_download() {
@@ -433,17 +549,48 @@ download_file() {
     url="$1"
     output="$2"
     tmp="${output}.tmp"
+    alt_url=""
 
     [ -n "$url" ] || return 1
     [ -n "$output" ] || return 1
-    [ -x "$CURLPATH" ] || return 1
+    url="$(normalize_download_url "$url")"
+    alt_url="$(alternate_download_url "$url" 2>/dev/null || true)"
 
-    if "$CURLPATH" -fsSL --retry 3 --retry-delay 1 -o "$tmp" "$url" >/dev/null 2>&1; then
-        mv "$tmp" "$output"
-        return 0
+    debug_log "download_file requested: $url -> $output"
+    [ -n "$alt_url" ] && debug_log "alternate download URL available: $alt_url"
+
+    downloader="$(resolve_downloader 2>/dev/null || true)"
+    if [ -n "$downloader" ]; then
+        if download_with_curl "$downloader" "$url" "$tmp"; then
+            mv "$tmp" "$output"
+            return 0
+        fi
+        debug_log "curl download failed for: $url"
+
+        if [ -n "$alt_url" ] && download_with_curl "$downloader" "$alt_url" "$tmp"; then
+            mv "$tmp" "$output"
+            return 0
+        fi
+        [ -n "$alt_url" ] && debug_log "curl alternate download failed for: $alt_url"
+    fi
+
+    downloader="$(resolve_wget 2>/dev/null || true)"
+    if [ -n "$downloader" ]; then
+        if download_with_wget "$downloader" "$url" "$tmp"; then
+            mv "$tmp" "$output"
+            return 0
+        fi
+        debug_log "wget download failed for: $url"
+
+        if [ -n "$alt_url" ] && download_with_wget "$downloader" "$alt_url" "$tmp"; then
+            mv "$tmp" "$output"
+            return 0
+        fi
+        [ -n "$alt_url" ] && debug_log "wget alternate download failed for: $alt_url"
     fi
 
     rm -f "$tmp"
+    debug_log "all download methods failed for: $url"
     return 1
 }
 
@@ -464,7 +611,14 @@ refresh_linked_file() {
     case "$url" in
         http://*|https://*)
             should_skip_download "$url" "$target" && return 0
-            [ -f "$bak" ] || backup_file "$target"
+            case "$target" in
+                "$LIST_DIR"/*|"$IPSET_DIR"/*)
+                    rm -f "$bak"
+                    ;;
+                *)
+                    [ -f "$bak" ] || backup_file "$target"
+                    ;;
+            esac
             download_file "$url" "$target" || return 1
             ;;
         *)
