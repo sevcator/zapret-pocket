@@ -442,6 +442,13 @@ jobs:
         run: |
           python .github/scripts/generate-assets.py
 
+      - name: Download default ipset-service.txt into module cache
+        run: |
+          mkdir -p module/.service
+          curl -fsSL \
+            -o module/.service/ipset-service.txt \
+            https://raw.githubusercontent.com/sevcator/zapret-lists/refs/heads/main/ipset-service.txt
+
       - name: Validate shell syntax
         run: |
           find module -type f \( -name "*.sh" -o -path "module/system/bin/zapret" \) -print0 | xargs -0 -n1 sh -n
