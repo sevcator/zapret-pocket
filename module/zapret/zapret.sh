@@ -11,12 +11,16 @@ STOP_REQUESTED=0
 NFQWS_PID=""
 
 boot_wait() {
-    while [ -z "$(getprop sys.boot_completed)" ]; do
-        sleep 2
-    done
+    wait_for_boot_complete
 }
 
 setup_logging() {
+    if [ "${CLI_DEBUG:-0}" = "1" ]; then
+        DEBUG_ENABLE=1
+        set -x
+        return 0
+    fi
+
     DEBUG_ENABLE="$(config_value "$DEBUG_FILE" "0")"
     if [ "$DEBUG_ENABLE" = "1" ]; then
         touch "$DEBUG_LOG"
