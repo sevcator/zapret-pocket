@@ -8,10 +8,16 @@
 
 [Author](https://github.com/sevcator/)
 
-- Update build.yml 9b79159
-- Update ipset-exclude-user.txt ff9d995
-- Delete module/list/ipset-all.txt.backup 770ef85
-- Add files via upload 84409e1
-- Add files via upload 63f0069
-- Add files via upload 5c65c1c
-- Update ipset-exclude-user.txt 645bace
+- Merge pull request #71 from sevcator/codex/fix-syntax-errors-in-shell-scripts b04ed8d
+- Fix zapret script syntax errors by normalizing line endings cdf8779
+- Merge pull request #70 from sevcator/codex/set-version-name-to-vtag-number 80ffcfd
+- chore: set version name to tag format 05d12ba
+- Merge pull request #69 from sevcator/codex/add-ipset-all-user.txt-file-and-strategies b427b97
+- Remove unnecessary strategy placeholder directory fe2ec21
+- Add files via upload ee23e9f
+- Add files via upload 2040d7d
+- Add files via upload cc2563c
+- Add files via upload ee55a96
+- Add files via upload e536bb8
+- Add files via upload 56ec58a
+- Add files via upload 78698f0
