@@ -8,16 +8,10 @@
 
 [Author](https://github.com/sevcator/)
 
-- Merge pull request #71 from sevcator/codex/fix-syntax-errors-in-shell-scripts b04ed8d
-- Fix zapret script syntax errors by normalizing line endings cdf8779
-- Merge pull request #70 from sevcator/codex/set-version-name-to-vtag-number 80ffcfd
-- chore: set version name to tag format 05d12ba
-- Merge pull request #69 from sevcator/codex/add-ipset-all-user.txt-file-and-strategies b427b97
-- Remove unnecessary strategy placeholder directory fe2ec21
-- Add files via upload ee23e9f
-- Add files via upload 2040d7d
-- Add files via upload cc2563c
-- Add files via upload ee55a96
-- Add files via upload e536bb8
-- Add files via upload 56ec58a
-- Add files via upload 78698f0
+- Add files via upload 3944efc
+- Add files via upload 3318ca1
+- Add files via upload 2dda30c
+- Add files via upload eb82e1b
+- Add files via upload 205d7cf
+- Merge pull request #72 from sevcator/codex/task-title 371d65e
+- Fix false-positive download success when move fails 2120b62
