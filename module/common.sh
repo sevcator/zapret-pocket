@@ -634,14 +634,20 @@ download_file() {
     downloader="$(resolve_downloader 2>/dev/null || true)"
     if [ -n "$downloader" ]; then
         if download_with_curl "$downloader" "$url" "$tmp"; then
-            mv "$tmp" "$output"
-            return 0
+            if mv "$tmp" "$output"; then
+                return 0
+            fi
+            rm -f "$tmp"
+            debug_log "failed to move downloaded file into place: $tmp -> $output"
         fi
         debug_log "curl download failed for: $url"
 
         if [ -n "$alt_url" ] && download_with_curl "$downloader" "$alt_url" "$tmp"; then
-            mv "$tmp" "$output"
-            return 0
+            if mv "$tmp" "$output"; then
+                return 0
+            fi
+            rm -f "$tmp"
+            debug_log "failed to move downloaded alternate file into place: $tmp -> $output"
         fi
         [ -n "$alt_url" ] && debug_log "curl alternate download failed for: $alt_url"
     fi
@@ -649,14 +655,20 @@ download_file() {
     downloader="$(resolve_wget 2>/dev/null || true)"
     if [ -n "$downloader" ]; then
         if download_with_wget "$downloader" "$url" "$tmp"; then
-            mv "$tmp" "$output"
-            return 0
+            if mv "$tmp" "$output"; then
+                return 0
+            fi
+            rm -f "$tmp"
+            debug_log "failed to move downloaded file into place: $tmp -> $output"
         fi
         debug_log "wget download failed for: $url"
 
         if [ -n "$alt_url" ] && download_with_wget "$downloader" "$alt_url" "$tmp"; then
-            mv "$tmp" "$output"
-            return 0
+            if mv "$tmp" "$output"; then
+                return 0
+            fi
+            rm -f "$tmp"
+            debug_log "failed to move downloaded alternate file into place: $tmp -> $output"
         fi
         [ -n "$alt_url" ] && debug_log "wget alternate download failed for: $alt_url"
     fi
