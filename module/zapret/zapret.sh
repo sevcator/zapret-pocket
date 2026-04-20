@@ -3,7 +3,7 @@
 MODPATH="/data/adb/modules/zapret"
 . "$MODPATH/common.sh"
 
-NFQWS_BIN="$STRATEGY_DIR/nfqws"
+NFQWS_BIN="$ZAPRET_DIR/nfqws"
 DEBUG_ENABLE=0
 CURRENT_STRATEGY=""
 HAS_IP6TABLES=0
@@ -35,6 +35,20 @@ detect_ipv6() {
     else
         HAS_IP6TABLES=0
     fi
+}
+
+# Read interface-only list from config file (comma or newline separated).
+# Result is stored in INTERFACE_ONLY as space-separated list (empty = all interfaces).
+INTERFACE_ONLY=""
+load_interface_only() {
+    INTERFACE_ONLY=""
+    [ -f "$INTERFACE_ONLY_FILE" ] || return 0
+    raw="$(cat "$INTERFACE_ONLY_FILE" 2>/dev/null | tr ',' ' ' | tr '\n' ' ' | tr -s ' ')"
+    # strip leading/trailing whitespace
+    raw="$(printf '%s' "$raw" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+    [ -n "$raw" ] || return 0
+    INTERFACE_ONLY="$raw"
+    echo "- Interface-only mode: $INTERFACE_ONLY"
 }
 
 validate_preflight() {
@@ -121,8 +135,15 @@ ipt_add() {
     port="$2"
     iptDPort="$iMportD $port"
     iptSPort="$iMportS $port"
-    append_unique_rule iptables mangle "$CHAIN_ZAPRET_POST" -p "$proto" $iptDPort $iCBo $iMark -j NFQUEUE --queue-num 200 --queue-bypass
-    append_unique_rule iptables mangle "$CHAIN_ZAPRET_PRE" -p "$proto" $iptSPort $iCBr $iMark -j NFQUEUE --queue-num 200 --queue-bypass
+    if [ -n "$INTERFACE_ONLY" ]; then
+        for _iface in $INTERFACE_ONLY; do
+            append_unique_rule iptables mangle "$CHAIN_ZAPRET_POST" -o "$_iface" -p "$proto" $iptDPort $iCBo $iMark -j NFQUEUE --queue-num 200 --queue-bypass
+            append_unique_rule iptables mangle "$CHAIN_ZAPRET_PRE"  -i "$_iface" -p "$proto" $iptSPort $iCBr $iMark -j NFQUEUE --queue-num 200 --queue-bypass
+        done
+    else
+        append_unique_rule iptables mangle "$CHAIN_ZAPRET_POST" -p "$proto" $iptDPort $iCBo $iMark -j NFQUEUE --queue-num 200 --queue-bypass
+        append_unique_rule iptables mangle "$CHAIN_ZAPRET_PRE" -p "$proto" $iptSPort $iCBr $iMark -j NFQUEUE --queue-num 200 --queue-bypass
+    fi
 }
 
 ip6t_add() {
@@ -131,8 +152,15 @@ ip6t_add() {
     [ "$HAS_IP6TABLES" = "1" ] || return 0
     ip6tDPort="$i6MportD $port"
     ip6tSPort="$i6MportS $port"
-    append_unique_rule ip6tables mangle "$CHAIN_ZAPRET_POST" -p "$proto" $ip6tDPort $i6CBo $i6Mark -j NFQUEUE --queue-num 200 --queue-bypass
-    append_unique_rule ip6tables mangle "$CHAIN_ZAPRET_PRE" -p "$proto" $ip6tSPort $i6CBr $i6Mark -j NFQUEUE --queue-num 200 --queue-bypass
+    if [ -n "$INTERFACE_ONLY" ]; then
+        for _iface in $INTERFACE_ONLY; do
+            append_unique_rule ip6tables mangle "$CHAIN_ZAPRET_POST" -o "$_iface" -p "$proto" $ip6tDPort $i6CBo $i6Mark -j NFQUEUE --queue-num 200 --queue-bypass
+            append_unique_rule ip6tables mangle "$CHAIN_ZAPRET_PRE"  -i "$_iface" -p "$proto" $ip6tSPort $i6CBr $i6Mark -j NFQUEUE --queue-num 200 --queue-bypass
+        done
+    else
+        append_unique_rule ip6tables mangle "$CHAIN_ZAPRET_POST" -p "$proto" $ip6tDPort $i6CBo $i6Mark -j NFQUEUE --queue-num 200 --queue-bypass
+        append_unique_rule ip6tables mangle "$CHAIN_ZAPRET_PRE" -p "$proto" $ip6tSPort $i6CBr $i6Mark -j NFQUEUE --queue-num 200 --queue-bypass
+    fi
 }
 
 add_multiport() {
@@ -202,6 +230,7 @@ main() {
     boot_wait
     setup_logging
     detect_ipv6
+    load_interface_only
     apply_optional_network_tweaks
     validate_preflight || exit 1
     run_strategy || exit 1
@@ -210,11 +239,36 @@ main() {
     apply_firewall_rules
 
     while [ "$STOP_REQUESTED" -eq 0 ]; do
-        sh "$STRATEGY_DIR/make-unkillable.sh" >/dev/null 2>&1 &
+        sh "$ZAPRET_DIR/make-unkillable.sh" >/dev/null 2>&1 &
         "$NFQWS_BIN" --uid=0:0 --bind-fix4 --bind-fix6 --qnum=200 $config &
         NFQWS_PID=$!
         write_pidfile "$NFQWS_PID_FILE" "$NFQWS_PID"
+
+        # Watchdog: kill nfqws if it becomes zombie or hangs (checked every 30s)
+        (
+            _wd_pid="$NFQWS_PID"
+            while kill -0 "$_wd_pid" 2>/dev/null; do
+                sleep 30
+                [ "$STOP_REQUESTED" -eq 1 ] && exit 0
+                # Check for zombie state
+                _state="$(cat /proc/$_wd_pid/status 2>/dev/null | grep -m1 '^State:' | awk '{print $2}')"
+                if [ "$_state" = "Z" ]; then
+                    echo "! nfqws watchdog: zombie detected, restarting"
+                    kill -KILL "$_wd_pid" 2>/dev/null || true
+                    exit 0
+                fi
+                # Check if nfqws is still consuming the NFQUEUE (sanity: process must exist)
+                if ! kill -CONT "$_wd_pid" 2>/dev/null; then
+                    exit 0
+                fi
+            done
+        ) &
+        _wd_bg_pid=$!
+
         wait "$NFQWS_PID"
+        kill "$_wd_bg_pid" 2>/dev/null || true
+        wait "$_wd_bg_pid" 2>/dev/null || true
+
         remove_pidfile "$NFQWS_PID_FILE"
         NFQWS_PID=""
         [ "$STOP_REQUESTED" -eq 1 ] && break
