@@ -271,7 +271,7 @@ jobs:
 
           TAG="${VERSION_CODE}"
           VERSION="v${TAG}"
-          RELEASE_NAME="${BUILD_TIME}"
+          RELEASE_NAME="v${VERSION_CODE}"
 
           # Fetch repo description from GitHub API
           DESCRIPTION="$(gh api "repos/${REPO}" --jq '.description // "Zapret module"')"
