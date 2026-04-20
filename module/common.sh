@@ -5,9 +5,10 @@ CONFIG_DIR="${CONFIG_DIR:-$MODPATH/config}"
 LIST_DIR="${LIST_DIR:-$MODPATH/list}"
 LEGACY_LIST_DIR="${LEGACY_LIST_DIR:-$MODPATH/lists}"
 IPSET_DIR="${IPSET_DIR:-$MODPATH/list}"
-STRATEGY_DIR="${STRATEGY_DIR:-$MODPATH/zapret}"
-LEGACY_STRATEGY_DIR="${LEGACY_STRATEGY_DIR:-$MODPATH/strategy}"
-LEGACY_STRATEGIES_DIR="${LEGACY_STRATEGIES_DIR:-$MODPATH/strategies}"
+ZAPRET_DIR="${ZAPRET_DIR:-$MODPATH/zapret}"
+STRATEGY_DIR="${STRATEGY_DIR:-$MODPATH/strategy}"
+LEGACY_STRATEGY_DIR="${LEGACY_STRATEGY_DIR:-$MODPATH/strategies}"
+LEGACY_ZAPRET_STRATEGY_DIR="${LEGACY_ZAPRET_STRATEGY_DIR:-$ZAPRET_DIR}"
 DNSCRYPT_DIR="${DNSCRYPT_DIR:-$MODPATH/dnscrypt}"
 SERVICE_DIR="${SERVICE_DIR:-$MODPATH/.service}"
 RUN_DIR="${RUN_DIR:-$SERVICE_DIR}"
@@ -20,7 +21,13 @@ DEBUG_LOG="$RUN_DIR/debug.log"
 BYPASS_CALLS_FILE="$CONFIG_DIR/bypass-calls"
 CURRENT_STRATEGY_FILE="$CONFIG_DIR/current-strategy"
 IPSET_FILTER_STATE="$CONFIG_DIR/ipset-filter"
+INTERFACE_ONLY_FILE="$CONFIG_DIR/interface-only"
 IPSET_LINK_FILE="$CONFIG_DIR/ipset-link"
+LIST_GENERAL_USER_FILE="$LIST_DIR/list-general-user.txt"
+LIST_EXCLUDE_USER_FILE="$LIST_DIR/list-exclude-user.txt"
+IPSET_ALL_USER_FILE="$IPSET_DIR/ipset-all-user.txt"
+IPSET_EXCLUDE_FILE="$IPSET_DIR/ipset-exclude.txt"
+IPSET_EXCLUDE_USER_FILE="$IPSET_DIR/ipset-exclude-user.txt"
 LIST_GENERAL_LINK="$CONFIG_DIR/list-general-link"
 LIST_GENERAL_LINK_LEGACY="$CONFIG_DIR/custom-list-general-url"
 DNSCRYPT_BLOCKED_NAMES_LINK="$CONFIG_DIR/dnscrypt-blocked-names-link"
@@ -95,6 +102,19 @@ copy_tree_if_needed() {
     cp -af "$src"/. "$dst"/ 2>/dev/null || true
 }
 
+copy_strategy_scripts_if_needed() {
+    src="$1"
+    [ -d "$src" ] || return 0
+    mkdir -p "$STRATEGY_DIR"
+    for file in "$src"/*.sh; do
+        [ -f "$file" ] || continue
+        case "$(basename "$file")" in
+            zapret.sh|make-unkillable.sh) continue ;;
+        esac
+        cp -af "$file" "$STRATEGY_DIR/" 2>/dev/null || true
+    done
+}
+
 migrate_file_if_missing() {
     src="$1"
     dst="$2"
@@ -138,7 +158,7 @@ migrate_legacy_config() {
 }
 
 ensure_layout() {
-    mkdir -p "$CONFIG_DIR" "$LIST_DIR" "$IPSET_DIR" "$STRATEGY_DIR" "$DNSCRYPT_DIR" "$SERVICE_DIR" "$STATE_DIR"
+    mkdir -p "$CONFIG_DIR" "$LIST_DIR" "$IPSET_DIR" "$ZAPRET_DIR" "$STRATEGY_DIR" "$DNSCRYPT_DIR" "$SERVICE_DIR" "$STATE_DIR"
 
     if [ -d "$MODPATH/.run" ] && [ "$MODPATH/.run" != "$SERVICE_DIR" ]; then
         copy_tree_if_needed "$MODPATH/.run" "$SERVICE_DIR"
@@ -148,12 +168,12 @@ ensure_layout() {
         copy_tree_if_needed "$LEGACY_LIST_DIR" "$LIST_DIR"
     fi
 
-    if [ -d "$LEGACY_STRATEGY_DIR" ]; then
-        copy_tree_if_needed "$LEGACY_STRATEGY_DIR" "$STRATEGY_DIR"
+    if [ -d "$LEGACY_ZAPRET_STRATEGY_DIR" ]; then
+        copy_strategy_scripts_if_needed "$LEGACY_ZAPRET_STRATEGY_DIR"
     fi
 
-    if [ -d "$LEGACY_STRATEGIES_DIR" ]; then
-        copy_tree_if_needed "$LEGACY_STRATEGIES_DIR" "$STRATEGY_DIR"
+    if [ -d "$LEGACY_STRATEGY_DIR" ]; then
+        copy_strategy_scripts_if_needed "$LEGACY_STRATEGY_DIR"
     fi
 }
 
@@ -163,18 +183,20 @@ ensure_default_config() {
     set_default_file "$DEBUG_FILE" "0"
     set_default_file "$BYPASS_CALLS_FILE" "0"
     set_default_file "$CURRENT_STRATEGY_FILE" "general"
-    set_default_file "$LIST_DIR/list-general-user.txt" ""
-    set_default_file "$LIST_DIR/list-exclude-user.txt" ""
-    set_default_file "$IPSET_DIR/ipset-exclude.txt" ""
-    set_default_file "$IPSET_DIR/ipset-exclude-user.txt" ""
+    set_default_file "$LIST_GENERAL_USER_FILE" ""
+    set_default_file "$LIST_EXCLUDE_USER_FILE" ""
+    set_default_file "$IPSET_ALL_USER_FILE" ""
+    set_default_file "$IPSET_EXCLUDE_FILE" ""
+    set_default_file "$IPSET_EXCLUDE_USER_FILE" ""
     cleanup_deprecated_layout
 }
 
 ensure_runtime_files() {
-    for file in "$LIST_DIR/list-general-user.txt" \
-                "$LIST_DIR/list-exclude-user.txt" \
-                "$IPSET_DIR/ipset-exclude.txt" \
-                "$IPSET_DIR/ipset-exclude-user.txt" \
+    for file in "$LIST_GENERAL_USER_FILE" \
+                "$LIST_EXCLUDE_USER_FILE" \
+                "$IPSET_ALL_USER_FILE" \
+                "$IPSET_EXCLUDE_FILE" \
+                "$IPSET_EXCLUDE_USER_FILE" \
                 "$DNSCRYPT_DIR/cloaking-rules.txt" \
                 "$DNSCRYPT_DIR/blocked-names.txt" \
                 "$DNSCRYPT_DIR/blocked-ips.txt"; do
@@ -241,7 +263,7 @@ terminate_pidfile_gracefully() {
 
 service_is_running() {
     pidfile_is_running "$ZAPRET_PID_FILE" && return 0
-    pgrep -f "$STRATEGY_DIR/zapret.sh" >/dev/null 2>&1
+    pgrep -f "$ZAPRET_DIR/zapret.sh" >/dev/null 2>&1
 }
 
 dnscrypt_supervisor_is_running() {
@@ -330,20 +352,32 @@ cleanup_zapret_firewall() {
 ensure_dnscrypt_firewall_base() {
     if iptables_supported iptables nat; then
         ensure_chain iptables nat "$CHAIN_DNSCRYPT_REDIRECT" || true
-        insert_unique_jump iptables nat OUTPUT "$CHAIN_DNSCRYPT_REDIRECT"
+        # Redirect DNS on all chains so mobile data (PREROUTING/FORWARD) is also covered
+        insert_unique_jump iptables nat PREROUTING "$CHAIN_DNSCRYPT_REDIRECT"
+        insert_unique_jump iptables nat OUTPUT    "$CHAIN_DNSCRYPT_REDIRECT"
+    fi
+
+    if iptables_supported iptables filter; then
+        ensure_chain iptables filter "$CHAIN_DNSCRYPT_OUTPUT"  || true
+        ensure_chain iptables filter "$CHAIN_DNSCRYPT_FORWARD" || true
+        insert_unique_jump iptables filter OUTPUT  "$CHAIN_DNSCRYPT_OUTPUT"
+        insert_unique_jump iptables filter FORWARD "$CHAIN_DNSCRYPT_FORWARD"
     fi
 
     if iptables_supported ip6tables filter; then
-        ensure_chain ip6tables filter "$CHAIN_DNSCRYPT_OUTPUT" || true
+        ensure_chain ip6tables filter "$CHAIN_DNSCRYPT_OUTPUT"  || true
         ensure_chain ip6tables filter "$CHAIN_DNSCRYPT_FORWARD" || true
-        insert_unique_jump ip6tables filter OUTPUT "$CHAIN_DNSCRYPT_OUTPUT"
+        insert_unique_jump ip6tables filter OUTPUT  "$CHAIN_DNSCRYPT_OUTPUT"
         insert_unique_jump ip6tables filter FORWARD "$CHAIN_DNSCRYPT_FORWARD"
     fi
 }
 
 cleanup_dnscrypt_firewall() {
-    remove_chain iptables nat OUTPUT "$CHAIN_DNSCRYPT_REDIRECT"
-    remove_chain ip6tables filter OUTPUT "$CHAIN_DNSCRYPT_OUTPUT"
+    remove_chain iptables nat PREROUTING "$CHAIN_DNSCRYPT_REDIRECT"
+    remove_chain iptables nat OUTPUT     "$CHAIN_DNSCRYPT_REDIRECT"
+    remove_chain iptables filter OUTPUT  "$CHAIN_DNSCRYPT_OUTPUT"
+    remove_chain iptables filter FORWARD "$CHAIN_DNSCRYPT_FORWARD"
+    remove_chain ip6tables filter OUTPUT  "$CHAIN_DNSCRYPT_OUTPUT"
     remove_chain ip6tables filter FORWARD "$CHAIN_DNSCRYPT_FORWARD"
 }
 
@@ -467,15 +501,53 @@ normalize_download_url() {
     printf '%s\n' "$url"
 }
 
+# curl_is_functional <path>
+#   Returns 0 if the binary exists, is executable, and actually loads (no ABI/linker errors).
+#   Sends a dummy request to an unreachable address to trigger lazy symbol binding.
+curl_is_functional() {
+    [ -x "$1" ] || return 1
+    _cif_out="$("$1" -IsS -m 1 https://127.0.0.2 2>&1)"
+    case "$_cif_out" in
+        *"CANNOT LINK"*|*"cannot locate symbol"*|*"No such file"*|*"not found"*) return 1 ;;
+    esac
+    return 0
+}
+
+# resolve_downloader
+#   Finds a working curl binary.  Priority order:
+#     1. $MODPATH/curl          (bundled, preferred)
+#     2. $MODPATH/system/bin/curl  (alternative bundled location)
+#     3. /system/bin/curl, /system/xbin/curl, /data/local/tmp/curl (common Android paths)
+#     4. whatever `command -v curl` finds (system PATH)
+#   Each candidate is verified with curl_is_functional so ABI mismatches are skipped.
+#   Result is cached in _RESOLVED_CURL to avoid repeated probes within the same session.
+_RESOLVED_CURL=""
 resolve_downloader() {
-    if [ -x "$CURLPATH" ]; then
-        printf '%s\n' "$CURLPATH"
+    # Return cached result if already resolved
+    if [ -n "$_RESOLVED_CURL" ] && curl_is_functional "$_RESOLVED_CURL"; then
+        printf '%s\n' "$_RESOLVED_CURL"
         return 0
     fi
 
-    downloader="$(command -v curl 2>/dev/null)"
-    [ -n "$downloader" ] || return 1
-    printf '%s\n' "$downloader"
+    # Candidate list — evaluated in order
+    _curl_candidates="
+$MODPATH/curl
+$MODPATH/system/bin/curl
+/system/bin/curl
+/system/xbin/curl
+/data/local/tmp/curl
+$(command -v curl 2>/dev/null)
+"
+    for _cand in $_curl_candidates; do
+        [ -n "$_cand" ] || continue
+        if curl_is_functional "$_cand"; then
+            _RESOLVED_CURL="$_cand"
+            printf '%s\n' "$_cand"
+            return 0
+        fi
+    done
+
+    return 1
 }
 
 resolve_wget() {
@@ -639,12 +711,12 @@ stop_module_service() {
     terminate_pidfile_gracefully "$DNSCRYPT_SUP_PID_FILE"
     terminate_pidfile_gracefully "$DNSCRYPT_PID_FILE"
 
-    pkill -TERM -f "$STRATEGY_DIR/zapret.sh" >/dev/null 2>&1 || true
+    pkill -TERM -f "$ZAPRET_DIR/zapret.sh" >/dev/null 2>&1 || true
     pkill -TERM -f "$MODPATH/dnscrypt/dnscrypt.sh" >/dev/null 2>&1 || true
     pkill -TERM -x nfqws >/dev/null 2>&1 || true
     pkill -TERM -x dnscrypt-proxy >/dev/null 2>&1 || true
     sleep 1
-    pkill -KILL -f "$STRATEGY_DIR/zapret.sh" >/dev/null 2>&1 || true
+    pkill -KILL -f "$ZAPRET_DIR/zapret.sh" >/dev/null 2>&1 || true
     pkill -KILL -f "$MODPATH/dnscrypt/dnscrypt.sh" >/dev/null 2>&1 || true
     pkill -KILL -x nfqws >/dev/null 2>&1 || true
     pkill -KILL -x dnscrypt-proxy >/dev/null 2>&1 || true

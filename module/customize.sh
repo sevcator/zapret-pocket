@@ -58,8 +58,9 @@ preserve_user_data_for_update() {
   mkdir -p "$MODUPDATEPATH/config" "$MODUPDATEPATH/list"
 
   cp -af "$FINALMODPATH/config/." "$MODUPDATEPATH/config/" 2>/dev/null || true
-  cp -af "$FINALMODPATH/list/list-general-user.txt" "$MODUPDATEPATH/list/list-exclude-user.txt" 2>/dev/null || true
+  cp -af "$FINALMODPATH/list/list-general-user.txt" "$MODUPDATEPATH/list/list-general-user.txt" 2>/dev/null || true
   cp -af "$FINALMODPATH/list/list-exclude-user.txt" "$MODUPDATEPATH/list/list-exclude-user.txt" 2>/dev/null || true
+  cp -af "$FINALMODPATH/list/ipset-all-user.txt" "$MODUPDATEPATH/list/ipset-all-user.txt" 2>/dev/null || true
   cp -af "$FINALMODPATH/list/ipset-exclude-user.txt" "$MODUPDATEPATH/list/ipset-exclude-user.txt" 2>/dev/null || true
 }
 preserve_user_data_for_update
@@ -91,7 +92,7 @@ ui_print "- Disabling tether offload"
 settings put global tether_offload_disabled 1 >/dev/null 2>&1 || true
 
 sanitize_scripts() {
-  SCRIPT_DIRS="$MODPATH $STRATEGY_DIR $DNSCRYPT_DIR $CONFIG_DIR $LIST_DIR $MODPATH/system/bin"
+  SCRIPT_DIRS="$MODPATH $ZAPRET_DIR $STRATEGY_DIR $DNSCRYPT_DIR $CONFIG_DIR $LIST_DIR $MODPATH/system/bin"
   for DIR in $SCRIPT_DIRS; do
     for FILE in "$DIR"/*.sh "$DIR"/zapret; do
       [ -f "$FILE" ] && sed -i 's/\r$//' "$FILE"
@@ -101,13 +102,13 @@ sanitize_scripts() {
 sanitize_scripts
 
 prepare_binaries() {
-  [ -f "$STRATEGY_DIR/$BINARY" ] || abort "! Missing zapret binary: $STRATEGY_DIR/$BINARY"
+  [ -f "$ZAPRET_DIR/$BINARY" ] || abort "! Missing zapret binary: $ZAPRET_DIR/$BINARY"
   [ -f "$DNSCRYPT_DIR/$BINARY2" ] || abort "! Missing dnscrypt binary: $DNSCRYPT_DIR/$BINARY2"
   [ -f "$MODPATH/$BINARY3" ] || abort "! Missing curl binary: $MODPATH/$BINARY3"
-  mv "$STRATEGY_DIR/$BINARY" "$STRATEGY_DIR/nfqws"
+  mv "$ZAPRET_DIR/$BINARY" "$ZAPRET_DIR/nfqws"
   mv "$DNSCRYPT_DIR/$BINARY2" "$DNSCRYPT_DIR/dnscrypt-proxy"
   mv "$MODPATH/$BINARY3" "$MODPATH/curl"
-  rm -f "$STRATEGY_DIR/nfqws-"*
+  rm -f "$ZAPRET_DIR/nfqws-"*
   rm -f "$DNSCRYPT_DIR/dnscrypt-proxy-"*
   rm -f "$MODPATH"/curl-*
 }
