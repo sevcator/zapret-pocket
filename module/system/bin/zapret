@@ -1,7 +1,8 @@
 #!/system/bin/sh
 
 MODPATH="${MODPATH:-/data/adb/modules/zapret}"
-. "$MODPATH/common.sh"
+COMMON_FILE="${COMMON_FILE:-$MODPATH/common.sh}"
+. "$COMMON_FILE"
 
 CLI_DEBUG="${CLI_DEBUG:-0}"
 
@@ -831,6 +832,7 @@ _ping_probe() {
 
 test_command() {
     NFQWS_BIN="$ZAPRET_DIR/nfqws"
+    DNSCRYPT_TEST_PROXY_BIN="${DNSCRYPT_PROXY_BIN:-$DNSCRYPT_DIR/dnscrypt-proxy}"
     TEST_RESULT_DIR="$RUN_DIR/test"
     DNSCRYPT_STARTED_BY_TEST=0
     TEST_RESTORE_STACK=0
@@ -852,10 +854,12 @@ test_command() {
             echo "- Stopping DNSCrypt started for test"
             terminate_pidfile_gracefully "$DNSCRYPT_SUP_PID_FILE"
             terminate_pidfile_gracefully "$DNSCRYPT_PID_FILE"
-            pkill -TERM -f "$MODPATH/dnscrypt/dnscrypt.sh" >/dev/null 2>&1 || true
+            pkill -TERM -f "$DNSCRYPT_DIR/dnscrypt.sh" >/dev/null 2>&1 || true
+            [ "$DNSCRYPT_DIR" = "$MODPATH/dnscrypt" ] || pkill -TERM -f "$MODPATH/dnscrypt/dnscrypt.sh" >/dev/null 2>&1 || true
             pkill -TERM -x dnscrypt-proxy >/dev/null 2>&1 || true
             sleep 1
-            pkill -KILL -f "$MODPATH/dnscrypt/dnscrypt.sh" >/dev/null 2>&1 || true
+            pkill -KILL -f "$DNSCRYPT_DIR/dnscrypt.sh" >/dev/null 2>&1 || true
+            [ "$DNSCRYPT_DIR" = "$MODPATH/dnscrypt" ] || pkill -KILL -f "$MODPATH/dnscrypt/dnscrypt.sh" >/dev/null 2>&1 || true
             pkill -KILL -x dnscrypt-proxy >/dev/null 2>&1 || true
             cleanup_dnscrypt_firewall
             restore_dnscrypt_runtime_tweaks
@@ -885,7 +889,7 @@ test_command() {
     echo "- Using curl: $TEST_CURL"
     [ -x "$NFQWS_BIN" ] || { echo "! nfqws binary not found: $NFQWS_BIN"; return 1; }
     [ -f "$DNSCRYPT_DIR/dnscrypt.sh" ] || { echo "! dnscrypt.sh not found"; return 1; }
-    [ -x "$DNSCRYPT_DIR/dnscrypt-proxy" ] || { echo "! dnscrypt-proxy not found"; return 1; }
+    [ -x "$DNSCRYPT_TEST_PROXY_BIN" ] || { echo "! dnscrypt-proxy not found: $DNSCRYPT_TEST_PROXY_BIN"; return 1; }
     mkdir -p "$TEST_RESULT_DIR" || { echo "! Failed to create test temp directory: $TEST_RESULT_DIR"; return 1; }
 
     TEST_URL_ARGS=""
@@ -925,16 +929,21 @@ test_command() {
     DPI_CHECKS=""     # newline-sep list of "id|url|thresholdBytes" from suite.json
 
     echo "- Downloading tcp16-20 suite files..."
-    if download_file "$DPI_SUITE_V2_URL" "$DPI_SUITE_V2_FILE" 2>/dev/null; then
+    if download_file "$DPI_SUITE_V2_URL" "$DPI_SUITE_V2_FILE" 2>/dev/null && [ -f "$DPI_SUITE_V2_FILE" ]; then
         # Extract hosts: parse JSON field "host": "..."
         DPI_HOSTS="$(grep -o '"host"[[:space:]]*:[[:space:]]*"[^"]*"' "$DPI_SUITE_V2_FILE" 2>/dev/null \
             | sed 's/"host"[[:space:]]*:[[:space:]]*"//;s/"$//' | tr '\n' ' ')"
-        echo "- suite.v2.json: $(echo "$DPI_HOSTS" | wc -w | tr -d ' ') hosts loaded"
+        _suite_host_count="$(echo "$DPI_HOSTS" | wc -w | tr -d ' ')"
+        if [ "$_suite_host_count" -gt 0 ] 2>/dev/null; then
+            echo "- suite.v2.json: $_suite_host_count hosts loaded"
+        else
+            echo "! suite.v2.json downloaded but no hosts parsed — DPI host checks will be skipped"
+        fi
     else
         echo "! Failed to download suite.v2.json — DPI host checks will be skipped"
     fi
 
-    if download_file "$DPI_SUITE_URL" "$DPI_SUITE_FILE" 2>/dev/null; then
+    if download_file "$DPI_SUITE_URL" "$DPI_SUITE_FILE" 2>/dev/null && [ -f "$DPI_SUITE_FILE" ]; then
         # Extract id|url|thresholdBytes from suite.json
         # Each entry: { "id": "...", ... "thresholdBytes": N, ... "url": "..." }
         _suite_count=0
@@ -947,12 +956,17 @@ test_command() {
 "
             _suite_count=$((_suite_count + 1))
         done < "$DPI_SUITE_FILE"
-        echo "- suite.json: $_suite_count URL checks loaded"
+        if [ "$_suite_count" -gt 0 ] 2>/dev/null; then
+            echo "- suite.json: $_suite_count URL checks loaded"
+        else
+            echo "! suite.json downloaded but no URL checks parsed — DPI threshold checks will be skipped"
+        fi
     else
         echo "! Failed to download suite.json — DPI threshold checks will be skipped"
     fi
 
     TEST_DEBUG_LOG="$TEST_RESULT_DIR/zapret-test-debug.log"
+    DNSCRYPT_START_LOG="$TEST_RESULT_DIR/dnscrypt-start.log"
     [ "$TEST_DEBUG" = "1" ] && : > "$TEST_DEBUG_LOG"
 
     # Check NFQUEUE availability
@@ -979,12 +993,39 @@ test_command() {
     fi
 
     echo "- Starting DNSCrypt for test"
-    nohup sh "$DNSCRYPT_DIR/dnscrypt.sh" >/dev/null 2>&1 &
+    : > "$DNSCRYPT_START_LOG"
+    if [ "$TEST_DEBUG" = "1" ]; then
+        {
+            echo "[dnscrypt] script=$DNSCRYPT_DIR/dnscrypt.sh"
+            echo "[dnscrypt] proxy=$DNSCRYPT_TEST_PROXY_BIN"
+            echo "[dnscrypt] run_dir=$RUN_DIR"
+            ls -ldZ "$DNSCRYPT_DIR" "$DNSCRYPT_DIR/dnscrypt.sh" 2>/dev/null || ls -ld "$DNSCRYPT_DIR" "$DNSCRYPT_DIR/dnscrypt.sh" 2>/dev/null || true
+        } >> "$TEST_DEBUG_LOG"
+    fi
+    nohup sh "$DNSCRYPT_DIR/dnscrypt.sh" > "$DNSCRYPT_START_LOG" 2>&1 &
     DNSCRYPT_STARTED_BY_TEST=1
-    sleep 2
+    _dnscrypt_wait=0
+    _dnscrypt_wait_limit="${DNSCRYPT_TEST_START_TIMEOUT:-15}"
+    while [ "$_dnscrypt_wait" -lt "$_dnscrypt_wait_limit" ] 2>/dev/null; do
+        if dnscrypt_supervisor_is_running && dnscrypt_is_running; then
+            break
+        fi
+        sleep 1
+        _dnscrypt_wait=$((_dnscrypt_wait + 1))
+    done
 
     if ! dnscrypt_supervisor_is_running || ! dnscrypt_is_running; then
         echo "! Failed to start DNSCrypt"
+        if [ -s "$DNSCRYPT_START_LOG" ]; then
+            echo "  DNSCrypt start log:"
+            tail -n 20 "$DNSCRYPT_START_LOG" 2>/dev/null | sed 's/^/  /'
+        elif [ "$TEST_DEBUG" = "1" ]; then
+            echo "  DNSCrypt start log is empty: $DNSCRYPT_START_LOG"
+        fi
+        if [ -s "$DNSCRYPT_DIR/latest.log" ]; then
+            echo "  Last DNSCrypt log lines:"
+            tail -n 20 "$DNSCRYPT_DIR/latest.log" 2>/dev/null | sed 's/^/  /'
+        fi
         cleanup_test_runtime
         return 1
     fi
@@ -1079,13 +1120,20 @@ test_command() {
         for _p in $_tcp_ports; do _add_ip6t tcp "$_p"; done
         for _p in $_udp_ports; do _add_ip6t udp "$_p"; done
 
-        "$NFQWS_BIN" --uid=0:0 --bind-fix4 --bind-fix6 --qnum=200 $config >/dev/null 2>&1 &
+        _nfqws_log="$TEST_RESULT_DIR/nfqws-$strategy_name.log"
+        : > "$_nfqws_log"
+        "$NFQWS_BIN" --uid=0:0 --bind-fix4 --bind-fix6 --qnum=200 $config > "$_nfqws_log" 2>&1 &
         _nfqws_pid=$!
         sleep 2
         if ! pid_is_running "$_nfqws_pid"; then
             echo "! nfqws exited early"
+            if [ -s "$_nfqws_log" ]; then
+                echo "    nfqws log:"
+                tail -n 10 "$_nfqws_log" 2>/dev/null | sed 's/^/    /'
+            fi
             [ "$TEST_DEBUG" = "1" ] && {
                 echo "[$strategy_name] nfqws exited early"
+                [ -s "$_nfqws_log" ] && tail -n 20 "$_nfqws_log"
             } >> "$TEST_DEBUG_LOG"
             cleanup_zapret_firewall 2>/dev/null
             printf 'SKIP:0:0:0:0:0:0:0:%s\n' "$strategy_name" >> "$RESULT_FILE"
