@@ -265,13 +265,13 @@ jobs:
         run: |
           # Generate timestamp in Moscow time (UTC+3)
           BUILD_TIME=$(TZ='Europe/Moscow' date '+%d-%m-%y %H:%M:%S')
-          VERSION="build at ${BUILD_TIME}"
 
           RELEASE_COUNT="$(gh api "repos/${REPO}/releases" --paginate --jq 'length' | awk '{s+=$1} END {print s+0}')"
           VERSION_CODE=$((RELEASE_COUNT + 1))
 
-          RELEASE_NAME="${BUILD_TIME}"
           TAG="${VERSION_CODE}"
+          VERSION="v${TAG}"
+          RELEASE_NAME="${BUILD_TIME}"
 
           # Fetch repo description from GitHub API
           DESCRIPTION="$(gh api "repos/${REPO}" --jq '.description // "Zapret module"')"
