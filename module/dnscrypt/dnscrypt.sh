@@ -1,8 +1,10 @@
 #!/system/bin/sh
 
-MODPATH="/data/adb/modules/zapret"
-. "$MODPATH/common.sh"
+MODPATH="${MODPATH:-/data/adb/modules/zapret}"
+COMMON_FILE="${COMMON_FILE:-$MODPATH/common.sh}"
+. "$COMMON_FILE"
 
+DNSCRYPT_PROXY_BIN="${DNSCRYPT_PROXY_BIN:-$DNSCRYPT_DIR/dnscrypt-proxy}"
 STOP_REQUESTED=0
 DNSCRYPT_PID=""
 
@@ -65,8 +67,12 @@ main() {
         exit 0
     fi
 
-    [ -x "$DNSCRYPT_DIR/dnscrypt-proxy" ] || {
+    [ -x "$DNSCRYPT_PROXY_BIN" ] || {
         echo "! dnscrypt-proxy not found" >&2
+        exit 1
+    }
+    [ -f "$DNSCRYPT_DIR/dnscrypt-proxy.toml" ] || {
+        echo "! dnscrypt-proxy.toml not found" >&2
         exit 1
     }
 
@@ -76,9 +82,13 @@ main() {
 
     apply_dnscrypt_runtime_tweaks
     setup_firewall
+    cd "$DNSCRYPT_DIR" || {
+        echo "! Failed to enter DNSCrypt directory: $DNSCRYPT_DIR" >&2
+        exit 1
+    }
 
     while [ "$STOP_REQUESTED" -eq 0 ]; do
-        "$DNSCRYPT_DIR/dnscrypt-proxy" >/dev/null 2>&1 &
+        "$DNSCRYPT_PROXY_BIN" >/dev/null 2>&1 &
         DNSCRYPT_PID=$!
         write_pidfile "$DNSCRYPT_PID_FILE" "$DNSCRYPT_PID"
         wait "$DNSCRYPT_PID"
