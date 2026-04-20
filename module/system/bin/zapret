@@ -9,6 +9,11 @@ CONFIG_DIR="${CONFIG_DIR:-$MODPATH/config}"
 LIST_DIR="${LIST_DIR:-$MODPATH/list}"
 SERVICE_DIR="${SERVICE_DIR:-$MODPATH/.service}"
 IPSET_LINK_FILE="${IPSET_LINK_FILE:-$CONFIG_DIR/ipset-link}"
+LIST_GENERAL_USER_FILE="${LIST_GENERAL_USER_FILE:-$LIST_DIR/list-general-user.txt}"
+LIST_EXCLUDE_USER_FILE="${LIST_EXCLUDE_USER_FILE:-$LIST_DIR/list-exclude-user.txt}"
+IPSET_USER_FILE="${IPSET_USER_FILE:-$LIST_DIR/ipset-all-user.txt}"
+IPSET_EXCLUDE_FILE="${IPSET_EXCLUDE_FILE:-$LIST_DIR/ipset-exclude.txt}"
+IPSET_EXCLUDE_USER_FILE="${IPSET_EXCLUDE_USER_FILE:-$LIST_DIR/ipset-exclude-user.txt}"
 
 IPSET_FILE="$LIST_DIR/ipset-all.txt"
 IPSET_SERVICE_FILE="$SERVICE_DIR/ipset-service.txt"
@@ -51,73 +56,300 @@ current_ipset_link() {
     printf '%s\n' "$IPSET_DEFAULT_URL"
 }
 
-apply_ipset_filter_mode() {
-    mode="$(current_ipset_filter)"
+normalize_entry() {
+    printf '%s' "$1" | tr '[:upper:]' '[:lower:]' | tr -d '\r' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//'
+}
 
-    rm -f "$LIST_DIR"/*.bak "$LIST_DIR"/*.backup 2>/dev/null || true
+looks_like_ip_literal() {
+    printf '%s\n' "$1" | grep -Eq '^(([0-9]{1,3}(\.[0-9]{1,3}){3})|([0-9a-f:]+))$'
+}
+
+is_cidr_or_range() {
+    entry="$1"
+
+    case "$entry" in
+        */*)
+            base="${entry%/*}"
+            mask="${entry##*/}"
+            printf '%s\n' "$mask" | grep -Eq '^[0-9]{1,3}$' || return 1
+            looks_like_ip_literal "$base"
+            ;;
+        *-*)
+            left="${entry%%-*}"
+            right="${entry#*-}"
+            [ -n "$left" ] && [ -n "$right" ] || return 1
+            looks_like_ip_literal "$left" && looks_like_ip_literal "$right"
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+}
+
+append_unique_line() {
+    target="$1"
+    entry="$2"
+
+    mkdir -p "$(dirname "$target")"
+    [ -f "$target" ] || : > "$target"
+
+    if grep -Fxiq "$entry" "$target" 2>/dev/null; then
+        return 1
+    fi
+
+    printf '%s\n' "$entry" >> "$target"
+}
+
+append_unique_nonempty_lines() {
+    source_file="$1"
+    target_file="$2"
+
+    [ -f "$source_file" ] || return 0
+
+    while IFS= read -r line || [ -n "$line" ]; do
+        line="$(normalize_entry "$line")"
+        [ -n "$line" ] || continue
+        grep -Fxiq "$line" "$target_file" 2>/dev/null || printf '%s\n' "$line" >> "$target_file"
+    done < "$source_file"
+}
+
+download_ipset_service_cache() {
+    url="$(current_ipset_link)"
+    debug_log "ipset_update using URL: $url"
+
+    mkdir -p "$SERVICE_DIR"
+    if download_file "$url" "$IPSET_SERVICE_FILE"; then
+        return 0
+    fi
+
+    echo "! Failed to download IPSet service list"
+    echo "! URL: $url"
+    return 1
+}
+
+rebuild_ipset_file_for_mode() {
+    mode="$1"
+    tmp_file="$SERVICE_DIR/ipset-all.build.$$"
+
+    : > "$tmp_file" || return 1
 
     case "$mode" in
         none)
-            : > "$IPSET_FILE"
             ;;
         loaded)
-            printf '%s\n' "$IPSET_PLACEHOLDER" > "$IPSET_FILE"
+            printf '%s\n' "$IPSET_PLACEHOLDER" >> "$tmp_file"
             ;;
         any)
             if [ ! -s "$IPSET_SERVICE_FILE" ]; then
                 echo "- IPSet service cache is empty, downloading..."
                 if debug_enabled; then
-                    ipset_update || return 1
+                    download_ipset_service_cache || {
+                        rm -f "$tmp_file"
+                        return 1
+                    }
                 else
-                    ipset_update >/dev/null || return 1
+                    download_ipset_service_cache >/dev/null || {
+                        rm -f "$tmp_file"
+                        return 1
+                    }
                 fi
             fi
             [ -f "$IPSET_SERVICE_FILE" ] || {
                 echo "! IPSet service list not found: $IPSET_SERVICE_FILE"
+                rm -f "$tmp_file"
                 return 1
             }
-            if debug_enabled; then
-                cp -f "$IPSET_SERVICE_FILE" "$IPSET_FILE" || {
-                    echo "! Failed to apply IPSet service list"
-                    return 1
-                }
-            else
-                cp -f "$IPSET_SERVICE_FILE" "$IPSET_FILE" >/dev/null 2>&1 || {
-                    echo "! Failed to apply IPSet service list"
-                    return 1
-                }
-            fi
+            append_unique_nonempty_lines "$IPSET_SERVICE_FILE" "$tmp_file"
             ;;
         *)
             echo "! Unknown ipset filter mode: $mode"
+            rm -f "$tmp_file"
             return 1
             ;;
     esac
+
+    append_unique_nonempty_lines "$IPSET_USER_FILE" "$tmp_file"
+
+    if [ -s "$tmp_file" ]; then
+        cat "$tmp_file" > "$IPSET_FILE" || {
+            echo "! Failed to write active ipset list"
+            rm -f "$tmp_file"
+            return 1
+        }
+    else
+        : > "$IPSET_FILE"
+    fi
+
+    rm -f "$tmp_file"
+    return 0
+}
+
+show_user_entries() {
+    label_one="$1"
+    file_one="$2"
+    label_two="$3"
+    file_two="$4"
+
+    echo "$label_one ($(basename "$file_one"))"
+    if [ -s "$file_one" ]; then
+        cat "$file_one"
+    else
+        echo "  (empty)"
+    fi
+
+    echo "$label_two ($(basename "$file_two"))"
+    if [ -s "$file_two" ]; then
+        cat "$file_two"
+    else
+        echo "  (empty)"
+    fi
+}
+
+add_user_entries() {
+    list_target="$1"
+    ipset_target="$2"
+    shift 2
+
+    [ $# -gt 0 ] || {
+        echo "! Missing entries"
+        return 1
+    }
+
+    ensure_runtime_files
+
+    added_any=0
+    ipset_changed=0
+    mode_before="$(current_ipset_filter)"
+
+    for raw_entry in "$@"; do
+        entry="$(normalize_entry "$raw_entry")"
+        [ -n "$entry" ] || continue
+
+        if is_cidr_or_range "$entry"; then
+            target="$ipset_target"
+        else
+            target="$list_target"
+        fi
+
+        if append_unique_line "$target" "$entry"; then
+            echo "- Added to $(basename "$target"): $entry"
+            added_any=1
+            [ "$target" = "$IPSET_USER_FILE" ] && ipset_changed=1
+        else
+            echo "- Already in $(basename "$target"): $entry"
+        fi
+    done
+
+    [ "$added_any" = "1" ] || return 0
+
+    if [ "$ipset_changed" = "1" ]; then
+        rebuild_ipset_file_for_mode "$mode_before" || return 1
+        write_ipset_filter_state "$mode_before"
+    fi
+
+    if service_is_running; then
+        echo "! Restart zapret to apply list changes"
+    fi
+}
+
+custom_command() {
+    case "$1" in
+        ""|list|show)
+            ensure_runtime_files
+            show_user_entries "Custom domains/IPs" "$LIST_GENERAL_USER_FILE" "Custom CIDR/ranges" "$IPSET_USER_FILE"
+            ;;
+        *)
+            add_user_entries "$LIST_GENERAL_USER_FILE" "$IPSET_USER_FILE" "$@"
+            ;;
+    esac
+}
+
+exclude_command() {
+    case "$1" in
+        ""|list|show)
+            ensure_runtime_files
+            show_user_entries "Exclude domains/IPs" "$LIST_EXCLUDE_USER_FILE" "Exclude CIDR/ranges" "$IPSET_EXCLUDE_USER_FILE"
+            ;;
+        *)
+            add_user_entries "$LIST_EXCLUDE_USER_FILE" "$IPSET_EXCLUDE_USER_FILE" "$@"
+            ;;
+    esac
+}
+
+search_command() {
+    [ $# -gt 0 ] || {
+        echo "! Usage: zapret search <entry> [entry ...]"
+        return 1
+    }
+
+    ensure_runtime_files
+
+    found_any=0
+    search_files="
+$LIST_DIR/list-general.txt
+$LIST_GENERAL_USER_FILE
+$IPSET_FILE
+$IPSET_USER_FILE
+$LIST_DIR/list-exclude.txt
+$LIST_EXCLUDE_USER_FILE
+$IPSET_EXCLUDE_FILE
+$IPSET_EXCLUDE_USER_FILE
+"
+
+    for raw_entry in "$@"; do
+        entry="$(normalize_entry "$raw_entry")"
+        [ -n "$entry" ] || continue
+
+        entry_found=0
+        echo "? $entry"
+
+        printf '%s\n' "$search_files" | while IFS= read -r file; do
+            [ -n "$file" ] || continue
+            [ -f "$file" ] || continue
+
+            matches="$(grep -Finx "$entry" "$file" 2>/dev/null || true)"
+            [ -n "$matches" ] || continue
+
+            printf '%s\n' "$matches" | while IFS= read -r match; do
+                line_no="${match%%:*}"
+                echo "  - $(basename "$file"):$line_no"
+            done
+        done
+
+        for file in "$LIST_DIR/list-general.txt" "$LIST_GENERAL_USER_FILE" "$IPSET_FILE" "$IPSET_USER_FILE" "$LIST_DIR/list-exclude.txt" "$LIST_EXCLUDE_USER_FILE" "$IPSET_EXCLUDE_FILE" "$IPSET_EXCLUDE_USER_FILE"; do
+            [ -f "$file" ] || continue
+            if grep -Finx "$entry" "$file" >/dev/null 2>&1; then
+                entry_found=1
+                found_any=1
+            fi
+        done
+
+        [ "$entry_found" = "1" ] || echo "  - Not found"
+    done
+
+    [ "$found_any" = "1" ]
+}
+
+apply_ipset_filter_mode() {
+    mode="$(current_ipset_filter)"
+
+    rm -f "$LIST_DIR"/*.bak "$LIST_DIR"/*.backup 2>/dev/null || true
+
+    rebuild_ipset_file_for_mode "$mode" || return 1
 
     write_ipset_filter_state "$mode"
     return 0
 }
 
 ipset_update() {
-    url="$(current_ipset_link)"
-    debug_log "ipset_update using URL: $url"
-
-    mkdir -p "$SERVICE_DIR"
-    if download_file "$url" "$IPSET_SERVICE_FILE"; then
+    if download_ipset_service_cache; then
         echo "- IPSet service list updated"
 
         if [ "$(current_ipset_filter)" = "any" ]; then
-            if debug_enabled; then
-                cp -f "$IPSET_SERVICE_FILE" "$IPSET_FILE" || {
-                    echo "! Failed to refresh active ipset-all.txt"
-                    return 1
-                }
-            else
-                cp -f "$IPSET_SERVICE_FILE" "$IPSET_FILE" >/dev/null 2>&1 || {
-                    echo "! Failed to refresh active ipset-all.txt"
-                    return 1
-                }
-            fi
+            rebuild_ipset_file_for_mode "any" || {
+                echo "! Failed to refresh active ipset-all.txt"
+                return 1
+            }
             echo "- Active ipset-all.txt refreshed"
         fi
 
@@ -127,9 +359,16 @@ ipset_update() {
         return 0
     fi
 
-    echo "! Failed to download IPSet service list"
-    echo "! URL: $url"
     return 1
+}
+
+current_interface_only() {
+    if [ -f "$INTERFACE_ONLY_FILE" ]; then
+        val="$(cat "$INTERFACE_ONLY_FILE" 2>/dev/null | tr -d '\r' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+        [ -n "$val" ] && printf '%s\n' "$val" || echo "all"
+    else
+        echo "all"
+    fi
 }
 
 command_info() {
@@ -137,6 +376,7 @@ command_info() {
     echo "  usage: zapret [--debug] <command>"
     echo "! Current strategy: $(current_strategy)"
     echo "! Current ipset filter: $(current_ipset_filter)"
+    echo "! Current interface-only: $(current_interface_only)"
     echo "  start                              - Start the zapret service"
     echo "  stop                               - Stop the zapret service"
     echo "  restart                            - Restart the zapret service"
@@ -145,12 +385,18 @@ command_info() {
     echo "  import-strategy <url>              - Download a strategy script"
     echo "  test [url1 url2 ...]               - Test all strategies via curl and report the best"
     echo "  ipset-update                       - Download ipset-service.txt into service cache"
+    echo "  custom [entry1 entry2 ...]         - Add custom domains/IPs or CIDR/ranges"
+    echo "  custom list                        - Show custom user lists"
+    echo "  exclude [entry1 entry2 ...]        - Add exclude domains/IPs or CIDR/ranges"
+    echo "  exclude list                       - Show exclude user lists"
+    echo "  search <entry1 entry2 ...>         - Search entries across zapret lists"
     echo "  setup bypass-calls [1|0]           - Enable or disable bypass calls"
     echo "  setup ipset-filter [none|loaded|any] - Set ipset-all mode"
     echo "  setup ipset-link [none|url]        - Set ipset-service source"
     echo "  setup cloaking-rules [none|url]    - Set dnscrypt cloaking-rules source"
     echo "  setup blocked-names [none|url]     - Set dnscrypt blocked-names source"
     echo "  setup list-general [none|url]      - Set list-general source"
+    echo "  setup interface-only [none|iface[,iface...]] - Restrict iptables rules to interface(s)"
 }
 
 list_strategies() {
@@ -205,7 +451,7 @@ set_ipset_filter_none() {
         return 0
     fi
 
-    : > "$IPSET_FILE"
+    rebuild_ipset_file_for_mode "none" || return 1
     write_ipset_filter_state "none"
     echo "- IPSet filter set to none"
 }
@@ -218,21 +464,7 @@ set_ipset_filter_any() {
         return 0
     fi
 
-    if [ ! -s "$IPSET_SERVICE_FILE" ]; then
-        ipset_update || return 1
-    fi
-
-    if debug_enabled; then
-        cp -f "$IPSET_SERVICE_FILE" "$IPSET_FILE" || {
-            echo "! Failed to activate IPSet service list"
-            return 1
-        }
-    else
-        cp -f "$IPSET_SERVICE_FILE" "$IPSET_FILE" >/dev/null 2>&1 || {
-            echo "! Failed to activate IPSet service list"
-            return 1
-        }
-    fi
+    rebuild_ipset_file_for_mode "any" || return 1
     write_ipset_filter_state "any"
     echo "- IPSet filter set to any"
 }
@@ -245,7 +477,7 @@ set_ipset_filter_loaded() {
         return 0
     fi
 
-    printf '%s\n' "$IPSET_PLACEHOLDER" > "$IPSET_FILE"
+    rebuild_ipset_file_for_mode "loaded" || return 1
     write_ipset_filter_state "loaded"
     echo "- IPSet filter set to loaded"
 }
@@ -313,7 +545,7 @@ start_service() {
 
     started_any=0
 
-    if [ ! -f "$STRATEGY_DIR/zapret.sh" ]; then
+    if [ ! -f "$ZAPRET_DIR/zapret.sh" ]; then
         echo "! zapret.sh not found"
         return 1
     fi
@@ -342,9 +574,9 @@ start_service() {
     if ! service_is_running; then
         if debug_enabled; then
             debug_log "starting strategy runner in foreground-attached background mode"
-            CLI_DEBUG=1 sh "$STRATEGY_DIR/zapret.sh" &
+            CLI_DEBUG=1 sh "$ZAPRET_DIR/zapret.sh" &
         else
-            nohup sh "$STRATEGY_DIR/zapret.sh" >/dev/null 2>&1 &
+            nohup sh "$ZAPRET_DIR/zapret.sh" >/dev/null 2>&1 &
         fi
         started_any=1
     fi
@@ -431,7 +663,11 @@ setup_command() {
 
     [ -n "$key" ] || { command_info; return 1; }
     [ -n "$value" ] || { echo "! Missing value for setup $key"; return 1; }
-    [ -z "$extra" ] || { echo "! Too many arguments for setup $key"; return 1; }
+
+    # interface-only accepts a comma-separated value as a single argument (no extra check)
+    if [ "$key" != "interface-only" ]; then
+        [ -z "$extra" ] || { echo "! Too many arguments for setup $key"; return 1; }
+    fi
 
     case "$key" in
         bypass-calls)
@@ -460,6 +696,27 @@ setup_command() {
         list-general)
             set_link_file "list-general" "$LIST_GENERAL_LINK" "$value" || return 1
             ;;
+        interface-only)
+            case "$value" in
+                none)
+                    rm -f "$INTERFACE_ONLY_FILE"
+                    echo "- interface-only removed (all interfaces)"
+                    ;;
+                *)
+                    # Validate: must look like interface names (alphanumeric, _, comma)
+                    _ifaces_clean="$(printf '%s' "$value" | tr ',' '\n' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | grep -v '^$')"
+                    if [ -z "$_ifaces_clean" ]; then
+                        echo "! No valid interface names provided"
+                        return 1
+                    fi
+                    # Normalize to comma-separated and save
+                    _ifaces_norm="$(printf '%s' "$_ifaces_clean" | tr '\n' ',' | sed 's/,$//')"
+                    mkdir -p "$(dirname "$INTERFACE_ONLY_FILE")"
+                    printf '%s\n' "$_ifaces_norm" > "$INTERFACE_ONLY_FILE"
+                    echo "- interface-only set to: $_ifaces_norm"
+                    ;;
+            esac
+            ;;
         *)
             echo "! Unknown setup key: $key"
             return 1
@@ -473,15 +730,15 @@ setup_command() {
 
 ## ---------------------------------------------------------------------------
 # test subcommand
-# Strategy tester — mirrors zapret-discord-youtube-main test logic:
+# Strategy tester:
 #   • Three curl probes per URL: HTTP/1.1, TLS 1.2, TLS 1.3
 #   • Status per probe: OK / ERR / UNSUP / SSL / DNS
-#   • Ping check per hostname and ping-only targets
-#   • Analytics: OK, ERR, UNSUP, PingOK, PingFail
-#   • Best strategy: max HTTP OK, tiebreak by PingOK
+#   • tcp16-20 checks: POST 64KB body + HEAD huge URI per host (suite.v2.json)
+#   • tcp16-20 threshold checks: download >= N bytes (suite.json)
+#   • Best strategy: max total score (HTTP_OK + DPI_BYPASSED + THRESHOLD_OK)
 # ---------------------------------------------------------------------------
 
-# Default targets — same set as targets.txt in zapret-discord-youtube-main
+# Default URL targets (HTTP/TLS checks)
 TEST_TARGET_URLS="
 https://discord.com
 https://gateway.discord.gg
@@ -491,12 +748,8 @@ https://www.youtube.com
 https://youtu.be
 https://i.ytimg.com
 https://redirector.googlevideo.com
-https://www.google.com
-https://www.gstatic.com
-https://www.cloudflare.com
-https://cdnjs.cloudflare.com
+https://soundcloud.com/versions.json
 "
-TEST_TARGET_PING="1.1.1.1 1.0.0.1 8.8.8.8 8.8.4.4 9.9.9.9"
 
 # ---------------------------------------------------------------------------
 # _curl_probe <url> <tls_flag>
@@ -577,7 +830,7 @@ _ping_probe() {
 }
 
 test_command() {
-    NFQWS_BIN="$STRATEGY_DIR/nfqws"
+    NFQWS_BIN="$ZAPRET_DIR/nfqws"
     TEST_RESULT_DIR="$RUN_DIR/test"
     DNSCRYPT_STARTED_BY_TEST=0
     TEST_RESTORE_STACK=0
@@ -622,27 +875,12 @@ test_command() {
 
     trap on_test_signal INT TERM
 
-    # Validate the curl binary actually loads. We must trigger a network request
-    # to catch lazy-binding linker errors (e.g. "cannot locate symbol curl_global_trace"
-    # when bundled libcurl expects newer system libraries).
-    check_curl_health() {
-        [ -x "$1" ] || return 1
-        local _out
-        _out="$("$1" -IsS -m 1 https://127.0.0.2 2>&1)"
-        case "$_out" in
-            *"CANNOT LINK"*|*"cannot locate symbol"*) return 1 ;;
-        esac
-        return 0
-    }
-
-    TEST_CURL="$CURLPATH"
-    if ! check_curl_health "$TEST_CURL"; then
-        [ -x "$TEST_CURL" ] && echo "! Bundled curl failed to load (ABI mismatch) — trying system curl"
-        TEST_CURL="$(command -v curl 2>/dev/null)"
-        if ! check_curl_health "$TEST_CURL"; then
-            echo "! curl not found or not functional (checked: $CURLPATH, system curl)"
-            return 1
-        fi
+    # Resolve a working curl binary (uses resolve_downloader from common.sh,
+    # which probes all known locations and validates ABI compatibility).
+    TEST_CURL="$(resolve_downloader 2>/dev/null)"
+    if [ -z "$TEST_CURL" ]; then
+        echo "! curl not found or not functional (checked: $MODPATH/curl and system paths)"
+        return 1
     fi
     echo "- Using curl: $TEST_CURL"
     [ -x "$NFQWS_BIN" ] || { echo "! nfqws binary not found: $NFQWS_BIN"; return 1; }
@@ -672,7 +910,46 @@ test_command() {
 
     if [ -n "$TEST_URL_ARGS" ]; then
         TEST_TARGET_URLS="$(printf '%b\n' "$TEST_URL_ARGS")"
-        TEST_TARGET_PING=""
+    fi
+
+    # ---------------------------------------------------------------------------
+    # tcp16-20 suite data — fetched once before strategy loop
+    # suite.v2.json  → host list for alive+DPI checks
+    # suite.json     → URL list for threshold-download checks
+    # ---------------------------------------------------------------------------
+    DPI_SUITE_V2_URL="https://raw.githubusercontent.com/hyperion-cs/dpi-checkers/refs/heads/main/ru/tcp-16-20/suite.v2.json"
+    DPI_SUITE_URL="https://raw.githubusercontent.com/hyperion-cs/dpi-checkers/refs/heads/main/ru/tcp-16-20/suite.json"
+    DPI_SUITE_V2_FILE="$TEST_RESULT_DIR/suite.v2.json"
+    DPI_SUITE_FILE="$TEST_RESULT_DIR/suite.json"
+    DPI_HOSTS=""      # space-sep list of hosts from suite.v2.json
+    DPI_CHECKS=""     # newline-sep list of "id|url|thresholdBytes" from suite.json
+
+    echo "- Downloading tcp16-20 suite files..."
+    if download_file "$DPI_SUITE_V2_URL" "$DPI_SUITE_V2_FILE" 2>/dev/null; then
+        # Extract hosts: parse JSON field "host": "..."
+        DPI_HOSTS="$(grep -o '"host"[[:space:]]*:[[:space:]]*"[^"]*"' "$DPI_SUITE_V2_FILE" 2>/dev/null \
+            | sed 's/"host"[[:space:]]*:[[:space:]]*"//;s/"$//' | tr '\n' ' ')"
+        echo "- suite.v2.json: $(echo "$DPI_HOSTS" | wc -w | tr -d ' ') hosts loaded"
+    else
+        echo "! Failed to download suite.v2.json — DPI host checks will be skipped"
+    fi
+
+    if download_file "$DPI_SUITE_URL" "$DPI_SUITE_FILE" 2>/dev/null; then
+        # Extract id|url|thresholdBytes from suite.json
+        # Each entry: { "id": "...", ... "thresholdBytes": N, ... "url": "..." }
+        _suite_count=0
+        while IFS= read -r _jline; do
+            _sid="$(printf '%s' "$_jline" | grep -o '"id"[[:space:]]*:[[:space:]]*"[^"]*"' | head -1 | sed 's/"id"[[:space:]]*:[[:space:]]*"//;s/"$//')"
+            _surl="$(printf '%s' "$_jline" | grep -o '"url"[[:space:]]*:[[:space:]]*"[^"]*"' | head -1 | sed 's/"url"[[:space:]]*:[[:space:]]*"//;s/"$//')"
+            _sthr="$(printf '%s' "$_jline" | grep -o '"thresholdBytes"[[:space:]]*:[[:space:]]*[0-9]*' | head -1 | sed 's/[^0-9]*//g')"
+            [ -n "$_sid" ] && [ -n "$_surl" ] && [ -n "$_sthr" ] || continue
+            DPI_CHECKS="${DPI_CHECKS}${_sid}|${_surl}|${_sthr}
+"
+            _suite_count=$((_suite_count + 1))
+        done < "$DPI_SUITE_FILE"
+        echo "- suite.json: $_suite_count URL checks loaded"
+    else
+        echo "! Failed to download suite.json — DPI threshold checks will be skipped"
     fi
 
     TEST_DEBUG_LOG="$TEST_RESULT_DIR/zapret-test-debug.log"
@@ -712,7 +989,7 @@ test_command() {
         return 1
     fi
 
-    _dns_probe="$(_curl_probe "https://www.google.com" "")"
+    _dns_probe="$(_curl_probe "https://bing.com" "")"
     [ -n "$_dns_probe" ] || _dns_probe="ERR@empty probe output"
     case "$_dns_probe" in
         *"@"*) ;;
@@ -722,28 +999,19 @@ test_command() {
     _dns_probe_detail="${_dns_probe#*@}"
     PRECHECK_HTTPS_STATUS="$_dns_probe_status"
     PRECHECK_HTTPS_DETAIL="$_dns_probe_detail"
-    PRECHECK_HOST_PING="$(_ping_probe "www.google.com")"
-    PRECHECK_IP_PING="$(_ping_probe "1.1.1.1")"
-
     _pf_https_label="${_dns_probe_status:-FAIL}"
-    echo "- Preflight: HTTPS=$_pf_https_label, host-ping=$PRECHECK_HOST_PING, ip-ping=$PRECHECK_IP_PING"
+
+    echo "- Preflight: HTTPS=$_pf_https_label"
     if [ "$TEST_DEBUG" = "1" ]; then
         {
-            echo "[preflight] DNS probe status=$_dns_probe_status"
-            echo "[preflight] DNS probe detail=$_dns_probe_detail"
-            echo "[preflight] host ping=$PRECHECK_HOST_PING"
-            echo "[preflight] ip ping=$PRECHECK_IP_PING"
+            echo "[preflight] HTTPS probe status=$_dns_probe_status"
+            echo "[preflight] HTTPS probe detail=$_dns_probe_detail"
         } >> "$TEST_DEBUG_LOG"
     fi
     if [ "$_dns_probe_status" != "OK" ]; then
         echo "! Baseline HTTPS probe failed before strategy tests (${_dns_probe_status:-empty-response})"
         echo "  Note: strategy tests will still run — results show what each strategy achieves"
         [ "$TEST_DEBUG" = "1" ] && echo "  debug: $_dns_probe_detail"
-    fi
-    if [ "$PRECHECK_IP_PING" = "Timeout" ]; then
-        echo "! IP ping also failed — network connectivity may be down entirely"
-    elif [ "$PRECHECK_HOST_PING" = "Timeout" ]; then
-        echo "! Hostname ping failed while IP ping works — DNS environment may be unstable"
     fi
 
     RESULT_FILE="$TEST_RESULT_DIR/zapret-test-results.$$"
@@ -754,7 +1022,8 @@ test_command() {
     printf ' Strategy tester — %s strategies\n' "$strat_count"
     echo "====================================================="
 
-    for strategy_name in $strategies; do
+    printf '%s\n' "$strategies" | while IFS= read -r strategy_name; do
+        [ -n "$strategy_name" ] || continue
         strategy_file="$STRATEGY_DIR/$strategy_name.sh"
         [ -f "$strategy_file" ] || continue
 
@@ -819,24 +1088,21 @@ test_command() {
                 echo "[$strategy_name] nfqws exited early"
             } >> "$TEST_DEBUG_LOG"
             cleanup_zapret_firewall 2>/dev/null
-            printf 'SKIP:0:0:0:0:0:%s\n' "$strategy_name" >> "$RESULT_FILE"
+            printf 'SKIP:0:0:0:0:0:0:0:%s\n' "$strategy_name" >> "$RESULT_FILE"
             continue
         fi
         echo "OK (pid $_nfqws_pid)"
 
-        st_ok=0; st_err=0; st_unsup=0; st_pingok=0; st_pingfail=0
+        st_ok=0; st_err=0; st_unsup=0; st_dpi_bypassed=0; st_dpi_fail=0; st_thr_ok=0; st_thr_fail=0
 
         printf '  > HTTP/TLS checks:\n'
-        
+
         _probe_pids=""
-        
         _url_idx=0
         for _url in $TEST_TARGET_URLS; do
             [ -z "$_url" ] && continue
             _url_idx=$((_url_idx + 1))
             (
-                _host="$(printf '%s' "$_url" | sed 's|^https\?://||;s|/.*||')"
-
                 _probe_http="$(_curl_probe "$_url" "")"
                 [ -n "$_probe_http" ] || _probe_http="ERR@empty probe output"
                 case "$_probe_http" in *"@"*) ;; *) _probe_http="ERR@$_probe_http" ;; esac
@@ -849,41 +1115,105 @@ test_command() {
                 [ -n "$_probe_13" ] || _probe_13="ERR@empty probe output"
                 case "$_probe_13" in *"@"*) ;; *) _probe_13="ERR@$_probe_13" ;; esac
 
-                _ping="$(_ping_probe "$_host")"
-
-                printf "%s\n" "$_probe_http|$_probe_12|$_probe_13|$_ping" > "$TEST_RESULT_DIR/_probe_$$.$_url_idx"
+                printf "%s\n" "$_probe_http|$_probe_12|$_probe_13" > "$TEST_RESULT_DIR/_probe_$$.$_url_idx"
             ) &
             _probe_pids="$_probe_pids $!"
         done
 
-        if [ -n "$TEST_TARGET_PING" ]; then
-            _ping_idx=0
-            for _ph in $TEST_TARGET_PING; do
-                _ping_idx=$((_ping_idx + 1))
+        # ---------------------------------------------------------------------------
+        # tcp16-20 DPI host checks (suite.v2.json)
+        #   Alive:  HEAD https://<host>/ -m 10
+        #   Method1 POST 64KB body -m 15 → if timeout/RST while alive = DPI DETECTED
+        #           (means strategy bypassed the block — GOOD)
+        #   We report: BYPASSED (DPI detected = strategy works) or FAIL (no DPI or host down)
+        # ---------------------------------------------------------------------------
+        _dpi_host_idx=0
+        if [ -n "$DPI_HOSTS" ]; then
+            for _dhost in $DPI_HOSTS; do
+                _dpi_host_idx=$((_dpi_host_idx + 1))
                 (
-                    _ping="$(_ping_probe "$_ph")"
-                    printf "%s\n" "$_ping" > "$TEST_RESULT_DIR/_ping_$$.$_ping_idx"
+                    _dpi_url="https://${_dhost}/"
+                    # Alive check: HEAD, 10s timeout
+                    _alive_exit=0
+                    "$TEST_CURL" -IsSL -m 10 -o /dev/null "$_dpi_url" >/dev/null 2>&1 || _alive_exit=$?
+                    # _alive_exit=0 means reachable, 28=timeout, other=conn error
+                    if [ "$_alive_exit" -eq 28 ]; then
+                        # Alive timed out — host might be down, skip DPI
+                        printf 'SKIP\n' > "$TEST_RESULT_DIR/_dpi_$$.$_dpi_host_idx"
+                        exit 0
+                    fi
+                    # POST 64KB random-safe data, 15s timeout
+                    # Generate pseudo-random data via /dev/urandom or fallback
+                    _post_tmp="$TEST_RESULT_DIR/_post64_$$"
+                    if [ -r /dev/urandom ]; then
+                        dd if=/dev/urandom of="$_post_tmp" bs=1024 count=64 2>/dev/null
+                    else
+                        # fallback: fill with zeros
+                        dd if=/dev/zero of="$_post_tmp" bs=1024 count=64 2>/dev/null
+                    fi
+                    _post_exit=0
+                    "$TEST_CURL" -sS -m 15 -X POST \
+                        --data-binary "@$_post_tmp" \
+                        -H 'Content-Type: application/octet-stream' \
+                        -o /dev/null "$_dpi_url" 2>/dev/null || _post_exit=$?
+                    rm -f "$_post_tmp"
+                    # exit 28 = timeout (DPI blocked large POST = bypass needed = strategy works)
+                    # exit 0  = succeeded without block (no DPI or DPI didn't trigger)
+                    if [ "$_post_exit" -eq 28 ]; then
+                        printf 'BYPASSED\n' > "$TEST_RESULT_DIR/_dpi_$$.$_dpi_host_idx"
+                    else
+                        printf 'FAIL\n' > "$TEST_RESULT_DIR/_dpi_$$.$_dpi_host_idx"
+                    fi
                 ) &
                 _probe_pids="$_probe_pids $!"
             done
         fi
 
-        # Wait only for probe jobs (do not wait for nfqws or dnscrypt daemon)
+        # ---------------------------------------------------------------------------
+        # tcp16-20 threshold checks (suite.json)
+        #   Download up to thresholdBytes of the URL, verify received >= threshold
+        # ---------------------------------------------------------------------------
+        _dpi_thr_idx=0
+        if [ -n "$DPI_CHECKS" ]; then
+            printf '%s' "$DPI_CHECKS" | while IFS='|' read -r _cid _curl _cthr; do
+                [ -n "$_cid" ] || continue
+                _dpi_thr_idx=$((_dpi_thr_idx + 1))
+                (
+                    _thr_tmp="$TEST_RESULT_DIR/_thr_$$.$_dpi_thr_idx"
+                    _dl_exit=0
+                    # Download up to thresholdBytes+1 bytes, 25s timeout
+                    _got="$("$TEST_CURL" -sS -m 25 -L \
+                        -H 'Range: bytes=0-'"$_cthr" \
+                        -w '%{size_download}' -o /dev/null \
+                        "$_curl" 2>/dev/null)" || _dl_exit=$?
+                    _got="$(printf '%s' "$_got" | tr -d '[:space:]' | grep -oE '^[0-9]+')"
+                    [ -n "$_got" ] || _got=0
+                    if [ "$_got" -ge "$_cthr" ]; then
+                        printf 'OK\n' > "$_thr_tmp"
+                    else
+                        printf 'FAIL\n' > "$_thr_tmp"
+                    fi
+                ) &
+                _probe_pids="$_probe_pids $!"
+            done
+        fi
+
+        # Wait only for probe jobs
         for _pid in $_probe_pids; do
             wait "$_pid" 2>/dev/null
         done
 
-        # Read back HTTP/TLS results in order
+        # Read back HTTP/TLS results
         _url_idx=0
         for _url in $TEST_TARGET_URLS; do
             [ -z "$_url" ] && continue
             _url_idx=$((_url_idx + 1))
             _res_file="$TEST_RESULT_DIR/_probe_$$.$_url_idx"
             if [ -f "$_res_file" ]; then
-                IFS='|' read -r _probe_http _probe_12 _probe_13 _ping < "$_res_file"
+                IFS='|' read -r _probe_http _probe_12 _probe_13 < "$_res_file"
                 rm -f "$_res_file"
             else
-                _probe_http="ERR@" _probe_12="ERR@" _probe_13="ERR@" _ping="Timeout"
+                _probe_http="ERR@" _probe_12="ERR@" _probe_13="ERR@"
             fi
 
             _r_http="${_probe_http%%@*}"
@@ -896,23 +1226,16 @@ test_command() {
             [ -n "$_r_http" ] || _r_http="ERR"
             [ -n "$_r_12" ] || _r_12="ERR"
             [ -n "$_r_13" ] || _r_13="ERR"
-            [ -n "$_d_http" ] || _d_http="empty probe output"
-            [ -n "$_d_12" ] || _d_12="empty probe output"
-            [ -n "$_d_13" ] || _d_13="empty probe output"
 
-            printf '    %-42s  HTTP:%-5s  TLS1.2:%-5s  TLS1.3:%-5s  Ping:%s\n' \
-                "$_url" "$_r_http" "$_r_12" "$_r_13" "$_ping"
+            printf '    %-42s  HTTP:%-5s  TLS1.2:%-5s  TLS1.3:%-5s\n' \
+                "$_url" "$_r_http" "$_r_12" "$_r_13"
 
             if [ "$TEST_DEBUG" = "1" ]; then
-                printf '      debug HTTP   : %s\n' "$_d_http"
-                printf '      debug TLS1.2 : %s\n' "$_d_12"
-                printf '      debug TLS1.3 : %s\n' "$_d_13"
                 {
                     echo "[$strategy_name] url=$_url"
                     echo "[$strategy_name] http=$_r_http detail=$_d_http"
                     echo "[$strategy_name] tls12=$_r_12 detail=$_d_12"
                     echo "[$strategy_name] tls13=$_r_13 detail=$_d_13"
-                    echo "[$strategy_name] ping=$_ping"
                 } >> "$TEST_DEBUG_LOG"
             fi
 
@@ -923,28 +1246,47 @@ test_command() {
                     UNSUP)       st_unsup=$((st_unsup+1)) ;;
                 esac
             done
-            case "$_ping" in
-                Timeout) st_pingfail=$((st_pingfail+1)) ;;
-                *)       st_pingok=$((st_pingok+1)) ;;
-            esac
         done
 
-        if [ -n "$TEST_TARGET_PING" ]; then
-            printf '  > Ping-only targets:\n'
-            _ping_idx=0
-            for _ph in $TEST_TARGET_PING; do
-                _ping_idx=$((_ping_idx + 1))
-                _res_file="$TEST_RESULT_DIR/_ping_$$.$_ping_idx"
+        # Read back DPI host results (suite.v2.json)
+        if [ -n "$DPI_HOSTS" ] && [ "$_dpi_host_idx" -gt 0 ]; then
+            printf '  > tcp16-20 DPI host checks:\n'
+            _hi=0
+            for _dhost in $DPI_HOSTS; do
+                _hi=$((_hi + 1))
+                [ "$_hi" -gt "$_dpi_host_idx" ] && break
+                _res_file="$TEST_RESULT_DIR/_dpi_$$.$_hi"
+                _dpi_r="SKIP"
                 if [ -f "$_res_file" ]; then
-                    read -r _ping < "$_res_file"
+                    read -r _dpi_r < "$_res_file"
                     rm -f "$_res_file"
-                else
-                    _ping="Timeout"
                 fi
-                printf '    %-42s  Ping:%s\n' "$_ph" "$_ping"
-                case "$_ping" in
-                    Timeout) st_pingfail=$((st_pingfail+1)) ;;
-                    *)       st_pingok=$((st_pingok+1)) ;;
+                printf '    %-38s  DPI:%s\n' "$_dhost" "$_dpi_r"
+                case "$_dpi_r" in
+                    BYPASSED) st_dpi_bypassed=$((st_dpi_bypassed+1)) ;;
+                    FAIL)     st_dpi_fail=$((st_dpi_fail+1)) ;;
+                esac
+            done
+        fi
+
+        # Read back threshold results (suite.json)
+        if [ -n "$DPI_CHECKS" ] && [ "$_dpi_thr_idx" -gt 0 ]; then
+            printf '  > tcp16-20 threshold checks:\n'
+            _ti=0
+            printf '%s' "$DPI_CHECKS" | while IFS='|' read -r _cid _curl _cthr; do
+                [ -n "$_cid" ] || continue
+                _ti=$((_ti + 1))
+                [ "$_ti" -gt "$_dpi_thr_idx" ] && break
+                _res_file="$TEST_RESULT_DIR/_thr_$$.$_ti"
+                _thr_r="FAIL"
+                if [ -f "$_res_file" ]; then
+                    read -r _thr_r < "$_res_file"
+                    rm -f "$_res_file"
+                fi
+                printf '    %-12s  %-38s  %s\n' "$_cid" "$(printf '%s' "$_curl" | cut -c1-38)" "$_thr_r"
+                case "$_thr_r" in
+                    OK)   st_thr_ok=$((st_thr_ok+1)) ;;
+                    FAIL) st_thr_fail=$((st_thr_fail+1)) ;;
                 esac
             done
         fi
@@ -954,10 +1296,12 @@ test_command() {
         kill -KILL "$_nfqws_pid" 2>/dev/null || true
         cleanup_zapret_firewall 2>/dev/null
 
-        printf '  > Score: HTTP_OK=%s  ERR=%s  UNSUP=%s  PingOK=%s  PingFail=%s\n' \
-            "$st_ok" "$st_err" "$st_unsup" "$st_pingok" "$st_pingfail"
-        printf 'OK:%s:%s:%s:%s:%s:%s\n' \
-            "$st_ok" "$st_err" "$st_unsup" "$st_pingok" "$st_pingfail" "$strategy_name" \
+        # Total score = HTTP_OK + DPI_BYPASSED + THRESHOLD_OK
+        _total=$(( st_ok + st_dpi_bypassed + st_thr_ok ))
+        printf '  > Score: HTTP_OK=%s  ERR=%s  UNSUP=%s  DPI_BYPASSED=%s  DPI_FAIL=%s  THR_OK=%s  THR_FAIL=%s  TOTAL=%s\n' \
+            "$st_ok" "$st_err" "$st_unsup" "$st_dpi_bypassed" "$st_dpi_fail" "$st_thr_ok" "$st_thr_fail" "$_total"
+        printf 'OK:%s:%s:%s:%s:%s:%s:%s:%s\n' \
+            "$st_ok" "$st_err" "$st_unsup" "$st_dpi_bypassed" "$st_dpi_fail" "$st_thr_ok" "$st_thr_fail" "$strategy_name" \
             >> "$RESULT_FILE"
     done
 
@@ -966,43 +1310,47 @@ test_command() {
     # ---------------------------------------------------------------------------
     echo ""
     echo "====================================================="
-    echo " Results summary  (sorted by HTTP OK)"
+    echo " Results summary  (sorted by total score)"
     echo "====================================================="
-    printf '  %-26s  %5s  %5s  %5s  %6s  %8s\n' \
-        "Strategy" "OK" "ERR" "UNSUP" "PingOK" "PingFail"
-    echo "  ------------------------------------------------------------------"
-    sort -t: -k2 -rn "$RESULT_FILE" | while IFS=: read -r _t _ok _err _unsup _pok _pf _nm; do
+    printf '  %-26s  %5s  %5s  %5s  %7s  %7s  %7s\n' \
+        "Strategy" "HTTP" "ERR" "UNSUP" "DPI_BYP" "THR_OK" "TOTAL"
+    echo "  ---------------------------------------------------------------------------"
+    # Sort by TOTAL = col8 (HTTP_OK + DPI_BYPASSED + THR_OK) — compute dynamically
+    sort -t: -k2 -rn "$RESULT_FILE" | while IFS=: read -r _t _ok _err _unsup _dpibp _dpif _throk _thrf _nm; do
         if [ "$_t" = "SKIP" ]; then
             printf '  %-26s  SKIPPED\n' "$_nm"
         else
-            printf '  %-26s  %5s  %5s  %5s  %6s  %8s\n' \
-                "$_nm" "$_ok" "$_err" "$_unsup" "$_pok" "$_pf"
+            _tot=$(( _ok + _dpibp + _throk ))
+            printf '  %-26s  %5s  %5s  %5s  %7s  %7s  %7s\n' \
+                "$_nm" "$_ok" "$_err" "$_unsup" "$_dpibp" "$_throk" "$_tot"
         fi
     done
 
-    # Pick best: max HTTP OK, tiebreak by PingOK
+    # Pick best: max TOTAL score
     best_strategy=""
     best_ok=-1
     best_ping=-1
-    while IFS=: read -r _t _ok _err _unsup _pok _pf _nm; do
+    while IFS=: read -r _t _ok _err _unsup _dpibp _dpif _throk _thrf _nm; do
         [ "$_t" = "SKIP" ] && continue
-        if [ "$_ok" -gt "$best_ok" ] || \
-           { [ "$_ok" -eq "$best_ok" ] && [ "$_pok" -gt "$best_ping" ]; }; then
-            best_ok="$_ok"
-            best_ping="$_pok"
+        _tot=$(( _ok + _dpibp + _throk ))
+        if [ "$_tot" -gt "$best_ok" ] || \
+           { [ "$_tot" -eq "$best_ok" ] && [ "$_dpibp" -gt "$best_ping" ]; }; then
+            best_ok="$_tot"
+            best_ping="$_dpibp"
             best_strategy="$_nm"
         fi
     done < "$RESULT_FILE"
     rm -f "$RESULT_FILE"
+    rm -f "$DPI_SUITE_V2_FILE" "$DPI_SUITE_FILE" 2>/dev/null || true
 
     cleanup_test_runtime
     trap - INT TERM
 
     echo ""
     if [ -n "$best_strategy" ] && [ "$best_ok" -ge 0 ]; then
-        echo "★  Best strategy: $best_strategy  (HTTP OK: $best_ok  PingOK: $best_ping)"
+        echo "★  Best strategy: $best_strategy  (Total score: $best_ok  DPI bypassed: $best_ping)"
         if [ "$best_ok" -eq 0 ] && [ "$PRECHECK_HTTPS_STATUS" != "OK" ]; then
-            echo "! All strategies failed, and baseline HTTPS was already failing before strategy checks."
+            echo "! All strategies scored 0, and baseline HTTPS was already failing before strategy checks."
             echo "! Most likely the issue is outside the strategy set: DNS/DNSCrypt/routing/network environment."
             [ "$TEST_DEBUG" = "1" ] && echo "! Baseline detail: $PRECHECK_HTTPS_DETAIL"
         fi
@@ -1048,6 +1396,9 @@ case "$1" in
     import-strategy) import_strategy "$2" ;;
     test) shift; test_command "$@" ;;
     ipset-update) ipset_update ;;
+    custom) shift; custom_command "$@" ;;
+    exclude) shift; exclude_command "$@" ;;
+    search) shift; search_command "$@" ;;
     setup) setup_command "$2" "$3" "$4" ;;
     *) command_info ;;
 esac
