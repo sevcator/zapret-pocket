@@ -10,14 +10,26 @@ setup_firewall() {
     ensure_dnscrypt_firewall_base
 
     if iptables_supported iptables nat; then
+        # Redirect all DNS queries (including from mobile data PREROUTING) to dnscrypt-proxy
         append_unique_rule iptables nat "$CHAIN_DNSCRYPT_REDIRECT" -p udp --dport 53 -j DNAT --to-destination 127.0.0.1:"$DNSCRYPT_PORT"
         append_unique_rule iptables nat "$CHAIN_DNSCRYPT_REDIRECT" -p tcp --dport 53 -j DNAT --to-destination 127.0.0.1:"$DNSCRYPT_PORT"
     fi
 
+    # Block DoT (853) and direct DNS (53) leaks on IPv4
+    if iptables_supported iptables filter; then
+        for proto in udp tcp; do
+            for dport in 853; do
+                append_unique_rule iptables filter "$CHAIN_DNSCRYPT_OUTPUT"  -p "$proto" --dport "$dport" -j DROP
+                append_unique_rule iptables filter "$CHAIN_DNSCRYPT_FORWARD" -p "$proto" --dport "$dport" -j DROP
+            done
+        done
+    fi
+
+    # Block DoT (853) and direct DNS (53) leaks on IPv6
     if iptables_supported ip6tables filter; then
         for proto in udp tcp; do
             for dport in 53 853; do
-                append_unique_rule ip6tables filter "$CHAIN_DNSCRYPT_OUTPUT" -p "$proto" --dport "$dport" -j DROP
+                append_unique_rule ip6tables filter "$CHAIN_DNSCRYPT_OUTPUT"  -p "$proto" --dport "$dport" -j DROP
                 append_unique_rule ip6tables filter "$CHAIN_DNSCRYPT_FORWARD" -p "$proto" --dport "$dport" -j DROP
             done
         done
