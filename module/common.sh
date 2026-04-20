@@ -266,9 +266,15 @@ service_is_running() {
     pgrep -f "$ZAPRET_DIR/zapret.sh" >/dev/null 2>&1
 }
 
+dnscrypt_script_path() {
+    printf '%s\n' "${DNSCRYPT_DIR:-$MODPATH/dnscrypt}/dnscrypt.sh"
+}
+
 dnscrypt_supervisor_is_running() {
+    _dnscrypt_script="$(dnscrypt_script_path)"
     pidfile_is_running "$DNSCRYPT_SUP_PID_FILE" && return 0
-    pgrep -f "$MODPATH/dnscrypt/dnscrypt.sh" >/dev/null 2>&1
+    pgrep -f "$_dnscrypt_script" >/dev/null 2>&1 && return 0
+    [ "$_dnscrypt_script" = "$MODPATH/dnscrypt/dnscrypt.sh" ] || pgrep -f "$MODPATH/dnscrypt/dnscrypt.sh" >/dev/null 2>&1
 }
 
 dnscrypt_is_running() {
@@ -557,36 +563,36 @@ resolve_wget() {
 }
 
 download_with_curl() {
-    downloader="$1"
-    url="$2"
-    output="$3"
+    _dwc_downloader="$1"
+    _dwc_url="$2"
+    _dwc_output="$3"
 
-    [ -n "$downloader" ] || return 1
-    [ -n "$url" ] || return 1
-    [ -n "$output" ] || return 1
+    [ -n "$_dwc_downloader" ] || return 1
+    [ -n "$_dwc_url" ] || return 1
+    [ -n "$_dwc_output" ] || return 1
 
-    debug_log "curl download: $url -> $output via $downloader"
+    debug_log "curl download: $_dwc_url -> $_dwc_output via $_dwc_downloader"
     if debug_enabled; then
-        "$downloader" -fSL -v --http1.1 --retry 3 --retry-delay 1 --connect-timeout 15 -o "$output" "$url"
+        "$_dwc_downloader" -fSL -v --http1.1 --retry 3 --retry-delay 1 --connect-timeout 15 -o "$_dwc_output" "$_dwc_url"
     else
-        "$downloader" -fsSL --http1.1 --retry 3 --retry-delay 1 --connect-timeout 15 -o "$output" "$url" >/dev/null 2>&1
+        "$_dwc_downloader" -fsSL --http1.1 --retry 3 --retry-delay 1 --connect-timeout 15 -o "$_dwc_output" "$_dwc_url" >/dev/null 2>&1
     fi
 }
 
 download_with_wget() {
-    downloader="$1"
-    url="$2"
-    output="$3"
+    _dww_downloader="$1"
+    _dww_url="$2"
+    _dww_output="$3"
 
-    [ -n "$downloader" ] || return 1
-    [ -n "$url" ] || return 1
-    [ -n "$output" ] || return 1
+    [ -n "$_dww_downloader" ] || return 1
+    [ -n "$_dww_url" ] || return 1
+    [ -n "$_dww_output" ] || return 1
 
-    debug_log "wget download: $url -> $output via $downloader"
+    debug_log "wget download: $_dww_url -> $_dww_output via $_dww_downloader"
     if debug_enabled; then
-        "$downloader" -S -O "$output" "$url"
+        "$_dww_downloader" -S -O "$_dww_output" "$_dww_url"
     else
-        "$downloader" -q -O "$output" "$url" >/dev/null 2>&1
+        "$_dww_downloader" -q -O "$_dww_output" "$_dww_url" >/dev/null 2>&1
     fi
 }
 
@@ -618,63 +624,65 @@ should_skip_download() {
 }
 
 download_file() {
-    url="$1"
-    output="$2"
-    tmp="${output}.tmp"
+    _df_url="$1"
+    _df_output="$2"
+    tmp="${_df_output}.tmp"
     alt_url=""
 
-    [ -n "$url" ] || return 1
-    [ -n "$output" ] || return 1
-    url="$(normalize_download_url "$url")"
-    alt_url="$(alternate_download_url "$url" 2>/dev/null || true)"
+    [ -n "$_df_url" ] || return 1
+    [ -n "$_df_output" ] || return 1
+    _df_url="$(normalize_download_url "$_df_url")"
+    alt_url="$(alternate_download_url "$_df_url" 2>/dev/null || true)"
+    mkdir -p "$(dirname "$_df_output")" || return 1
+    rm -f "$tmp"
 
-    debug_log "download_file requested: $url -> $output"
+    debug_log "download_file requested: $_df_url -> $_df_output"
     [ -n "$alt_url" ] && debug_log "alternate download URL available: $alt_url"
 
     downloader="$(resolve_downloader 2>/dev/null || true)"
     if [ -n "$downloader" ]; then
-        if download_with_curl "$downloader" "$url" "$tmp"; then
-            if mv "$tmp" "$output"; then
+        if download_with_curl "$downloader" "$_df_url" "$tmp"; then
+            if [ -f "$tmp" ] && mv "$tmp" "$_df_output"; then
                 return 0
             fi
             rm -f "$tmp"
-            debug_log "failed to move downloaded file into place: $tmp -> $output"
+            debug_log "failed to move downloaded file into place: $tmp -> $_df_output"
         fi
-        debug_log "curl download failed for: $url"
+        debug_log "curl download failed for: $_df_url"
 
         if [ -n "$alt_url" ] && download_with_curl "$downloader" "$alt_url" "$tmp"; then
-            if mv "$tmp" "$output"; then
+            if [ -f "$tmp" ] && mv "$tmp" "$_df_output"; then
                 return 0
             fi
             rm -f "$tmp"
-            debug_log "failed to move downloaded alternate file into place: $tmp -> $output"
+            debug_log "failed to move downloaded alternate file into place: $tmp -> $_df_output"
         fi
         [ -n "$alt_url" ] && debug_log "curl alternate download failed for: $alt_url"
     fi
 
     downloader="$(resolve_wget 2>/dev/null || true)"
     if [ -n "$downloader" ]; then
-        if download_with_wget "$downloader" "$url" "$tmp"; then
-            if mv "$tmp" "$output"; then
+        if download_with_wget "$downloader" "$_df_url" "$tmp"; then
+            if [ -f "$tmp" ] && mv "$tmp" "$_df_output"; then
                 return 0
             fi
             rm -f "$tmp"
-            debug_log "failed to move downloaded file into place: $tmp -> $output"
+            debug_log "failed to move downloaded file into place: $tmp -> $_df_output"
         fi
-        debug_log "wget download failed for: $url"
+        debug_log "wget download failed for: $_df_url"
 
         if [ -n "$alt_url" ] && download_with_wget "$downloader" "$alt_url" "$tmp"; then
-            if mv "$tmp" "$output"; then
+            if [ -f "$tmp" ] && mv "$tmp" "$_df_output"; then
                 return 0
             fi
             rm -f "$tmp"
-            debug_log "failed to move downloaded alternate file into place: $tmp -> $output"
+            debug_log "failed to move downloaded alternate file into place: $tmp -> $_df_output"
         fi
         [ -n "$alt_url" ] && debug_log "wget alternate download failed for: $alt_url"
     fi
 
     rm -f "$tmp"
-    debug_log "all download methods failed for: $url"
+    debug_log "all download methods failed for: $_df_url"
     return 1
 }
 
@@ -718,18 +726,21 @@ refresh_linked_lists() {
 }
 
 stop_module_service() {
+    _dnscrypt_script="$(dnscrypt_script_path)"
     terminate_pidfile_gracefully "$ZAPRET_PID_FILE"
     terminate_pidfile_gracefully "$NFQWS_PID_FILE"
     terminate_pidfile_gracefully "$DNSCRYPT_SUP_PID_FILE"
     terminate_pidfile_gracefully "$DNSCRYPT_PID_FILE"
 
     pkill -TERM -f "$ZAPRET_DIR/zapret.sh" >/dev/null 2>&1 || true
-    pkill -TERM -f "$MODPATH/dnscrypt/dnscrypt.sh" >/dev/null 2>&1 || true
+    pkill -TERM -f "$_dnscrypt_script" >/dev/null 2>&1 || true
+    [ "$_dnscrypt_script" = "$MODPATH/dnscrypt/dnscrypt.sh" ] || pkill -TERM -f "$MODPATH/dnscrypt/dnscrypt.sh" >/dev/null 2>&1 || true
     pkill -TERM -x nfqws >/dev/null 2>&1 || true
     pkill -TERM -x dnscrypt-proxy >/dev/null 2>&1 || true
     sleep 1
     pkill -KILL -f "$ZAPRET_DIR/zapret.sh" >/dev/null 2>&1 || true
-    pkill -KILL -f "$MODPATH/dnscrypt/dnscrypt.sh" >/dev/null 2>&1 || true
+    pkill -KILL -f "$_dnscrypt_script" >/dev/null 2>&1 || true
+    [ "$_dnscrypt_script" = "$MODPATH/dnscrypt/dnscrypt.sh" ] || pkill -KILL -f "$MODPATH/dnscrypt/dnscrypt.sh" >/dev/null 2>&1 || true
     pkill -KILL -x nfqws >/dev/null 2>&1 || true
     pkill -KILL -x dnscrypt-proxy >/dev/null 2>&1 || true
 
