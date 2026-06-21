@@ -1,0 +1,14 @@
+# Zapret Configuration
+# >.<
+# zapret2 variant (auto-translated from ALT11.sh; nfqws1 --dpi-desync* -> nfqws2 --lua-desync=)
+ZAPRET=2
+
+config="--blob=fake_quic_google:@$MODPATH/zapret/quic_initial_www_google_com.bin --blob=fake_tls_google:@$MODPATH/zapret/tls_clienthello_www_google_com.bin --blob=fake_tls_max_ru:@$MODPATH/zapret/tls_clienthello_max_ru.bin --filter-udp=443 --hostlist=$MODPATH/list/list-general.txt --hostlist=$MODPATH/list/list-general-user.txt --hostlist-exclude=$MODPATH/list/list-exclude.txt --hostlist-exclude=$MODPATH/list/list-exclude-user.txt --ipset-exclude=$MODPATH/list/ipset-exclude.txt --ipset-exclude=$MODPATH/list/ipset-exclude-user.txt --payload=all --lua-desync=fake:blob=fake_quic_google:repeats=11 --new"
+if [ "$(cat "$MODPATH/config/bypass-calls" 2>/dev/null || echo 0)" = "1" ]; then
+    config="$config --filter-udp=19294-19344,50000-50100 --filter-l7=discord,stun --payload=discord_ip_discovery,stun --lua-desync=fake:blob=0x00000000000000000000000000000000:repeats=6 --new"
+    config="$config --filter-tcp=2053,2083,2087,2096,8443 --hostlist-domains=discord.media --payload=all --lua-desync=fake:blob=fake_tls_google:tcp_ts=-1000:tcp_ts_up:repeats=8 --lua-desync=multisplit:pos=1:seqovl=681:seqovl_pattern=fake_tls_google --new"
+fi
+config="$config --filter-tcp=443 --hostlist=$MODPATH/list/list-google.txt --payload=all --lua-desync=fake:blob=fake_tls_google:tcp_ts=-1000:tcp_ts_up:ip_id=zero:repeats=8 --lua-desync=multisplit:pos=1:seqovl=681:seqovl_pattern=fake_tls_google --new"
+config="$config --filter-tcp=80,443 --hostlist=$MODPATH/list/list-general.txt --hostlist=$MODPATH/list/list-general-user.txt --hostlist-exclude=$MODPATH/list/list-exclude.txt --hostlist-exclude=$MODPATH/list/list-exclude-user.txt --ipset-exclude=$MODPATH/list/ipset-exclude.txt --ipset-exclude=$MODPATH/list/ipset-exclude-user.txt --payload=all --lua-desync=fake:blob=fake_tls_max_ru:tcp_ts=-1000:tcp_ts_up:repeats=8 --lua-desync=multisplit:pos=1:seqovl=664:seqovl_pattern=fake_tls_max_ru --new"
+config="$config --filter-udp=443 --ipset=$MODPATH/list/ipset-all.txt --hostlist-exclude=$MODPATH/list/list-exclude.txt --hostlist-exclude=$MODPATH/list/list-exclude-user.txt --ipset-exclude=$MODPATH/list/ipset-exclude.txt --ipset-exclude=$MODPATH/list/ipset-exclude-user.txt --payload=all --lua-desync=fake:blob=fake_quic_google:repeats=11 --new"
+config="$config --filter-tcp=80,443,8443 --ipset=$MODPATH/list/ipset-all.txt --hostlist-exclude=$MODPATH/list/list-exclude.txt --hostlist-exclude=$MODPATH/list/list-exclude-user.txt --ipset-exclude=$MODPATH/list/ipset-exclude.txt --ipset-exclude=$MODPATH/list/ipset-exclude-user.txt --payload=all --lua-desync=fake:blob=fake_tls_max_ru:tcp_ts=-1000:tcp_ts_up:repeats=8 --lua-desync=multisplit:pos=1:seqovl=664:seqovl_pattern=fake_tls_max_ru --new"
