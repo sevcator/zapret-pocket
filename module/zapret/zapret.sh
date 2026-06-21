@@ -4,8 +4,10 @@ MODPATH="/data/adb/modules/zapret"
 . "$MODPATH/common.sh"
 
 NFQWS_BIN="$ZAPRET_DIR/nfqws"
+NFQWS2_BIN="$ZAPRET_DIR/nfqws2"
 DEBUG_ENABLE=0
 CURRENT_STRATEGY=""
+ZAPRET_ENGINE=1
 HAS_IP6TABLES=0
 STOP_REQUESTED=0
 NFQWS_PID=""
@@ -57,11 +59,6 @@ validate_preflight() {
         return 1
     }
 
-    [ -x "$NFQWS_BIN" ] || {
-        echo "! nfqws binary not found"
-        return 1
-    }
-
     CURRENT_STRATEGY="$(config_value "$CURRENT_STRATEGY_FILE" "general")"
     [ -f "$STRATEGY_DIR/$CURRENT_STRATEGY.sh" ] || {
         echo "! Strategy not found: $CURRENT_STRATEGY"
@@ -69,14 +66,36 @@ validate_preflight() {
     }
 }
 
+# Pick the DPI engine for the current strategy. A strategy may set ZAPRET=2 (in the
+# sourced strategy file) to run under the zapret2 engine (nfqws2); default is 1 (nfqws).
+select_engine() {
+    case "$1" in
+        2)
+            ZAPRET_ENGINE=2
+            NFQWS_BIN="$NFQWS2_BIN"
+            ;;
+        *)
+            ZAPRET_ENGINE=1
+            NFQWS_BIN="$ZAPRET_DIR/nfqws"
+            ;;
+    esac
+    echo "- Engine: zapret$ZAPRET_ENGINE ($(basename "$NFQWS_BIN"))"
+}
+
 run_strategy() {
     config=""
+    ZAPRET=1
     . "$STRATEGY_DIR/$CURRENT_STRATEGY.sh"
-    config="$(printf '%s\n' "$config" | sed -e 's/ --dpi-desync-any-protocol=1 --dpi-desync-fake-quic=/ --dpi-desync-fake-quic=/g' -e 's/ --dpi-desync-fake-quic=/ --dpi-desync-any-protocol=1 --dpi-desync-fake-quic=/g')"
+    # The QUIC any-protocol normalization is a zapret1 (nfqws) quirk. zapret2
+    # strategies use the --lua-desync syntax and must pass through untouched.
+    if [ "${ZAPRET:-1}" != "2" ]; then
+        config="$(printf '%s\n' "$config" | sed -e 's/ --dpi-desync-any-protocol=1 --dpi-desync-fake-quic=/ --dpi-desync-fake-quic=/g' -e 's/ --dpi-desync-fake-quic=/ --dpi-desync-any-protocol=1 --dpi-desync-fake-quic=/g')"
+    fi
     [ -n "$config" ] || {
         echo "! Strategy produced empty config: $CURRENT_STRATEGY"
         return 1
     }
+    select_engine "${ZAPRET:-1}"
 }
 
 derive_ports() {
@@ -234,13 +253,32 @@ main() {
     apply_optional_network_tweaks
     validate_preflight || exit 1
     run_strategy || exit 1
+    [ -x "$NFQWS_BIN" ] || {
+        echo "! Engine binary for ZAPRET=$ZAPRET_ENGINE not found: $NFQWS_BIN"
+        [ "$ZAPRET_ENGINE" = "2" ] && echo "! zapret2 (nfqws2) is not installed — use a ZAPRET=1 strategy or reinstall the module"
+        exit 1
+    }
+
+    # zapret2 (nfqws2) has no built-in desync logic — the DPI attacks live in the
+    # bundled Lua library, which must be loaded with --lua-init. Order matters:
+    # zapret-lib.lua defines the primitives, zapret-antidpi.lua the desync funcs.
+    ENGINE_LUA_ARGS=""
+    if [ "$ZAPRET_ENGINE" = "2" ]; then
+        if [ ! -f "$LUA_DIR/zapret-lib.lua" ] || [ ! -f "$LUA_DIR/zapret-antidpi.lua" ]; then
+            echo "! zapret2 Lua scripts missing in $LUA_DIR (zapret-lib.lua, zapret-antidpi.lua)"
+            echo "! Reinstall the module or pick a ZAPRET=1 strategy"
+            exit 1
+        fi
+        ENGINE_LUA_ARGS="--lua-init=@$LUA_DIR/zapret-lib.lua --lua-init=@$LUA_DIR/zapret-antidpi.lua"
+    fi
+
     [ "$DEBUG_ENABLE" = "1" ] && config="$config --debug=1"
     derive_ports
     apply_firewall_rules
 
     while [ "$STOP_REQUESTED" -eq 0 ]; do
         sh "$ZAPRET_DIR/make-unkillable.sh" >/dev/null 2>&1 &
-        "$NFQWS_BIN" --uid=0:0 --bind-fix4 --bind-fix6 --qnum=200 $config &
+        "$NFQWS_BIN" --uid=0:0 --bind-fix4 --bind-fix6 --qnum=200 $ENGINE_LUA_ARGS $config &
         NFQWS_PID=$!
         write_pidfile "$NFQWS_PID_FILE" "$NFQWS_PID"
 
