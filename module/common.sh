@@ -6,6 +6,7 @@ LIST_DIR="${LIST_DIR:-$MODPATH/list}"
 LEGACY_LIST_DIR="${LEGACY_LIST_DIR:-$MODPATH/lists}"
 IPSET_DIR="${IPSET_DIR:-$MODPATH/list}"
 ZAPRET_DIR="${ZAPRET_DIR:-$MODPATH/zapret}"
+LUA_DIR="${LUA_DIR:-$MODPATH/lua}"
 STRATEGY_DIR="${STRATEGY_DIR:-$MODPATH/strategy}"
 LEGACY_STRATEGY_DIR="${LEGACY_STRATEGY_DIR:-$MODPATH/strategies}"
 LEGACY_ZAPRET_STRATEGY_DIR="${LEGACY_ZAPRET_STRATEGY_DIR:-$ZAPRET_DIR}"
@@ -158,7 +159,7 @@ migrate_legacy_config() {
 }
 
 ensure_layout() {
-    mkdir -p "$CONFIG_DIR" "$LIST_DIR" "$IPSET_DIR" "$ZAPRET_DIR" "$STRATEGY_DIR" "$DNSCRYPT_DIR" "$SERVICE_DIR" "$STATE_DIR"
+    mkdir -p "$CONFIG_DIR" "$LIST_DIR" "$IPSET_DIR" "$ZAPRET_DIR" "$LUA_DIR" "$STRATEGY_DIR" "$DNSCRYPT_DIR" "$SERVICE_DIR" "$STATE_DIR"
 
     if [ -d "$MODPATH/.run" ] && [ "$MODPATH/.run" != "$SERVICE_DIR" ]; then
         copy_tree_if_needed "$MODPATH/.run" "$SERVICE_DIR"
@@ -284,7 +285,8 @@ dnscrypt_is_running() {
 
 nfqws_is_running() {
     pidfile_is_running "$NFQWS_PID_FILE" && return 0
-    pgrep -x nfqws >/dev/null 2>&1
+    pgrep -x nfqws >/dev/null 2>&1 && return 0
+    pgrep -x nfqws2 >/dev/null 2>&1
 }
 
 iptables_supported() {
@@ -396,12 +398,42 @@ sysctl_state_file() {
     printf '%s/%s.state\n' "$STATE_DIR" "$1"
 }
 
+# sysctl read/write that does NOT depend on a `sysctl` binary being reachable on
+# PATH. A plain `su` shell often lacks the Magisk busybox dir on its PATH, so an
+# external sysctl may be unreachable when the CLI is run by hand. Writing
+# /proc/sys/... directly is the universal, fork-free method that behaves
+# identically under mksh, busybox ash and toybox; the sysctl binary is only a
+# last-resort fallback. This matters most for route_localnet — without it the DNS
+# DNAT to 127.0.0.1 is martian-dropped and resolution breaks entirely.
+sysctl_proc_path() {
+    # net.ipv4.conf.all.route_localnet -> /proc/sys/net/ipv4/conf/all/route_localnet
+    printf '/proc/sys/%s\n' "$(printf '%s' "$1" | tr '.' '/')"
+}
+
+read_sysctl_value() {
+    _rsv_path="$(sysctl_proc_path "$1")"
+    if [ -r "$_rsv_path" ]; then
+        cat "$_rsv_path" 2>/dev/null
+        return 0
+    fi
+    sysctl -n "$1" 2>/dev/null
+}
+
+write_sysctl_value() {
+    _wsv_path="$(sysctl_proc_path "$1")"
+    if [ -w "$_wsv_path" ]; then
+        printf '%s\n' "$2" > "$_wsv_path" 2>/dev/null && return 0
+    fi
+    sysctl -w "$1=$2" >/dev/null 2>&1
+}
+
 remember_sysctl_value() {
     state_name="$1"
     key="$2"
     state_file="$(sysctl_state_file "$state_name")"
     [ -f "$state_file" ] && return 0
-    current="$(sysctl -n "$key" 2>/dev/null)" || return 1
+    current="$(read_sysctl_value "$key")"
+    [ -n "$current" ] || return 1
     printf '%s\n' "$current" > "$state_file"
 }
 
@@ -410,7 +442,7 @@ apply_managed_sysctl() {
     key="$2"
     value="$3"
     remember_sysctl_value "$state_name" "$key" || return 1
-    sysctl -w "$key=$value" >/dev/null 2>&1
+    write_sysctl_value "$key" "$value"
 }
 
 restore_managed_sysctl() {
@@ -419,7 +451,7 @@ restore_managed_sysctl() {
     state_file="$(sysctl_state_file "$state_name")"
     [ -f "$state_file" ] || return 0
     value="$(cat "$state_file" 2>/dev/null)"
-    [ -n "$value" ] && sysctl -w "$key=$value" >/dev/null 2>&1
+    [ -n "$value" ] && write_sysctl_value "$key" "$value"
     rm -f "$state_file"
 }
 
@@ -514,7 +546,7 @@ curl_is_functional() {
     [ -x "$1" ] || return 1
     _cif_out="$("$1" -IsS -m 1 https://127.0.0.2 2>&1)"
     case "$_cif_out" in
-        *"CANNOT LINK"*|*"cannot locate symbol"*|*"No such file"*|*"not found"*) return 1 ;;
+        *"CANNOT LINK"*|*"cannot locate symbol"*|*"No such file"*|*"not found"*|*"is for EM_"*|*"unexpected e_machine"*) return 1 ;;
     esac
     return 0
 }
@@ -736,12 +768,14 @@ stop_module_service() {
     pkill -TERM -f "$_dnscrypt_script" >/dev/null 2>&1 || true
     [ "$_dnscrypt_script" = "$MODPATH/dnscrypt/dnscrypt.sh" ] || pkill -TERM -f "$MODPATH/dnscrypt/dnscrypt.sh" >/dev/null 2>&1 || true
     pkill -TERM -x nfqws >/dev/null 2>&1 || true
+    pkill -TERM -x nfqws2 >/dev/null 2>&1 || true
     pkill -TERM -x dnscrypt-proxy >/dev/null 2>&1 || true
     sleep 1
     pkill -KILL -f "$ZAPRET_DIR/zapret.sh" >/dev/null 2>&1 || true
     pkill -KILL -f "$_dnscrypt_script" >/dev/null 2>&1 || true
     [ "$_dnscrypt_script" = "$MODPATH/dnscrypt/dnscrypt.sh" ] || pkill -KILL -f "$MODPATH/dnscrypt/dnscrypt.sh" >/dev/null 2>&1 || true
     pkill -KILL -x nfqws >/dev/null 2>&1 || true
+    pkill -KILL -x nfqws2 >/dev/null 2>&1 || true
     pkill -KILL -x dnscrypt-proxy >/dev/null 2>&1 || true
 
     cleanup_all_firewall

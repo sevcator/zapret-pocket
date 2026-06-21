@@ -43,10 +43,10 @@ fi
 
 ABI="$(grep_get_prop ro.product.cpu.abi)"
 case "$ABI" in
-  arm64-v8a)    BINARY="nfqws-aarch64"; BINARY2="dnscrypt-proxy-arm64"; BINARY3="curl-aarch64" ;;
-  x86_64)       BINARY="nfqws-x86_x64"; BINARY2="dnscrypt-proxy-x86_64"; BINARY3="curl-x86_64" ;;
-  armeabi-v7a)  BINARY="nfqws-arm";     BINARY2="dnscrypt-proxy-arm";     BINARY3="curl-arm" ;;
-  x86)          BINARY="nfqws-x86";     BINARY2="dnscrypt-proxy-i386";    BINARY3="curl-x86" ;;
+  arm64-v8a)    BINARY="nfqws-aarch64"; BINARY_NFQWS2="nfqws2-aarch64"; BINARY2="dnscrypt-proxy-arm64"; BINARY3="curl-aarch64" ;;
+  x86_64)       BINARY="nfqws-x86_x64"; BINARY_NFQWS2="nfqws2-x86_x64"; BINARY2="dnscrypt-proxy-x86_64"; BINARY3="curl-x86_64" ;;
+  armeabi-v7a)  BINARY="nfqws-arm";     BINARY_NFQWS2="nfqws2-arm";     BINARY2="dnscrypt-proxy-arm";     BINARY3="curl-arm" ;;
+  x86)          BINARY="nfqws-x86";     BINARY_NFQWS2="nfqws2-x86";     BINARY2="dnscrypt-proxy-i386";    BINARY3="curl-x86" ;;
   *)            abort "! Unsupported architecture: $ABI" ;;
 esac
 ui_print "- Device architecture: $ABI"
@@ -78,11 +78,23 @@ import_updated_lists
 if pm list packages | grep -q "$PACKAGENAME"; then
   ui_print "- VpnHotspot is already installed"
   rm -rf "$(dirname "$APKPATH")"
-elif pm install "$APKPATH" >/dev/null 2>&1; then
-  ui_print "- VpnHotspot installed"
-  rm -rf "$(dirname "$APKPATH")"
 else
-  ui_print "! VpnHotspot installation failed"
+  # Android 9+ requires `pm install` to read the APK from a location the system
+  # PackageManager can access under enforcing SELinux. The module staging dir is
+  # not readable by system_server, so copy the APK into /data/local/tmp first.
+  APKTMP="/data/local/tmp/VpnHotspot-install.apk"
+  cp -f "$APKPATH" "$APKTMP" 2>/dev/null
+  chmod 0644 "$APKTMP" 2>/dev/null
+  chcon u:object_r:shell_data_file:s0 "$APKTMP" 2>/dev/null || true
+  if pm install "$APKTMP" >/dev/null 2>&1; then
+    ui_print "- VpnHotspot installed"
+    rm -f "$APKTMP"
+    rm -rf "$(dirname "$APKPATH")"
+  else
+    ui_print "! VpnHotspot installation failed (incompatible Android version?)"
+    rm -f "$APKTMP"
+    # Leave the APK under system/app as a systemized fallback for the boot scan.
+  fi
 fi
 
 ui_print "- Disabling Private DNS"
@@ -108,7 +120,18 @@ prepare_binaries() {
   mv "$ZAPRET_DIR/$BINARY" "$ZAPRET_DIR/nfqws"
   mv "$DNSCRYPT_DIR/$BINARY2" "$DNSCRYPT_DIR/dnscrypt-proxy"
   mv "$MODPATH/$BINARY3" "$MODPATH/curl"
+
+  # zapret2 engine (nfqws2). Optional: ZAPRET=1 strategies still work without it,
+  # so a missing nfqws2 is a warning, not a fatal abort.
+  if [ -f "$ZAPRET_DIR/$BINARY_NFQWS2" ]; then
+    mv "$ZAPRET_DIR/$BINARY_NFQWS2" "$ZAPRET_DIR/nfqws2"
+    ui_print "- zapret2 engine: installed (nfqws2)"
+  else
+    ui_print "! zapret2 engine (nfqws2) not bundled — ZAPRET=2 strategies will be unavailable"
+  fi
+
   rm -f "$ZAPRET_DIR/nfqws-"*
+  rm -f "$ZAPRET_DIR/nfqws2-"*
   rm -f "$DNSCRYPT_DIR/dnscrypt-proxy-"*
   rm -f "$MODPATH"/curl-*
 }
