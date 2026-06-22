@@ -433,6 +433,7 @@ command_info() {
     echo "  setup ipset-link [none|url]        - Set ipset-service source"
     echo "  setup cloaking-rules [none|url]    - Set dnscrypt cloaking-rules source"
     echo "  setup blocked-names [none|url]     - Set dnscrypt blocked-names source"
+    echo "  setup blocked-ips [none|url]       - Set dnscrypt blocked-ips source"
     echo "  setup list-general [none|url]      - Set list-general source"
     echo "  setup interface-only [none|iface[,iface...]] - Restrict iptables rules to interface(s)"
     echo "  engine                             - Show the current strategy's engine (set ZAPRET=2"
@@ -762,6 +763,9 @@ setup_command() {
             ;;
         blocked-names)
             set_link_file "blocked-names" "$DNSCRYPT_BLOCKED_NAMES_LINK" "$value" || return 1
+            ;;
+        blocked-ips)
+            set_link_file "blocked-ips" "$DNSCRYPT_BLOCKED_IPS_LINK" "$value" || return 1
             ;;
         list-general)
             set_link_file "list-general" "$LIST_GENERAL_LINK" "$value" || return 1
