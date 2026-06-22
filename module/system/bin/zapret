@@ -576,6 +576,15 @@ module_stack_is_running() {
     return 0
 }
 
+# The DPI-bypass core is zapret (nfqws). DNSCrypt is an auxiliary DNS-privacy
+# feature, so the module counts as working whenever the core is up — DNSCrypt
+# lagging or failing must not make the whole module report as "not running".
+zapret_core_running() {
+    service_is_running || return 1
+    nfqws_is_running || return 1
+    return 0
+}
+
 start_service() {
     ensure_layout
     ensure_default_config
@@ -636,17 +645,30 @@ start_service() {
         started_any=1
     fi
 
-    sleep 2
+    # Poll for readiness instead of a fixed sleep. The core and DNSCrypt are started
+    # concurrently and DNSCrypt's first DoH probe can take a few seconds, so a fixed
+    # 2s wait used to report a false "Failed to start". Exit early once the full
+    # stack is up; otherwise keep waiting up to the cap.
+    _waited=0
+    while [ "$_waited" -lt 15 ]; do
+        module_stack_is_running && break
+        sleep 1
+        _waited=$((_waited + 1))
+    done
+
     if module_stack_is_running; then
-        if [ "$started_any" = "1" ]; then
-            echo "- Service started"
-        else
-            echo "- Service already running"
-        fi
+        echo "- Service started"
         return 0
     fi
 
-    echo "! Failed to start module stack"
+    # DNSCrypt is best-effort: a running nfqws core means the DPI bypass works even
+    # if DNSCrypt did not come up (e.g. its upstream is unreachable on this network).
+    if zapret_core_running; then
+        echo "- Service started (DPI bypass active; DNSCrypt is not running)"
+        return 0
+    fi
+
+    echo "! Failed to start: zapret core (nfqws) did not come up"
     return 1
 }
 
@@ -662,7 +684,7 @@ restart_service() {
 }
 
 status_service() {
-    if module_stack_is_running; then
+    if zapret_core_running; then
         echo "running"
         return 0
     fi
