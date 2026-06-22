@@ -496,16 +496,16 @@
             text-align: center;
         }
         body.light-theme {
-            --bg-main: #F5F5F5;
+            --bg-main: #FDF2F5;
             --bg-card: #FFFFFF;
-            --bg-input: #F0F0F0;
-            --border-color: #E0E0E0;
-            --text-primary: #212121;
-            --text-secondary: #757575;
-            --accent-color: #007AFF;
-            --shadow-color-feedback: rgba(0, 122, 255, 0.25);
-            --btn-hover-bg: #E0E0E0;
-            --btn-hover-border: #C7C7C7;
+            --bg-input: #FCE9EE;
+            --border-color: #F3CAD6;
+            --text-primary: #2B1A1F;
+            --text-secondary: #9C6678;
+            --accent-color: #E11D48;
+            --shadow-color-feedback: rgba(225, 29, 72, 0.25);
+            --btn-hover-bg: #F8D7E0;
+            --btn-hover-border: #EFB3C5;
         }
         .light-theme .status-indicator.running .dot,
         .light-theme .status-indicator.running .text,
@@ -522,12 +522,12 @@
         }
         .light-theme .card.all-running {
             border-color: var(--accent-color);
-            box-shadow: 0 0 15px rgba(0, 122, 255, 0.2);
+            box-shadow: 0 0 15px rgba(225, 29, 72, 0.2);
         }
         .light-theme .list-btn.active {
             color: var(--accent-color);
             border-color: var(--accent-color);
-            background-color: #E8F4FF;
+            background-color: #FDE3EA;
             box-shadow: none;
         }
         .light-theme .log-line .log-info {
@@ -651,7 +651,7 @@
     transition: opacity 2s ease;
 }
 body.light-theme #error-overlay {
-    background: rgba(0, 0, 255, 0.4);
+    background: rgba(225, 29, 72, 0.4);
 }
 #error-overlay.visible {
     opacity: 1;
@@ -790,7 +790,9 @@ body.light-theme #error-overlay {
 <button class="list-btn" data-i18n="list_exclude" data-tab="tab-list-exclude">List Exclude</button>
 <button class="list-btn" data-i18n="ipset_custom" data-tab="tab-ipset-custom">IPSet Custom</button>
 <button class="list-btn" data-i18n="ipset_exclude" data-tab="tab-ipset-exclude">IPSet Exclude</button>
-<button class="list-btn" data-i18n="dnscrypt_custom" data-tab="tab-dnscrypt-custom">DNSCrypt Custom</button>
+<button class="list-btn" data-i18n="cloaking_rules" data-tab="tab-cloaking-rules">Cloaking Rules</button>
+<button class="list-btn" data-i18n="blocked_names" data-tab="tab-blocked-names">Blocked Names</button>
+<button class="list-btn" data-i18n="blocked_ips" data-tab="tab-blocked-ips">Blocked IPs</button>
 </div>
 <div class="tab-content-wrapper">
 <div class="tab-content active" id="tab-list-custom">
@@ -853,19 +855,49 @@ body.light-theme #error-overlay {
 <button class="btn btn-save" data-i18n="btn_save" data-path="list/ipset-exclude-user.txt">Сохранить</button>
 </div>
 </div>
-<div class="tab-content" id="tab-dnscrypt-custom">
-<textarea id="file-dnscrypt-custom" rows="10"></textarea>
+<div class="tab-content" id="tab-cloaking-rules">
+<textarea id="file-cloaking-rules" rows="10"></textarea>
 <div class="textarea-footer">
 <span class="line-counter" data-i18n-base="line_counter">
           Строк: 0
          </span>
-<button class="btn btn-icon btn-clear" data-i18n-title="btn_clear_title" data-target="file-dnscrypt-custom">
+<button class="btn btn-icon btn-clear" data-i18n-title="btn_clear_title" data-target="file-cloaking-rules">
 <svg viewbox="0 0 24 24">
 <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z">
 </path>
 </svg>
 </button>
 <button class="btn btn-save" data-i18n="btn_save" data-path="dnscrypt/cloaking-rules.txt">Сохранить</button>
+</div>
+</div>
+<div class="tab-content" id="tab-blocked-names">
+<textarea id="file-blocked-names" rows="10"></textarea>
+<div class="textarea-footer">
+<span class="line-counter" data-i18n-base="line_counter">
+          Строк: 0
+         </span>
+<button class="btn btn-icon btn-clear" data-i18n-title="btn_clear_title" data-target="file-blocked-names">
+<svg viewbox="0 0 24 24">
+<path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z">
+</path>
+</svg>
+</button>
+<button class="btn btn-save" data-i18n="btn_save" data-path="dnscrypt/blocked-names.txt">Сохранить</button>
+</div>
+</div>
+<div class="tab-content" id="tab-blocked-ips">
+<textarea id="file-blocked-ips" rows="10"></textarea>
+<div class="textarea-footer">
+<span class="line-counter" data-i18n-base="line_counter">
+          Строк: 0
+         </span>
+<button class="btn btn-icon btn-clear" data-i18n-title="btn_clear_title" data-target="file-blocked-ips">
+<svg viewbox="0 0 24 24">
+<path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z">
+</path>
+</svg>
+</button>
+<button class="btn btn-save" data-i18n="btn_save" data-path="dnscrypt/blocked-ips.txt">Сохранить</button>
 </div>
 </div>
 </div>
@@ -933,6 +965,10 @@ body.light-theme #error-overlay {
 <div class="setting-item stacked">
 <label data-i18n="blocked_names_link">Ссылка на Blocked Names</label>
 <input class="text-input" id="input-blocked-names" placeholder="https://example.github.io/blocked-names.txt" type="text"/>
+</div>
+<div class="setting-item stacked">
+<label data-i18n="blocked_ips_link">Ссылка на Blocked IPs</label>
+<input class="text-input" id="input-blocked-ips" placeholder="https://example.github.io/blocked-ips.txt" type="text"/>
 </div>
 <div class="setting-item stacked">
 <label data-i18n="interface_only">Только интерфейсы (через запятую)</label>
@@ -1057,7 +1093,9 @@ body.light-theme #error-overlay {
                 "list_exclude": "Домены (исключения)",
                 "ipset_custom": "IP / подсети (обход)",
                 "ipset_exclude": "IP / подсети (исключения)",
-                "dnscrypt_custom": "DNSCrypt cloaking-rules.txt",
+                "cloaking_rules": "Правила маскировки",
+                "blocked_names": "Заблокированные домены",
+                "blocked_ips": "Заблокированные IP",
                 "line_counter": "Строк: {count}",
                 "btn_clear_title": "Очистить список",
                 "btn_save": "Сохранить",
@@ -1082,6 +1120,7 @@ body.light-theme #error-overlay {
                 "ipset_link": "Ссылка на список IP (ipset)",
                 "cloaking_rules_link": "Ссылка на Cloaking Rules",
                 "blocked_names_link": "Ссылка на Blocked Names",
+                "blocked_ips_link": "Ссылка на Blocked IPs",
                 "note_restart": "После изменения настроек не забудьте перезапустить службу",
                 "interface_settings_title": "Интерфейс",
                 "dark_theme": "Темная тема",
@@ -1111,7 +1150,9 @@ body.light-theme #error-overlay {
                 "list_exclude": "Domains (exclude)",
                 "ipset_custom": "IPs / subnets (bypass)",
                 "ipset_exclude": "IPs / subnets (exclude)",
-                "dnscrypt_custom": "DNSCrypt cloaking-rules.txt",
+                "cloaking_rules": "Cloaking Rules",
+                "blocked_names": "Blocked Names",
+                "blocked_ips": "Blocked IPs",
                 "line_counter": "Lines: {count}",
                 "btn_clear_title": "Clear list",
                 "btn_save": "Save",
@@ -1136,6 +1177,7 @@ body.light-theme #error-overlay {
                 "ipset_link": "IP list (ipset) link",
                 "cloaking_rules_link": "Cloaking Rules Link",
                 "blocked_names_link": "Blocked Names Link",
+                "blocked_ips_link": "Blocked IPs Link",
                 "note_restart": "Restart the service after changing settings",
                 "interface_settings_title": "Interface",
                 "dark_theme": "Dark Theme",
@@ -1283,6 +1325,7 @@ async function waitForZapret(wantRunning, timeout = 25000) {
                 const inputIpsetLink = document.getElementById('input-ipset-link');
                 const inputCloakingRules = document.getElementById('input-cloaking-rules');
                 const inputBlockedNames = document.getElementById('input-blocked-names');
+                const inputBlockedIps = document.getElementById('input-blocked-ips');
                 const inputInterfaceOnly = document.getElementById('input-interface-only');
                 let currentzapretLogText = '';
                 let currentDnscryptLogText = '';
@@ -1293,7 +1336,9 @@ async function waitForZapret(wantRunning, timeout = 25000) {
                     'list/list-exclude-user.txt': document.getElementById('file-list-exclude'),
                     'list/ipset-all-user.txt': document.getElementById('file-ipset-custom'),
                     'list/ipset-exclude-user.txt': document.getElementById('file-ipset-exclude'),
-                    'dnscrypt/cloaking-rules.txt': document.getElementById('file-dnscrypt-custom')
+                    'dnscrypt/cloaking-rules.txt': document.getElementById('file-cloaking-rules'),
+                    'dnscrypt/blocked-names.txt': document.getElementById('file-blocked-names'),
+                    'dnscrypt/blocked-ips.txt': document.getElementById('file-blocked-ips')
                 };
                 const isDirty = {};
                 Object.keys(fileContents).forEach(path => {
@@ -1357,7 +1402,7 @@ async function waitForZapret(wantRunning, timeout = 25000) {
                 // root-shell spawns — this is the bulk of the polling cost. Newline is
                 // used as the separator because config values are single-line and \n is
                 // the only printf escape guaranteed across toybox/mksh on Android.
-                const CFG_KEYS = ['current-strategy', 'bypass-calls', 'debug', 'ipset-filter', 'ipset-link', 'list-general-link', 'dnscrypt-cloaking-rules-link', 'dnscrypt-blocked-names-link', 'interface-only'];
+                const CFG_KEYS = ['current-strategy', 'bypass-calls', 'debug', 'ipset-filter', 'ipset-link', 'list-general-link', 'dnscrypt-cloaking-rules-link', 'dnscrypt-blocked-names-link', 'dnscrypt-blocked-ips-link', 'interface-only'];
                 const readState = async () => {
                     const reads = CFG_KEYS.map(k => `printf '%s=%s\\n' '${k}' "$(cat ${MODPATH}/config/${k} 2>/dev/null)"`);
                     reads.push(`printf 'nfqws=%s\\n' "$({ pgrep -x nfqws || pgrep -x nfqws2; } >/dev/null 2>&1 && echo 1 || echo 0)"`);
@@ -1397,6 +1442,7 @@ async function waitForZapret(wantRunning, timeout = 25000) {
                     setIfNotFocused(inputIpsetLink, st['ipset-link']);
                     setIfNotFocused(inputCloakingRules, st['dnscrypt-cloaking-rules-link']);
                     setIfNotFocused(inputBlockedNames, st['dnscrypt-blocked-names-link']);
+                    setIfNotFocused(inputBlockedIps, st['dnscrypt-blocked-ips-link']);
                     setIfNotFocused(inputInterfaceOnly, st['interface-only']);
                     if (st.version) moduleVersionEl.textContent = `v${st.version.replace(/^v/, '')}`;
                     const statusCard = statusNfqws.closest('.card');
@@ -1578,6 +1624,7 @@ async function waitForZapret(wantRunning, timeout = 25000) {
                 setupLinkInput(inputIpsetLink, 'ipset-link', true);
                 setupLinkInput(inputCloakingRules, 'dnscrypt-cloaking-rules-link', true);
                 setupLinkInput(inputBlockedNames, 'dnscrypt-blocked-names-link', true);
+                setupLinkInput(inputBlockedIps, 'dnscrypt-blocked-ips-link', true);
                 setupLinkInput(inputInterfaceOnly, 'interface-only', false);
                 document.querySelectorAll('.btn-save').forEach(button => {
                     button.addEventListener('click', async () => {
