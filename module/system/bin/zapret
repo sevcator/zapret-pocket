@@ -160,7 +160,14 @@ rebuild_ipset_file_for_mode() {
                 rm -f "$tmp_file"
                 return 1
             }
-            append_unique_nonempty_lines "$IPSET_SERVICE_FILE" "$tmp_file"
+            # Bulk-normalize the (large, ~60k-line) service list in a single pass.
+            # The previous per-line dedup spawned ~4 processes AND a full-file grep
+            # for every line — O(n^2) with ~250k forks, turning "any"-mode startup
+            # into a multi-minute freeze. sort -u is order-independent for an ipset.
+            tr -d '\r' < "$IPSET_SERVICE_FILE" \
+                | tr '[:upper:]' '[:lower:]' \
+                | sed 's/^[[:space:]]*//;s/[[:space:]]*$//;/^$/d' \
+                | sort -u > "$tmp_file"
             ;;
         *)
             echo "! Unknown ipset filter mode: $mode"
@@ -372,12 +379,41 @@ current_interface_only() {
     fi
 }
 
+current_engine() {
+    _ce_file="$STRATEGY_DIR/$(current_strategy).sh"
+    _ce_val=1
+    if [ -f "$_ce_file" ]; then
+        _ce_e="$(grep -oE 'ZAPRET=[12]' "$_ce_file" 2>/dev/null | tail -1 | sed 's/ZAPRET=//')"
+        [ -n "$_ce_e" ] && _ce_val="$_ce_e"
+    fi
+    echo "$_ce_val"
+}
+
+engine_command() {
+    _ec_strat="$(current_strategy)"
+    _ec_eng="$(current_engine)"
+    if [ "$_ec_eng" = "2" ]; then
+        _ec_bin="nfqws2"
+    else
+        _ec_bin="nfqws"
+    fi
+    echo "! Current strategy: $_ec_strat"
+    echo "! Current engine: zapret$_ec_eng ($_ec_bin)"
+    if [ "$_ec_eng" = "2" ] && [ ! -x "$ZAPRET_DIR/nfqws2" ]; then
+        echo "! Warning: nfqws2 is not installed — this strategy will fail to start"
+    fi
+    echo "- Set ZAPRET=1 or ZAPRET=2 inside the strategy file to choose the engine:"
+    echo "  $STRATEGY_DIR/$_ec_strat.sh"
+}
+
 command_info() {
     echo "zapret Pocket"
     echo "  usage: zapret [--debug] <command>"
     echo "! Current strategy: $(current_strategy)"
+    echo "! Current engine: zapret$(current_engine)"
     echo "! Current ipset filter: $(current_ipset_filter)"
     echo "! Current interface-only: $(current_interface_only)"
+    echo "! Debug logging: $(config_enabled "$DEBUG_FILE" "0" && echo on || echo off)"
     echo "  start                              - Start the zapret service"
     echo "  stop                               - Stop the zapret service"
     echo "  restart                            - Restart the zapret service"
@@ -392,12 +428,15 @@ command_info() {
     echo "  exclude list                       - Show exclude user lists"
     echo "  search <entry1 entry2 ...>         - Search entries across zapret lists"
     echo "  setup bypass-calls [1|0]           - Enable or disable bypass calls"
+    echo "  setup debug [1|0]                  - Enable or disable persistent debug logging"
     echo "  setup ipset-filter [none|loaded|any] - Set ipset-all mode"
     echo "  setup ipset-link [none|url]        - Set ipset-service source"
     echo "  setup cloaking-rules [none|url]    - Set dnscrypt cloaking-rules source"
     echo "  setup blocked-names [none|url]     - Set dnscrypt blocked-names source"
     echo "  setup list-general [none|url]      - Set list-general source"
     echo "  setup interface-only [none|iface[,iface...]] - Restrict iptables rules to interface(s)"
+    echo "  engine                             - Show the current strategy's engine (set ZAPRET=2"
+    echo "                                       in a strategy file to use zapret2 / nfqws2)"
 }
 
 list_strategies() {
@@ -542,7 +581,12 @@ start_service() {
     ensure_default_config
     ensure_runtime_files
     refresh_linked_lists
-    apply_ipset_filter_mode || return 1
+    # Refreshing ipset-all.txt may need the network (mode "any" downloads the
+    # service list). A failure here must NOT prevent the DPI-bypass service from
+    # starting — nfqws still works with the existing/empty ipset list.
+    if ! apply_ipset_filter_mode; then
+        echo "! Could not rebuild ipset-all.txt (network?), continuing with the existing list"
+    fi
 
     started_any=0
 
@@ -673,6 +717,9 @@ setup_command() {
     case "$key" in
         bypass-calls)
             set_boolean_file "bypass-calls" "$BYPASS_CALLS_FILE" "$value" || return 1
+            ;;
+        debug)
+            set_boolean_file "debug" "$DEBUG_FILE" "$value" || return 1
             ;;
         ipset-filter)
             case "$value" in
@@ -813,25 +860,9 @@ _curl_probe() {
     fi
 }
 
-# ---------------------------------------------------------------------------
-# _ping_probe <host>  → avg ms or "Timeout"
-# ---------------------------------------------------------------------------
-_ping_probe() {
-    _pp_host="$1"
-    # -c 2 sends 2 packets. -q makes it quiet except for summary line.
-    _pp_out="$(ping -c 2 -W 1 -q "$_pp_host" 2>/dev/null | tail -1)"
-    case "$_pp_out" in
-        *avg*|*min*|*mdev*)
-            _pp_avg="$(printf '%s' "$_pp_out" | sed -n 's|.*=[[:space:]]*[0-9.]*/\([0-9.]*\)/.*|\1|p')"
-            [ -n "$_pp_avg" ] && printf '%s ms' "$_pp_avg" || printf 'Timeout'
-            ;;
-        *)
-            printf 'Timeout' ;;
-    esac
-}
-
 test_command() {
     NFQWS_BIN="$ZAPRET_DIR/nfqws"
+    NFQWS2_BIN="$ZAPRET_DIR/nfqws2"
     DNSCRYPT_TEST_PROXY_BIN="${DNSCRYPT_PROXY_BIN:-$DNSCRYPT_DIR/dnscrypt-proxy}"
     TEST_RESULT_DIR="$RUN_DIR/test"
     DNSCRYPT_STARTED_BY_TEST=0
@@ -842,8 +873,6 @@ test_command() {
     HAS_IP6_NFQUEUE=0
     PRECHECK_HTTPS_STATUS=""
     PRECHECK_HTTPS_DETAIL=""
-    PRECHECK_HOST_PING=""
-    PRECHECK_IP_PING=""
 
     cleanup_test_runtime() {
         [ "$TEST_CLEANUP_DONE" = "1" ] && return 0
@@ -965,6 +994,13 @@ test_command() {
         echo "! Failed to download suite.json — DPI threshold checks will be skipped"
     fi
 
+    # Persist parsed threshold checks so the per-strategy loops can read them via
+    # redirection. A `printf | while` pipeline runs the loop in a subshell, which
+    # would lose _dpi_thr_idx / _probe_pids / st_thr_* updates to the parent and
+    # silently disable threshold scoring.
+    DPI_CHECKS_FILE="$TEST_RESULT_DIR/dpi-checks.list"
+    printf '%s' "$DPI_CHECKS" > "$DPI_CHECKS_FILE"
+
     TEST_DEBUG_LOG="$TEST_RESULT_DIR/zapret-test-debug.log"
     DNSCRYPT_START_LOG="$TEST_RESULT_DIR/dnscrypt-start.log"
     [ "$TEST_DEBUG" = "1" ] && : > "$TEST_DEBUG_LOG"
@@ -1074,11 +1110,16 @@ test_command() {
         echo "----------------------------------------------------"
 
         config=""
+        ZAPRET=1
         # shellcheck disable=SC1090
         . "$strategy_file" 2>/dev/null
         config="$(printf '%s\n' "$config" | sed \
             -e 's/ --dpi-desync-any-protocol=1 --dpi-desync-fake-quic=/ --dpi-desync-fake-quic=/g' \
             -e 's/ --dpi-desync-fake-quic=/ --dpi-desync-any-protocol=1 --dpi-desync-fake-quic=/g')"
+        case "${ZAPRET:-1}" in
+            2) _test_engine=2; _test_nfqws="$NFQWS2_BIN" ;;
+            *) _test_engine=1; _test_nfqws="$NFQWS_BIN" ;;
+        esac
 
         if [ "$TEST_DEBUG" = "1" ]; then
             {
@@ -1092,7 +1133,13 @@ test_command() {
             continue
         fi
 
-        printf '  > Starting nfqws... '
+        if [ ! -x "$_test_nfqws" ]; then
+            echo "  ! zapret2 engine (nfqws2) not installed — ZAPRET=2 strategy skipped"
+            printf 'SKIP:0:0:0:0:0:0:0:%s\n' "$strategy_name" >> "$RESULT_FILE"
+            continue
+        fi
+
+        printf '  > Starting nfqws (zapret%s)... ' "$_test_engine"
         ensure_zapret_firewall_base 2>/dev/null
 
         _tcp_ports="$(printf '%s\n' "$config" | grep -oE 'filter-tcp=[0-9,-]+' | \
@@ -1122,7 +1169,7 @@ test_command() {
 
         _nfqws_log="$TEST_RESULT_DIR/nfqws-$strategy_name.log"
         : > "$_nfqws_log"
-        "$NFQWS_BIN" --uid=0:0 --bind-fix4 --bind-fix6 --qnum=200 $config > "$_nfqws_log" 2>&1 &
+        "$_test_nfqws" --uid=0:0 --bind-fix4 --bind-fix6 --qnum=200 $config > "$_nfqws_log" 2>&1 &
         _nfqws_pid=$!
         sleep 2
         if ! pid_is_running "$_nfqws_pid"; then
@@ -1192,7 +1239,7 @@ test_command() {
                     fi
                     # POST 64KB random-safe data, 15s timeout
                     # Generate pseudo-random data via /dev/urandom or fallback
-                    _post_tmp="$TEST_RESULT_DIR/_post64_$$"
+                    _post_tmp="$TEST_RESULT_DIR/_post64_$$.$_dpi_host_idx"
                     if [ -r /dev/urandom ]; then
                         dd if=/dev/urandom of="$_post_tmp" bs=1024 count=64 2>/dev/null
                     else
@@ -1223,7 +1270,7 @@ test_command() {
         # ---------------------------------------------------------------------------
         _dpi_thr_idx=0
         if [ -n "$DPI_CHECKS" ]; then
-            printf '%s' "$DPI_CHECKS" | while IFS='|' read -r _cid _curl _cthr; do
+            while IFS='|' read -r _cid _curl _cthr; do
                 [ -n "$_cid" ] || continue
                 _dpi_thr_idx=$((_dpi_thr_idx + 1))
                 (
@@ -1243,7 +1290,7 @@ test_command() {
                     fi
                 ) &
                 _probe_pids="$_probe_pids $!"
-            done
+            done < "$DPI_CHECKS_FILE"
         fi
 
         # Wait only for probe jobs
@@ -1321,7 +1368,7 @@ test_command() {
         if [ -n "$DPI_CHECKS" ] && [ "$_dpi_thr_idx" -gt 0 ]; then
             printf '  > tcp16-20 threshold checks:\n'
             _ti=0
-            printf '%s' "$DPI_CHECKS" | while IFS='|' read -r _cid _curl _cthr; do
+            while IFS='|' read -r _cid _curl _cthr; do
                 [ -n "$_cid" ] || continue
                 _ti=$((_ti + 1))
                 [ "$_ti" -gt "$_dpi_thr_idx" ] && break
@@ -1336,7 +1383,7 @@ test_command() {
                     OK)   st_thr_ok=$((st_thr_ok+1)) ;;
                     FAIL) st_thr_fail=$((st_thr_fail+1)) ;;
                 esac
-            done
+            done < "$DPI_CHECKS_FILE"
         fi
 
         kill -TERM "$_nfqws_pid" 2>/dev/null || true
@@ -1389,7 +1436,7 @@ test_command() {
         fi
     done < "$RESULT_FILE"
     rm -f "$RESULT_FILE"
-    rm -f "$DPI_SUITE_V2_FILE" "$DPI_SUITE_FILE" 2>/dev/null || true
+    rm -f "$DPI_SUITE_V2_FILE" "$DPI_SUITE_FILE" "$DPI_CHECKS_FILE" 2>/dev/null || true
 
     cleanup_test_runtime
     trap - INT TERM
@@ -1442,6 +1489,7 @@ case "$1" in
     running) module_stack_is_running ;;
     strategy) strategy_command "$2" ;;
     import-strategy) import_strategy "$2" ;;
+    engine) engine_command ;;
     test) shift; test_command "$@" ;;
     ipset-update) ipset_update ;;
     custom) shift; custom_command "$@" ;;
