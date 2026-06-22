@@ -33,6 +33,7 @@ LIST_GENERAL_LINK="$CONFIG_DIR/list-general-link"
 LIST_GENERAL_LINK_LEGACY="$CONFIG_DIR/custom-list-general-url"
 DNSCRYPT_BLOCKED_NAMES_LINK="$CONFIG_DIR/dnscrypt-blocked-names-link"
 DNSCRYPT_BLOCKED_NAMES_LINK_LEGACY="$CONFIG_DIR/custom-blocked-names-url"
+DNSCRYPT_BLOCKED_IPS_LINK="$CONFIG_DIR/dnscrypt-blocked-ips-link"
 DNSCRYPT_CLOAKING_LINK="$CONFIG_DIR/dnscrypt-cloaking-rules-link"
 DNSCRYPT_CLOAKING_LINK_LEGACY="$CONFIG_DIR/custom-cloaking-rules-url"
 BYPASS_CALLS_LEGACY_FILE="$CONFIG_DIR/bypass-discord"
@@ -781,6 +782,7 @@ refresh_linked_file() {
 refresh_linked_lists() {
     refresh_linked_file "$DNSCRYPT_DIR/cloaking-rules.txt" "$DNSCRYPT_CLOAKING_LINK" "$DNSCRYPT_CLOAKING_LINK_LEGACY" || true
     refresh_linked_file "$DNSCRYPT_DIR/blocked-names.txt" "$DNSCRYPT_BLOCKED_NAMES_LINK" "$DNSCRYPT_BLOCKED_NAMES_LINK_LEGACY" || true
+    refresh_linked_file "$DNSCRYPT_DIR/blocked-ips.txt" "$DNSCRYPT_BLOCKED_IPS_LINK" || true
     refresh_linked_file "$LIST_DIR/list-general.txt" "$LIST_GENERAL_LINK" "$LIST_GENERAL_LINK_LEGACY" || true
 }
 
