@@ -8,6 +8,15 @@
 
 [Author](https://github.com/sevcator/)
 
+- Add files via upload 127b6a6
+- Add files via upload 15b4290
+- Add files via upload 49fe619
+- Add files via upload 5d2f6fe
+- Add files via upload 513526d
+- Add files via upload 2517c83
+- Add files via upload 724bb07
+- Add files via upload 7e7074e
+- chore: update version, changelog, update.json, lua [skip ci] ff425cc
 - Delete .github/scripts/__pycache__ directory b09151e
 - Add files via upload e514f1b
 - Add files via upload 2b0137a

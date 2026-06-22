@@ -914,7 +914,6 @@ function print_current_time()
 end
 function timer_info_print(tinfo)
 	print(" timer_info.name="..tinfo.name)
-	print(" timer_info.func="..tinfo.func)
 	print(" timer_info.period="..tinfo.period)
 	print(" timer_info.oneshot="..tostring(tinfo.oneshot))
 	print(" timer_info.fires="..tinfo.fires)
@@ -939,8 +938,17 @@ function timer2(name, data)
 	end
 end
 function test_timer(opts)
-	timer_set("t1","timer1",500,true,"sample_data");
+	-- anonymous function
+	timer_set("t0",function(name,data)
+		print("timer "..name.." fired. anonymous timer function")
+		print_current_time()
+		end,
+		100,true)
+
+	-- pass function as function
+	timer_set("t1",timer1,500,true,"sample_data");
 	local tbl = {n=0}
+	-- pass function through string name
 	timer_set("t2","timer2",700,false,tbl);
 
 	print("* timers\n")
