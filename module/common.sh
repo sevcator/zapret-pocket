@@ -289,11 +289,36 @@ nfqws_is_running() {
     pgrep -x nfqws2 >/dev/null 2>&1
 }
 
+# iptables and ip6tables share one kernel lock (xtables). Android's netd and the
+# second zapret daemon (dnscrypt.sh) modify rules at the same time, so WITHOUT -w
+# our rule installs intermittently fail ("another app is holding the xtables lock")
+# — and because every call is silenced with 2>/dev/null the failure is invisible:
+# the module looks like it started while no traffic is actually queued (the classic
+# "starts but nothing changes"). -w makes iptables wait for the lock. Probed once,
+# because very old binaries accept -w with no seconds argument.
+# Must always be expanded UNQUOTED ($IPT_LOCK_WAIT, never "$IPT_LOCK_WAIT") so it
+# field-splits into the two args `-w 5` (or nothing). Quoting it would pass the
+# single literal "-w 5" to iptables and error.
+IPT_LOCK_WAIT=""
+_IPT_WAIT_PROBED=""
+ensure_ipt_lock_wait() {
+    [ -n "$_IPT_WAIT_PROBED" ] && return 0
+    _IPT_WAIT_PROBED=1
+    # `-S` is read-only and returns immediately; this only tests whether the binary
+    # accepts the `-w <seconds>` syntax (every iptables that has the xtables lock,
+    # i.e. >= 1.6.0, does). If not, fall back to lock-less calls (the old behavior)
+    # rather than a bare `-w`, which on ancient binaries means "wait forever".
+    if iptables -w 5 -t filter -S >/dev/null 2>&1; then
+        IPT_LOCK_WAIT="-w 5"
+    fi
+}
+
 iptables_supported() {
     tool="$1"
     table="$2"
     command -v "$tool" >/dev/null 2>&1 || return 1
-    "$tool" -t "$table" -S >/dev/null 2>&1
+    ensure_ipt_lock_wait
+    "$tool" $IPT_LOCK_WAIT -t "$table" -S >/dev/null 2>&1
 }
 
 append_unique_rule() {
@@ -301,7 +326,8 @@ append_unique_rule() {
     table="$2"
     chain="$3"
     shift 3
-    "$tool" -t "$table" -C "$chain" "$@" >/dev/null 2>&1 || "$tool" -t "$table" -A "$chain" "$@" >/dev/null 2>&1
+    ensure_ipt_lock_wait
+    "$tool" $IPT_LOCK_WAIT -t "$table" -C "$chain" "$@" >/dev/null 2>&1 || "$tool" $IPT_LOCK_WAIT -t "$table" -A "$chain" "$@" >/dev/null 2>&1
 }
 
 insert_unique_jump() {
@@ -309,7 +335,8 @@ insert_unique_jump() {
     table="$2"
     parent="$3"
     chain="$4"
-    "$tool" -t "$table" -C "$parent" -j "$chain" >/dev/null 2>&1 || "$tool" -t "$table" -I "$parent" -j "$chain" >/dev/null 2>&1
+    ensure_ipt_lock_wait
+    "$tool" $IPT_LOCK_WAIT -t "$table" -C "$parent" -j "$chain" >/dev/null 2>&1 || "$tool" $IPT_LOCK_WAIT -t "$table" -I "$parent" -j "$chain" >/dev/null 2>&1
 }
 
 ensure_chain() {
@@ -319,7 +346,7 @@ ensure_chain() {
     if ! iptables_supported "$tool" "$table"; then
         return 1
     fi
-    "$tool" -t "$table" -N "$chain" >/dev/null 2>&1 || "$tool" -t "$table" -F "$chain" >/dev/null 2>&1
+    "$tool" $IPT_LOCK_WAIT -t "$table" -N "$chain" >/dev/null 2>&1 || "$tool" $IPT_LOCK_WAIT -t "$table" -F "$chain" >/dev/null 2>&1
     return 0
 }
 
@@ -331,9 +358,9 @@ remove_chain() {
     if ! iptables_supported "$tool" "$table"; then
         return 0
     fi
-    while "$tool" -t "$table" -D "$parent" -j "$chain" >/dev/null 2>&1; do :; done
-    "$tool" -t "$table" -F "$chain" >/dev/null 2>&1 || true
-    "$tool" -t "$table" -X "$chain" >/dev/null 2>&1 || true
+    while "$tool" $IPT_LOCK_WAIT -t "$table" -D "$parent" -j "$chain" >/dev/null 2>&1; do :; done
+    "$tool" $IPT_LOCK_WAIT -t "$table" -F "$chain" >/dev/null 2>&1 || true
+    "$tool" $IPT_LOCK_WAIT -t "$table" -X "$chain" >/dev/null 2>&1 || true
 }
 
 ensure_zapret_firewall_base() {
