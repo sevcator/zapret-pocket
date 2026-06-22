@@ -210,6 +210,12 @@ apply_firewall_rules() {
     configure_match_flags
     add_multiport "tcp" "$tcp_ports"
     add_multiport "udp" "$udp_ports"
+    # Confirm the NFQUEUE rules really landed. Lock contention / missing privileges
+    # used to make this fail silently, leaving nfqws running with nothing queued.
+    if ! iptables $IPT_LOCK_WAIT -t mangle -S "$CHAIN_ZAPRET_POST" 2>/dev/null | grep -q -- '-j NFQUEUE'; then
+        echo "! WARNING: zapret NFQUEUE rules were NOT installed (iptables lock or permissions?)."
+        echo "! Traffic is not being intercepted — DPI bypass will have no effect."
+    fi
 }
 
 terminate_child() {
