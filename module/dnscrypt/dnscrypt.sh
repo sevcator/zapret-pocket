@@ -7,6 +7,26 @@ COMMON_FILE="${COMMON_FILE:-$MODPATH/common.sh}"
 DNSCRYPT_PROXY_BIN="${DNSCRYPT_PROXY_BIN:-$DNSCRYPT_DIR/dnscrypt-proxy}"
 STOP_REQUESTED=0
 DNSCRYPT_PID=""
+DNSCRYPT_DEBUG=0
+DNSCRYPT_DEBUG_LOG="$RUN_DIR/dnscrypt-debug.log"
+
+# Same debug model as zapret.sh: CLI_DEBUG=1 (per-run, traces to the caller) or a
+# persistent config/debug flag (traces + dnscrypt-proxy output captured to a log).
+setup_logging() {
+    if [ "${CLI_DEBUG:-0}" = "1" ]; then
+        DNSCRYPT_DEBUG=1
+        set -x
+        return 0
+    fi
+
+    DNSCRYPT_DEBUG="$(config_value "$DEBUG_FILE" "0")"
+    if [ "$DNSCRYPT_DEBUG" = "1" ]; then
+        mkdir -p "$RUN_DIR"
+        touch "$DNSCRYPT_DEBUG_LOG"
+        exec >>"$DNSCRYPT_DEBUG_LOG" 2>&1
+        set -x
+    fi
+}
 
 setup_firewall() {
     ensure_dnscrypt_firewall_base
@@ -80,6 +100,7 @@ main() {
     trap on_signal INT TERM
     trap cleanup_runtime EXIT
 
+    setup_logging
     apply_dnscrypt_runtime_tweaks
     setup_firewall
     cd "$DNSCRYPT_DIR" || {
@@ -88,7 +109,12 @@ main() {
     }
 
     while [ "$STOP_REQUESTED" -eq 0 ]; do
-        "$DNSCRYPT_PROXY_BIN" >/dev/null 2>&1 &
+        if [ "$DNSCRYPT_DEBUG" = "1" ]; then
+            # Inherit the debug fds (the log when persistent, the terminal under CLI_DEBUG)
+            "$DNSCRYPT_PROXY_BIN" &
+        else
+            "$DNSCRYPT_PROXY_BIN" >/dev/null 2>&1 &
+        fi
         DNSCRYPT_PID=$!
         write_pidfile "$DNSCRYPT_PID_FILE" "$DNSCRYPT_PID"
         wait "$DNSCRYPT_PID"
