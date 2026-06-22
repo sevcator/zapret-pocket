@@ -324,12 +324,10 @@ def stage_repo(root: Path) -> None:
         for path in fake_root.glob("*.bin"):
             copy_tree(path, root / "zapret" / path.name)
 
-    ipset_root = root / "ipset"
-    ipset_root.mkdir(parents=True, exist_ok=True)
-    for name in ("ipset-exclude.txt", "ipset-exclude-user.txt"):
-        src = ROOT / "list" / name
-        if src.exists():
-            copy_tree(src, ipset_root / name)
+    # NOTE: the module keeps ipset lists in list/ (IPSET_DIR defaults to MODPATH/list),
+    # so we intentionally do NOT create a separate ipset/ directory here — it is legacy
+    # layout that prune_legacy_paths() removes, and creating it only left an empty,
+    # stray ipset/ dir in the staged output.
 
     zapret_src = ROOT / "zapret"
     if zapret_src.exists():
