@@ -8,4 +8,5 @@
 
 [Author](https://github.com/sevcator/)
 
-- chore: update version, changelog, update.json, lua [skip ci] 5f07e1e
+- fix(ci): build with committed assets when upstream repo is gone 1a85824
+- feat: Telegram bypass (tg-ws-proxy) + wssize profile + dnscrypt user overlays e783a5c
