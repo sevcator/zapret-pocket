@@ -82,10 +82,29 @@ select_engine() {
     echo "- Engine: zapret$ZAPRET_ENGINE ($(basename "$NFQWS_BIN"))"
 }
 
+# Some sites drop the ServerHello *after* the ClientHello: the TCP handshake
+# completes and the ClientHello is sent, but no TLS reply ever returns. Pure
+# ClientHello desync (split/disorder/fake) cannot fix this — the DPI is dropping
+# the server's return packets. The counter is --wssize, which shrinks the client
+# window so the server fragments its ServerHello/cert below the DPI reassembly
+# threshold. wssize must be applied from the SYN, which only happens in an
+# ipset/IP profile (a hostlist profile is matched too late, after the SNI). So if
+# list/ipset-wssize-user.txt holds any IPs, we prepend a high-priority ipset+wssize
+# profile that claims those connections before any hostlist profile. Engine 1 only
+# (zapret2/nfqws2 desync lives in Lua).
+apply_wssize_profile() {
+    [ "${ZAPRET:-1}" = "2" ] && return 0
+    _wsfile="$MODPATH/list/ipset-wssize-user.txt"
+    grep -qE '^[[:space:]]*[0-9a-fA-F]' "$_wsfile" 2>/dev/null || return 0
+    config="--filter-tcp=80,443 --ipset=$_wsfile --wssize=1:6 --dpi-desync=multidisorder --dpi-desync-split-pos=1,midsld --dpi-desync-fooling=md5sig --dpi-desync-repeats=6 --new $config"
+    echo "- wssize profile prepended for IPs in $(basename "$_wsfile")"
+}
+
 run_strategy() {
     config=""
     ZAPRET=1
     . "$STRATEGY_DIR/$CURRENT_STRATEGY.sh"
+    apply_wssize_profile
     # The QUIC any-protocol normalization is a zapret1 (nfqws) quirk. zapret2
     # strategies use the --lua-desync syntax and must pass through untouched.
     if [ "${ZAPRET:-1}" != "2" ]; then
@@ -282,11 +301,23 @@ main() {
     derive_ports
     apply_firewall_rules
 
+    # Extra firewall setup (QUIC block) is done ONCE just after the main engine is up —
+    # see inside the loop — so its xtables-lock contention with dnscrypt/netd at boot
+    # never delays the primary desync.
+    _post_start_done=0
     while [ "$STOP_REQUESTED" -eq 0 ]; do
         sh "$ZAPRET_DIR/make-unkillable.sh" >/dev/null 2>&1 &
         "$NFQWS_BIN" --uid=0:0 --bind-fix4 --bind-fix6 --qnum=200 $ENGINE_LUA_ARGS $config &
         NFQWS_PID=$!
         write_pidfile "$NFQWS_PID_FILE" "$NFQWS_PID"
+
+        # One-time post-start firewall extras, done AFTER the main nfqws is up so their
+        # xtables-lock waits never delay the primary desync. Idempotent, so a watchdog
+        # relaunch re-running them is harmless.
+        if [ "$_post_start_done" -eq 0 ]; then
+            _post_start_done=1
+            apply_quic_block
+        fi
 
         # Watchdog: kill nfqws if it becomes zombie or hangs (checked every 30s)
         (

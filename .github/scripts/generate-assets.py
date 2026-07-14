@@ -25,6 +25,22 @@ CLOAKING_HEADER = """################################
 # Generated from upstream hosts file during packaging
 """
 
+# Static cloaks for domains that are DNS-blackholed on many RU networks (the bundled
+# resolver returns an empty answer) — which is the usual reason an APP fails while the
+# site works in a browser (the browser dodges it via its own DoH; the app uses system
+# DNS). Cloaking forces resolution. For gelbooru the IP also needs an entry in
+# list/ipset-wssize-user.txt so apply_wssize_profile bypasses its ServerHello-drop;
+# Facebook/Instagram edges bypass with the normal desync. Update the IP if the site
+# moves. NOTE: youtubei.googleapis.com is intentionally NOT cloaked — it is also
+# SNI-blocked at every IP, so resolving it wouldn't help (YouTube app stays broken).
+# domain -> ip
+EXTRA_CLOAKING_RULES = {
+    "gelbooru.com": "131.143.124.72",
+    "www.gelbooru.com": "131.143.124.72",
+    "instagram.com": "31.13.72.53",
+    "www.instagram.com": "31.13.72.53",
+}
+
 
 def copy_tree(src: Path, dest: Path) -> None:
     if src.is_dir():
@@ -187,6 +203,13 @@ def convert_hosts_to_cloaking_rules(content: str) -> str:
                 continue
             seen.add(pair)
             lines.append(f"={normalized_domain} {ip}")
+
+    for domain, ip in EXTRA_CLOAKING_RULES.items():
+        pair = (domain, ip)
+        if pair in seen:
+            continue
+        seen.add(pair)
+        lines.append(f"={domain} {ip}")
 
     return "\n".join(lines) + "\n"
 

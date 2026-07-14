@@ -62,6 +62,14 @@ preserve_user_data_for_update() {
   cp -af "$FINALMODPATH/list/list-exclude-user.txt" "$MODUPDATEPATH/list/list-exclude-user.txt" 2>/dev/null || true
   cp -af "$FINALMODPATH/list/ipset-all-user.txt" "$MODUPDATEPATH/list/ipset-all-user.txt" 2>/dev/null || true
   cp -af "$FINALMODPATH/list/ipset-exclude-user.txt" "$MODUPDATEPATH/list/ipset-exclude-user.txt" 2>/dev/null || true
+  cp -af "$FINALMODPATH/list/ipset-wssize-user.txt" "$MODUPDATEPATH/list/ipset-wssize-user.txt" 2>/dev/null || true
+
+  # User overlays for the dnscrypt lists (cloaking / blocked-names / blocked-ips)
+  mkdir -p "$MODUPDATEPATH/dnscrypt"
+  cp -af "$FINALMODPATH/dnscrypt/cloaking-rules-user.txt" "$MODUPDATEPATH/dnscrypt/cloaking-rules-user.txt" 2>/dev/null || true
+  cp -af "$FINALMODPATH/dnscrypt/blocked-names-user.txt" "$MODUPDATEPATH/dnscrypt/blocked-names-user.txt" 2>/dev/null || true
+  cp -af "$FINALMODPATH/dnscrypt/blocked-ips-user.txt" "$MODUPDATEPATH/dnscrypt/blocked-ips-user.txt" 2>/dev/null || true
+
 }
 preserve_user_data_for_update
 

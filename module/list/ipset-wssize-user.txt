@@ -1,0 +1,20 @@
+# IPs of sites that drop the ServerHello AFTER the ClientHello: the TCP handshake
+# completes and the ClientHello is sent, but no TLS reply ever returns and the
+# connection times out. Ordinary DPI desync (split / disorder / fake) cannot fix
+# this — the DPI is dropping the server's return packets, not reacting to the SNI.
+#
+# Every IPv4 address / CIDR listed here gets an automatic high-priority profile with
+# --wssize=1:6, which shrinks the TCP window so the server fragments its
+# ServerHello/cert below the DPI reassembly threshold. (wssize must be applied from
+# the SYN, which only works in an ipset/IP profile — that is why this is an IP list,
+# not a hostlist. The module prepends the profile in zapret.sh -> apply_wssize_profile.)
+#
+# One IPv4 address or CIDR per line. If the site's domain does not resolve on this
+# network, also add a cloak line to dnscrypt/cloaking-rules.txt pointing the domain
+# at the same IP (see gelbooru below).
+#
+# gelbooru.com (ServerHello dropped by RU DPI; also DNS-blackholed -> cloaked)
+131.143.124.72
+# instagram.com / *.cdninstagram.com Facebook edge (same ServerHello-drop; cloaked to
+# this IP in dnscrypt/cloaking-rules.txt — without wssize the TLS reply never returns)
+31.13.72.53

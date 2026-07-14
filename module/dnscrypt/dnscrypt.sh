@@ -81,6 +81,9 @@ cleanup_runtime() {
 main() {
     ensure_layout
     ensure_default_config
+    # Append the user's cloaking / blocked-names / blocked-ips rules onto the base lists
+    # BEFORE dnscrypt-proxy loads them, so user customizations take effect immediately.
+    apply_dnscrypt_user_overlays
 
     if pidfile_is_running "$DNSCRYPT_SUP_PID_FILE"; then
         echo "- dnscrypt supervisor already running"

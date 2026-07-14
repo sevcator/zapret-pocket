@@ -496,16 +496,16 @@
             text-align: center;
         }
         body.light-theme {
-            --bg-main: #FDF2F5;
-            --bg-card: #FFFFFF;
-            --bg-input: #FCE9EE;
-            --border-color: #F3CAD6;
-            --text-primary: #2B1A1F;
-            --text-secondary: #9C6678;
-            --accent-color: #E11D48;
-            --shadow-color-feedback: rgba(225, 29, 72, 0.25);
-            --btn-hover-bg: #F8D7E0;
-            --btn-hover-border: #EFB3C5;
+            --bg-main: #E7E7EB;
+            --bg-card: #FBFBFC;
+            --bg-input: #F1F1F4;
+            --border-color: #D3D3DA;
+            --text-primary: #26262B;
+            --text-secondary: #66666E;
+            --accent-color: #C71585;
+            --shadow-color-feedback: rgba(199, 21, 133, 0.25);
+            --btn-hover-bg: #E6E6EB;
+            --btn-hover-border: #C7C7CE;
         }
         .light-theme .status-indicator.running .dot,
         .light-theme .status-indicator.running .text,
@@ -522,12 +522,12 @@
         }
         .light-theme .card.all-running {
             border-color: var(--accent-color);
-            box-shadow: 0 0 15px rgba(225, 29, 72, 0.2);
+            box-shadow: 0 0 15px rgba(199, 21, 133, 0.2);
         }
         .light-theme .list-btn.active {
             color: var(--accent-color);
             border-color: var(--accent-color);
-            background-color: #FDE3EA;
+            background-color: #EAEAEF;
             box-shadow: none;
         }
         .light-theme .log-line .log-info {
@@ -651,13 +651,224 @@
     transition: opacity 2s ease;
 }
 body.light-theme #error-overlay {
-    background: rgba(225, 29, 72, 0.4);
+    background: rgba(199, 21, 133, 0.4);
 }
 #error-overlay.visible {
     opacity: 1;
 }
 #error-overlay.hidden {
     display: none;
+}
+.strat-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 10002;
+    background: rgba(0, 0, 0, 0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+}
+.strat-overlay.hidden { display: none; }
+.strat-modal {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    width: 100%;
+    max-width: 460px;
+    max-height: 88vh;
+    display: flex;
+    flex-direction: column;
+    padding: 16px;
+    box-shadow: 0 12px 44px rgba(0, 0, 0, 0.45);
+}
+.strat-modal-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+.strat-modal-title { font-size: 1.1em; font-weight: 600; color: var(--text-primary); }
+.strat-modal-x {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 1.7em;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0 6px;
+}
+.strat-modal-x:hover { color: var(--accent-color); }
+#strat-select-all { width: 100%; margin-bottom: 6px; }
+.strat-list {
+    overflow-y: auto;
+    max-height: 46vh;
+    margin: 6px 0 10px 0;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 4px;
+    background: var(--bg-main);
+}
+.strat-list label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    color: var(--text-primary);
+    font-size: 0.9em;
+}
+.strat-list label:hover { background: var(--bg-input); }
+.strat-list input[type="checkbox"] {
+    accent-color: var(--accent-color);
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+}
+.strat-console {
+    display: block;
+    max-height: 52vh;
+    overflow: auto;
+    background: var(--bg-main);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 12px;
+    font-size: 0.78em;
+    line-height: 1.4;
+    white-space: pre-wrap;
+    word-break: break-all;
+    margin: 6px 0;
+    color: var(--text-primary);
+    font-family: 'SF Mono', 'Courier New', monospace;
+}
+.strat-console.hidden,
+#strat-pick-area.hidden,
+#strat-run-area.hidden,
+#strat-test-run.hidden,
+#strat-test-close.hidden { display: none; }
+/* ── Strategy test — live results GUI ──────────────────────────────── */
+.strat-progress {
+    font-size: 0.86em;
+    font-weight: 600;
+    color: var(--text-secondary);
+    padding: 2px 2px 8px 2px;
+    font-variant-numeric: tabular-nums;
+}
+.strat-results {
+    overflow-y: auto;
+    max-height: 50vh;
+    margin: 0 0 8px 0;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 4px;
+    background: var(--bg-main);
+}
+.strat-res-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 10px;
+    border-radius: 6px;
+    color: var(--text-primary);
+    position: relative;
+    overflow: hidden;
+    transition: background 0.2s ease, opacity 0.2s ease;
+}
+.strat-res-row + .strat-res-row { margin-top: 2px; }
+.strat-res-name {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-family: 'SF Mono', 'Courier New', monospace;
+    font-size: 0.86em;
+}
+.strat-res-status {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    z-index: 1;
+}
+.strat-res-label {
+    font-size: 0.78em;
+    color: var(--text-secondary);
+}
+.strat-spinner {
+    width: 15px;
+    height: 15px;
+    border: 2px solid var(--border-color);
+    border-top-color: var(--accent-color);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    flex: 0 0 auto;
+}
+.strat-spinner.dim { opacity: 0.5; }
+/* per-strategy result cells: HTTP | TLS 1.2 | TLS 1.3 */
+.strat-res-cells {
+    display: flex;
+    gap: 4px;
+}
+.strat-col {
+    width: 56px;
+    text-align: center;
+    font-size: 0.78em;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    padding: 4px 0;
+    border-radius: 5px;
+    background: var(--bg-input);
+    color: var(--text-secondary);
+}
+.strat-col.pass    { color: #16A34A; background: rgba(34,197,94,0.16); }
+.strat-col.partial { color: #D97706; background: rgba(245,158,11,0.16); }
+.strat-col.fail    { color: #DC2626; background: rgba(239,68,68,0.15); }
+.strat-col.na      { color: var(--text-secondary); background: var(--bg-input); opacity: 0.65; }
+.strat-res-wait { display: flex; align-items: center; gap: 8px; }
+/* column header row (aligns with the cells above) */
+.strat-res-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 2px 10px 6px 10px;
+}
+.strat-res-head .hname { flex: 1 1 auto; min-width: 0; font-size: 0.76em; color: var(--text-secondary); }
+.strat-res-head .hcells { flex: 0 0 auto; display: flex; gap: 4px; }
+.strat-res-head .hcells span {
+    width: 56px;
+    text-align: center;
+    font-size: 0.7em;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+}
+.strat-res-row[data-state="testing"] {
+    background: var(--bg-input);
+    box-shadow: inset 0 0 0 1.5px var(--accent-color);
+}
+.strat-res-row[data-state="skip"] { opacity: 0.45; }
+.strat-res-row[data-state="pending"] { opacity: 0.7; }
+.strat-res-row[data-state="pending"]::after {
+    content: "";
+    position: absolute;
+    top: 0; bottom: 0; left: 0;
+    width: 50%;
+    background: linear-gradient(90deg, transparent, var(--bg-input), transparent);
+    transform: translateX(-100%);
+    animation: stratShimmer 1.25s ease-in-out infinite;
+    pointer-events: none;
+    z-index: 0;
+}
+@keyframes stratShimmer {
+    to { transform: translateX(300%); }
+}
+#strat-test-logtoggle {
+    font-size: 0.8em;
+    opacity: 0.85;
+    margin-bottom: 6px;
 }
 @keyframes gradientShift {
     0% { background-position: 0% 0%; }
@@ -794,6 +1005,7 @@ body.light-theme #error-overlay {
 <button class="list-btn" data-i18n="blocked_names" data-tab="tab-blocked-names">Blocked Names</button>
 <button class="list-btn" data-i18n="blocked_ips" data-tab="tab-blocked-ips">Blocked IPs</button>
 </div>
+<p class="note" id="editor-active-info" style="margin:0 0 12px 0;text-align:left"></p>
 <div class="tab-content-wrapper">
 <div class="tab-content active" id="tab-list-custom">
 <textarea id="file-list-custom" rows="10"></textarea>
@@ -867,7 +1079,7 @@ body.light-theme #error-overlay {
 </path>
 </svg>
 </button>
-<button class="btn btn-save" data-i18n="btn_save" data-path="dnscrypt/cloaking-rules.txt">Сохранить</button>
+<button class="btn btn-save" data-i18n="btn_save" data-path="dnscrypt/cloaking-rules-user.txt">Сохранить</button>
 </div>
 </div>
 <div class="tab-content" id="tab-blocked-names">
@@ -882,7 +1094,7 @@ body.light-theme #error-overlay {
 </path>
 </svg>
 </button>
-<button class="btn btn-save" data-i18n="btn_save" data-path="dnscrypt/blocked-names.txt">Сохранить</button>
+<button class="btn btn-save" data-i18n="btn_save" data-path="dnscrypt/blocked-names-user.txt">Сохранить</button>
 </div>
 </div>
 <div class="tab-content" id="tab-blocked-ips">
@@ -897,7 +1109,7 @@ body.light-theme #error-overlay {
 </path>
 </svg>
 </button>
-<button class="btn btn-save" data-i18n="btn_save" data-path="dnscrypt/blocked-ips.txt">Сохранить</button>
+<button class="btn btn-save" data-i18n="btn_save" data-path="dnscrypt/blocked-ips-user.txt">Сохранить</button>
 </div>
 </div>
 </div>
@@ -976,6 +1188,111 @@ body.light-theme #error-overlay {
 </div>
 </div>
 <p class="note" data-i18n="note_restart">После изменения настроек не забудьте перезапустить службу.</p>
+</div>
+<div class="card">
+<h2 class="card-title" data-i18n="telegram_bypass_title">tg-ws-proxy</h2>
+<div class="settings">
+<div class="setting-item">
+<label data-i18n="telegram_bypass_enable">Включить</label>
+<label class="switch">
+<input id="toggle-telegram-bypass" type="checkbox"/>
+<span class="slider"></span>
+</label>
+</div>
+<div class="setting-item">
+<label data-i18n="telegram_bypass_proxy_status">Статус прокси</label>
+<span id="tg-proxy-status-dot" style="width:10px;height:10px;border-radius:50%;background-color:var(--disabled-color);border:1px solid var(--text-secondary);display:inline-block;transition:all 0.3s"></span>
+</div>
+<div class="setting-item stacked">
+<label data-i18n="telegram_bypass_port">Порт</label>
+<input class="text-input" id="input-tg-proxy-port" placeholder="1443" type="text"/>
+</div>
+<div class="setting-item stacked">
+<label data-i18n="telegram_bypass_secret">Секрет</label>
+<input class="text-input" id="input-tg-proxy-secret" type="text" style="font-family:'SF Mono','Courier New',monospace;font-size:0.9em"/>
+</div>
+<div class="setting-item">
+<button class="btn btn-full" id="btn-tg-copy-proxy" data-i18n="telegram_bypass_copy">Копировать прокси</button>
+</div>
+</div>
+<h3 class="subsection-title" data-i18n="tg_dc_title">Датацентры Telegram (DC → IP)</h3>
+<div class="settings">
+<div class="setting-item stacked">
+<label style="font-weight:400;font-size:0.9em;color:var(--text-secondary)" data-i18n="tg_dc_hint">По одному правилу на строку, формат: номер:IP</label>
+<textarea id="textarea-tg-dc-ip" rows="4" style="min-height:80px"></textarea>
+</div>
+</div>
+<h3 class="subsection-title">Cloudflare Proxy</h3>
+<div class="settings">
+<div class="setting-item">
+<label data-i18n="tg_cfproxy_enable">Включить CF-прокси</label>
+<label class="switch">
+<input id="toggle-tg-cfproxy" type="checkbox"/>
+<span class="slider"></span>
+</label>
+</div>
+<div class="setting-item stacked">
+<label data-i18n="tg_cfproxy_domain">Свой домен</label>
+<input class="text-input" id="input-tg-cfproxy-domain" type="text"/>
+</div>
+</div>
+<h3 class="subsection-title">Cloudflare Worker</h3>
+<div class="settings">
+<div class="setting-item stacked">
+<label data-i18n="tg_cfworker_domain">Cloudflare Worker домен</label>
+<input class="text-input" id="input-tg-cfworker-domain" type="text"/>
+</div>
+</div>
+<h3 class="subsection-title" data-i18n="tg_perf_title">Логи и производительность</h3>
+<div class="settings">
+<div class="setting-item">
+<label data-i18n="tg_verbose">Подробное логирование (verbose)</label>
+<label class="switch">
+<input id="toggle-tg-verbose" type="checkbox"/>
+<span class="slider"></span>
+</label>
+</div>
+<div class="setting-item stacked">
+<label data-i18n="tg_bufkb">Буфер, КБ (по умолчанию 256)</label>
+<input class="text-input" id="input-tg-bufkb" placeholder="256" type="text"/>
+</div>
+<div class="setting-item stacked">
+<label data-i18n="tg_pool_size">Пул WebSocket-сессий (по умолчанию 4)</label>
+<input class="text-input" id="input-tg-pool-size" placeholder="4" type="text"/>
+</div>
+</div>
+</div>
+<div class="card">
+<h2 class="card-title" data-i18n="test_title">Тест стратегий</h2>
+<div class="settings">
+<div class="setting-item">
+<button class="btn btn-full" id="btn-test-strategies" data-i18n="test_open">Тест стратегий</button>
+</div>
+</div>
+</div>
+<div class="strat-overlay hidden" id="strat-test-overlay">
+<div class="strat-modal">
+<div class="strat-modal-head">
+<span class="strat-modal-title" data-i18n="test_title">Тест стратегий</span>
+<button class="strat-modal-x" id="strat-test-x">&times;</button>
+</div>
+<div id="strat-pick-area">
+<button class="btn" id="strat-select-all" data-i18n="select_all">Выбрать все</button>
+<div class="strat-list" id="strat-test-list"></div>
+<button class="btn btn-full btn-save" id="strat-test-run" data-i18n="btn_run">Запуск</button>
+</div>
+<div id="strat-run-area" class="hidden">
+<div class="strat-progress" id="strat-test-progress"></div>
+<div class="strat-res-head">
+<span class="hname"></span>
+<span class="hcells"><span>HTTP</span><span>TLS 1.2</span><span>TLS 1.3</span></span>
+</div>
+<div class="strat-results" id="strat-test-results"></div>
+<button class="btn btn-full" id="strat-test-logtoggle" data-i18n="test_show_log">Показать лог</button>
+<pre class="strat-console hidden" id="strat-test-console"></pre>
+<button class="btn btn-full hidden" id="strat-test-close" data-i18n="btn_close">Закрыть</button>
+</div>
+</div>
 </div>
 <div class="card">
 <h2 class="card-title" data-i18n="interface_settings_title">Интерфейс</h2>
@@ -1104,6 +1421,20 @@ body.light-theme #error-overlay {
                 "bypass_calls": "Включить обход звонков",
                 "debug_logging": "Отладочные логи",
                 "update_lists": "Обновить списки",
+                "test_title": "Тест стратегий",
+                "test_current": "Тест текущей стратегии",
+                "test_all": "Тест всех стратегий (долго)",
+                "test_running": "Идёт тест...",
+                "test_open": "Тест стратегий",
+                "select_all": "Выбрать все",
+                "deselect_all": "Убрать все",
+                "btn_run": "Запуск",
+                "btn_close": "Закрыть",
+                "test_progress": "Протестировано",
+                "test_in_progress": "идёт тест",
+                "test_show_log": "Показать лог",
+                "test_hide_log": "Скрыть лог",
+                "editor_active": "Активные списки (авто-обновляются): домены {g}, IP-диапазоны {i}, исключения {ex}. Ниже — ваши личные добавления.",
                 "import_strategy": "Импорт стратегии",
                 "import_strategy_placeholder": "Вставьте ссылку",
                 "import_strategy_confirm": "Импорт",
@@ -1122,6 +1453,21 @@ body.light-theme #error-overlay {
                 "blocked_names_link": "Ссылка на Blocked Names",
                 "blocked_ips_link": "Ссылка на Blocked IPs",
                 "note_restart": "После изменения настроек не забудьте перезапустить службу",
+                "telegram_bypass_title": "tg-ws-proxy",
+                "telegram_bypass_enable": "Включить",
+                "telegram_bypass_proxy_status": "Статус прокси",
+                "telegram_bypass_port": "Порт",
+                "telegram_bypass_secret": "Секрет",
+                "telegram_bypass_copy": "Копировать прокси",
+                "tg_dc_title": "Датацентры Telegram (DC → IP)",
+                "tg_dc_hint": "По одному правилу на строку, формат: номер:IP",
+                "tg_cfproxy_enable": "Включить CF-прокси",
+                "tg_cfproxy_domain": "Свой домен",
+                "tg_cfworker_domain": "Cloudflare Worker домен",
+                "tg_perf_title": "Логи и производительность",
+                "tg_verbose": "Подробное логирование (verbose)",
+                "tg_bufkb": "Буфер, КБ (по умолчанию 256)",
+                "tg_pool_size": "Пул WebSocket-сессий (по умолчанию 4)",
                 "interface_settings_title": "Интерфейс",
                 "dark_theme": "Темная тема",
                 "language": "Язык",
@@ -1161,6 +1507,20 @@ body.light-theme #error-overlay {
                 "bypass_calls": "Enable bypass calls",
                 "debug_logging": "Debug logging",
                 "update_lists": "Update lists",
+                "test_title": "Test strategies",
+                "test_current": "Test current strategy",
+                "test_all": "Test all strategies (slow)",
+                "test_running": "Testing...",
+                "test_open": "Test strategies",
+                "select_all": "Select all",
+                "deselect_all": "Deselect all",
+                "btn_run": "Run",
+                "btn_close": "Close",
+                "test_progress": "Tested",
+                "test_in_progress": "testing",
+                "test_show_log": "Show log",
+                "test_hide_log": "Hide log",
+                "editor_active": "Active lists (auto-updated): domains {g}, IP ranges {i}, exclusions {ex}. Below are your personal additions.",
                 "import_strategy": "Import strategy",
                 "import_strategy_placeholder": "Paste link",
                 "import_strategy_confirm": "Import",
@@ -1179,6 +1539,22 @@ body.light-theme #error-overlay {
                 "blocked_names_link": "Blocked Names Link",
                 "blocked_ips_link": "Blocked IPs Link",
                 "note_restart": "Restart the service after changing settings",
+                "telegram_bypass_title": "tg-ws-proxy",
+                "telegram_bypass_enable": "Enable",
+                "telegram_bypass_proxy_status": "Proxy status",
+                "telegram_bypass_port": "Port",
+                "telegram_bypass_secret": "Secret",
+                "telegram_bypass_copy": "Copy proxy",
+                "tg_dc_title": "Telegram Datacenters (DC → IP)",
+                "tg_dc_hint": "One rule per line, format: number:IP",
+                "tg_cfproxy_enable": "Enable CF proxy",
+                "tg_cfproxy_domain": "Custom domain",
+                "tg_cfworker_domain": "Cloudflare Worker domain",
+                "tg_perf_title": "Logs & Performance",
+                "tg_verbose": "Verbose logging",
+                "tg_bufkb": "Buffer, KB (default 256)",
+                "tg_pool_size": "WebSocket session pool (default 4)",
+                "tg_log_max_mb": "Max log size, MB (default 5)",
                 "interface_settings_title": "Interface",
                 "dark_theme": "Dark Theme",
                 "language": "Language",
@@ -1302,11 +1678,24 @@ async function waitForZapret(wantRunning, timeout = 25000) {
                 const btnPrimaryText = document.getElementById('btn-primary-text');
                 const btnRestart = document.getElementById('btn-restart');
                 const btnUpdateLists = document.getElementById('btn-update-lists');
+                const btnTestStrategies = document.getElementById('btn-test-strategies');
                 const strategySelect = document.getElementById('strategy-select');
                 const engineInfo = document.getElementById('engine-info');
                 const btnImportStrategy = document.getElementById('btn-import-strategy');
                 const toggleBypassCalls = document.getElementById('toggle-bypass-calls');
                 const toggleDebug = document.getElementById('toggle-debug');
+                const toggleTelegramBypass = document.getElementById('toggle-telegram-bypass');
+                const tgProxyStatusDot = document.getElementById('tg-proxy-status-dot');
+                const inputTgProxyPort = document.getElementById('input-tg-proxy-port');
+                const inputTgProxySecret = document.getElementById('input-tg-proxy-secret');
+                const btnTgCopyProxy = document.getElementById('btn-tg-copy-proxy');
+                const textareaTgDcIp = document.getElementById('textarea-tg-dc-ip');
+                const toggleTgCfproxy = document.getElementById('toggle-tg-cfproxy');
+                const inputTgCfproxyDomain = document.getElementById('input-tg-cfproxy-domain');
+                const inputTgCfworkerDomain = document.getElementById('input-tg-cfworker-domain');
+                const toggleTgVerbose = document.getElementById('toggle-tg-verbose');
+                const inputTgBufkb = document.getElementById('input-tg-bufkb');
+                const inputTgPoolSize = document.getElementById('input-tg-pool-size');
                 const selectIpsetFilter = document.getElementById('select-ipset-filter');
                 const logsContentzapret = document.getElementById('logs-content-zapret');
                 const logsContentDnscrypt = document.getElementById('logs-content-dnscrypt');
@@ -1336,9 +1725,9 @@ async function waitForZapret(wantRunning, timeout = 25000) {
                     'list/list-exclude-user.txt': document.getElementById('file-list-exclude'),
                     'list/ipset-all-user.txt': document.getElementById('file-ipset-custom'),
                     'list/ipset-exclude-user.txt': document.getElementById('file-ipset-exclude'),
-                    'dnscrypt/cloaking-rules.txt': document.getElementById('file-cloaking-rules'),
-                    'dnscrypt/blocked-names.txt': document.getElementById('file-blocked-names'),
-                    'dnscrypt/blocked-ips.txt': document.getElementById('file-blocked-ips')
+                    'dnscrypt/cloaking-rules-user.txt': document.getElementById('file-cloaking-rules'),
+                    'dnscrypt/blocked-names-user.txt': document.getElementById('file-blocked-names'),
+                    'dnscrypt/blocked-ips-user.txt': document.getElementById('file-blocked-ips')
                 };
                 const isDirty = {};
                 Object.keys(fileContents).forEach(path => {
@@ -1379,7 +1768,9 @@ async function waitForZapret(wantRunning, timeout = 25000) {
                         container.innerHTML = `<div class="logs-empty">${escapeHtml(emptyText || (langData.logs_empty || 'Empty'))}</div>`;
                         return;
                     }
-                    const lines = logText.split('\n');
+                    let lines = logText.split('\n');
+                    // Hard cap the rendered DOM — a huge log must never freeze the UI.
+                    if (lines.length > 400) lines = lines.slice(-400);
                     let html = '';
                     lines.forEach(line => {
                         if (!line.trim()) return;
@@ -1402,13 +1793,22 @@ async function waitForZapret(wantRunning, timeout = 25000) {
                 // root-shell spawns — this is the bulk of the polling cost. Newline is
                 // used as the separator because config values are single-line and \n is
                 // the only printf escape guaranteed across toybox/mksh on Android.
-                const CFG_KEYS = ['current-strategy', 'bypass-calls', 'debug', 'ipset-filter', 'ipset-link', 'list-general-link', 'dnscrypt-cloaking-rules-link', 'dnscrypt-blocked-names-link', 'dnscrypt-blocked-ips-link', 'interface-only'];
+                const CFG_KEYS = ['current-strategy', 'bypass-calls', 'debug', 'ipset-filter', 'ipset-link', 'list-general-link', 'dnscrypt-cloaking-rules-link', 'dnscrypt-blocked-names-link', 'dnscrypt-blocked-ips-link', 'interface-only', 'telegram-bypass'];
                 const readState = async () => {
                     const reads = CFG_KEYS.map(k => `printf '%s=%s\\n' '${k}' "$(cat ${MODPATH}/config/${k} 2>/dev/null)"`);
                     reads.push(`printf 'nfqws=%s\\n' "$({ pgrep -x nfqws || pgrep -x nfqws2; } >/dev/null 2>&1 && echo 1 || echo 0)"`);
                     reads.push(`printf 'dnscrypt=%s\\n' "$(pgrep -x dnscrypt-proxy >/dev/null 2>&1 && echo 1 || echo 0)"`);
                     reads.push(`printf 'version=%s\\n' "$(grep '^version=' ${MODPATH}/module.prop 2>/dev/null | head -n1 | cut -d= -f2)"`);
                     reads.push(`printf 'engine=%s\\n' "$(s=$(cat ${MODPATH}/config/current-strategy 2>/dev/null); grep -oE 'ZAPRET=[12]' ${MODPATH}/strategy/$s.sh 2>/dev/null | tail -n1 | sed 's/ZAPRET=//')"`);
+                    reads.push(`printf 'tg-proxy-port=%s\\n' "$(cat ${MODPATH}/config/telegram-bypass-port 2>/dev/null)"`);
+                    reads.push(`printf 'tg-proxy-secret=%s\\n' "$(cat ${MODPATH}/config/telegram-bypass-secret 2>/dev/null)"`);
+                    reads.push(`printf 'tg-proxy-running=%s\\n' "$([ -f ${MODPATH}/.service/tg-ws-proxy.pid ] && kill -0 $(cat ${MODPATH}/.service/tg-ws-proxy.pid 2>/dev/null) 2>/dev/null && echo 1 || echo 0)"`);
+                    reads.push(`printf 'tg-cfproxy=%s\\n' "$(cat ${MODPATH}/config/telegram-bypass-cfproxy 2>/dev/null)"`);
+                    reads.push(`printf 'tg-cfproxy-domain=%s\\n' "$(cat ${MODPATH}/config/telegram-bypass-cfproxy-domain 2>/dev/null)"`);
+                    reads.push(`printf 'tg-cfworker-domain=%s\\n' "$(cat ${MODPATH}/config/telegram-bypass-cfworker-domain 2>/dev/null)"`);
+                    reads.push(`printf 'tg-verbose=%s\\n' "$(cat ${MODPATH}/config/telegram-bypass-verbose 2>/dev/null)"`);
+                    reads.push(`printf 'tg-bufkb=%s\\n' "$(cat ${MODPATH}/config/telegram-bypass-bufkb 2>/dev/null)"`);
+                    reads.push(`printf 'tg-pool-size=%s\\n' "$(cat ${MODPATH}/config/telegram-bypass-pool-size 2>/dev/null)"`);
                     const out = await run(reads.join('; '));
                     const map = {};
                     out.split('\n').forEach(rec => {
@@ -1431,12 +1831,29 @@ async function waitForZapret(wantRunning, timeout = 25000) {
                         btnPrimaryText.textContent = langData.btn_start || 'Start';
                         btnPrimary.dataset.action = 'start';
                     }
+                    // Restart only makes sense while the service runs (i.e. when the
+                    // primary button shows "Stop"); disable it when stopped.
+                    btnRestart.disabled = !nfqwsRunning;
                     if (engineInfo) {
                         const eng = st.engine === '2' ? '2 (nfqws2)' : '1 (nfqws)';
                         engineInfo.textContent = `${langData.engine_label || 'Engine'}: zapret${eng}`;
                     }
                     toggleBypassCalls.checked = st['bypass-calls'] === '1';
                     toggleDebug.checked = st['debug'] === '1';
+                    toggleTelegramBypass.checked = st['telegram-bypass'] === '1';
+                    if (tgProxyStatusDot) {
+                        const proxyOn = st['tg-proxy-running'] === '1';
+                        tgProxyStatusDot.style.backgroundColor = proxyOn ? '#4caf50' : 'var(--disabled-color)';
+                        tgProxyStatusDot.style.borderColor = proxyOn ? '#4caf50' : 'var(--text-secondary)';
+                    }
+                    setIfNotFocused(inputTgProxyPort, st['tg-proxy-port']);
+                    setIfNotFocused(inputTgProxySecret, st['tg-proxy-secret']);
+                    toggleTgCfproxy.checked = st['tg-cfproxy'] !== '0';
+                    setIfNotFocused(inputTgCfproxyDomain, st['tg-cfproxy-domain']);
+                    setIfNotFocused(inputTgCfworkerDomain, st['tg-cfworker-domain']);
+                    toggleTgVerbose.checked = st['tg-verbose'] === '1';
+                    setIfNotFocused(inputTgBufkb, st['tg-bufkb']);
+                    setIfNotFocused(inputTgPoolSize, st['tg-pool-size']);
                     selectIpsetFilter.value = ['none', 'loaded', 'any'].includes(st['ipset-filter']) ? st['ipset-filter'] : 'none';
                     setIfNotFocused(inputListGeneral, st['list-general-link']);
                     setIfNotFocused(inputIpsetLink, st['ipset-link']);
@@ -1487,11 +1904,33 @@ async function waitForZapret(wantRunning, timeout = 25000) {
                             console.error(`Editor load error (${p}): ${e.message}`);
                         }
                     }));
+                    // Show that the ACTIVE (auto-updated) lists are populated — the tabs
+                    // above edit only the user-additions, which is why they look empty.
+                    const ai = document.getElementById('editor-active-info');
+                    if (ai) {
+                        try {
+                            const out = await run(`for f in list-general.txt list-google.txt ipset-all.txt list-exclude.txt ipset-exclude.txt; do printf '%s ' "$(grep -vcE '^[[:space:]]*(#|$)' ${MODPATH}/list/$f 2>/dev/null || echo 0)"; done`);
+                            const c = out.trim().split(/\s+/).map(n => parseInt(n, 10) || 0);
+                            const tpl = langData.editor_active || 'Active lists: domains {g}, IP ranges {i}, exclusions {ex}.';
+                            ai.textContent = tpl.replace('{g}', c[0] + c[1]).replace('{i}', c[2]).replace('{ex}', c[3] + c[4]);
+                        } catch (e) { /* non-fatal */ }
+                    }
+                };
+                let tgDcIpDirty = false;
+                textareaTgDcIp.addEventListener('input', () => { tgDcIpDirty = true; });
+                const fetchTgDcIp = async () => {
+                    if (tgDcIpDirty) return;
+                    try {
+                        const val = await run(`cat ${MODPATH}/config/telegram-bypass-dc-ip 2>/dev/null || true`);
+                        if (document.activeElement !== textareaTgDcIp) textareaTgDcIp.value = val || '';
+                    } catch (e) {}
                 };
                 const fetchLogs = async () => {
                     try {
-                        currentzapretLogText = await run(`cat ${MODPATH}/.service/debug.log 2>/dev/null || true`);
-                        currentDnscryptLogText = await run(`cat ${MODPATH}/dnscrypt/latest.log 2>/dev/null || true`);
+                        // Only read the TAIL. The debug log can grow to many MB; cat-ing
+                        // the whole thing and rendering a div per line froze the WebUI.
+                        currentzapretLogText = await run(`tail -n 300 ${MODPATH}/.service/debug.log 2>/dev/null || true`);
+                        currentDnscryptLogText = await run(`tail -n 300 ${MODPATH}/dnscrypt/latest.log 2>/dev/null || true`);
                         const zapretEmpty = toggleDebug.checked ? (langData.logs_empty || 'Empty') : (langData.logs_hint_debug || '');
                         renderLogInto(logsContentzapret, currentzapretLogText, zapretEmpty);
                         renderLogInto(logsContentDnscrypt, currentDnscryptLogText, langData.logs_empty || 'Empty');
@@ -1527,8 +1966,11 @@ async function waitForZapret(wantRunning, timeout = 25000) {
                             await launchDetached(`sh ${CLI} start`);
                             await waitForZapret(true, 25000);
                         } else {
-                            await run(`sh ${CLI} stop`);
-                            await waitForZapret(false, 25000);
+                            // Run detached and poll — stop_module_service kills nfqws early
+                            // but then does a slower firewall cleanup; we don't want the UI
+                            // frozen on the loading overlay for the whole teardown.
+                            await launchDetached(`sh ${CLI} stop`);
+                            await waitForZapret(false, 20000);
                         }
                     } catch (e) {
                         console.error(e);
@@ -1558,6 +2000,251 @@ async function waitForZapret(wantRunning, timeout = 25000) {
                         flashError();
                     } finally {
                         hideLoading();
+                    }
+                });
+                // ── Strategy tester modal ──────────────────────────────────────
+                const stratOverlay = document.getElementById('strat-test-overlay');
+                const stratList = document.getElementById('strat-test-list');
+                const stratSelectAll = document.getElementById('strat-select-all');
+                const stratRun = document.getElementById('strat-test-run');
+                const stratConsole = document.getElementById('strat-test-console');
+                const stratClose = document.getElementById('strat-test-close');
+                const stratX = document.getElementById('strat-test-x');
+                const stratPickArea = document.getElementById('strat-pick-area');
+                const stratRunArea = document.getElementById('strat-run-area');
+                const stratResultsEl = document.getElementById('strat-test-results');
+                const stratProgressEl = document.getElementById('strat-test-progress');
+                const stratLogToggle = document.getElementById('strat-test-logtoggle');
+                let stratTestPolling = false;
+                let stratResults = null;       // [{name, idx, state, httpOk, httpTot, t12Ok, t12Tot, t13Ok, t13Tot, el, statusEl}]
+                let stratResultMap = null;     // Map(name -> result obj)
+                let stratResFile = '';
+                const stratBoxes = () => Array.from(stratList.querySelectorAll('input[type="checkbox"]'));
+                const updateSelectAllLabel = () => {
+                    const boxes = stratBoxes();
+                    const allChecked = boxes.length > 0 && boxes.every(b => b.checked);
+                    stratSelectAll.dataset.state = allChecked ? 'all' : 'some';
+                    stratSelectAll.textContent = allChecked
+                        ? (langData.deselect_all || 'Убрать все')
+                        : (langData.select_all || 'Выбрать все');
+                };
+                // Build one DOM row per selected strategy (initial: pending)
+                const buildResultRows = () => {
+                    stratResultsEl.innerHTML = '';
+                    stratResults.forEach(r => {
+                        const row = document.createElement('div');
+                        row.className = 'strat-res-row';
+                        row.dataset.state = 'pending';
+                        const nm = document.createElement('span');
+                        nm.className = 'strat-res-name';
+                        nm.textContent = r.name;
+                        const st = document.createElement('span');
+                        st.className = 'strat-res-status';
+                        row.appendChild(nm);
+                        row.appendChild(st);
+                        r.el = row;
+                        r.statusEl = st;
+                        stratResultsEl.appendChild(row);
+                    });
+                };
+                // One column cell: green=all pass, amber=partial, red=none, grey=n/a
+                const colHtml = (ok, tot) => {
+                    if (!tot || tot <= 0) return '<span class="strat-col na">—</span>';
+                    let cls = 'fail';
+                    if (ok >= tot) cls = 'pass';
+                    else if (ok > 0) cls = 'partial';
+                    return `<span class="strat-col ${cls}">${ok}/${tot}</span>`;
+                };
+                const renderRowStatus = (r) => {
+                    r.el.dataset.state = r.state;
+                    const st = r.statusEl;
+                    if (r.state === 'done') {
+                        st.innerHTML =
+                            '<span class="strat-res-cells">' +
+                            colHtml(r.httpOk, r.httpTot) +
+                            colHtml(r.t12Ok, r.t12Tot) +
+                            colHtml(r.t13Ok, r.t13Tot) +
+                            '</span>';
+                    } else if (r.state === 'skip') {
+                        st.innerHTML = '<span class="strat-res-wait"><span class="strat-res-label">SKIP</span></span>';
+                    } else if (r.state === 'testing') {
+                        st.innerHTML =
+                            '<span class="strat-res-wait">' +
+                            `<span class="strat-res-label">${langData.test_in_progress || 'идёт тест'}</span>` +
+                            '<span class="strat-spinner"></span></span>';
+                    } else { // pending
+                        st.innerHTML = '<span class="strat-res-wait"><span class="strat-spinner dim"></span></span>';
+                    }
+                };
+                const stratStateRank = (r) =>
+                    (r.state === 'done' || r.state === 'skip') ? 0 : (r.state === 'testing' ? 1 : 2);
+                // Re-sort (most-passing first) and repaint every row
+                const renderTestResults = () => {
+                    if (!stratResults) return;
+                    const order = stratResults.slice().sort((a, b) => {
+                        const ra = stratStateRank(a), rb = stratStateRank(b);
+                        if (ra !== rb) return ra - rb;
+                        if (ra === 0) {
+                            const pa = a.httpOk + a.t12Ok + a.t13Ok, pb = b.httpOk + b.t12Ok + b.t13Ok;
+                            if (pb !== pa) return pb - pa;
+                            const ta = a.httpTot + a.t12Tot + a.t13Tot, tb = b.httpTot + b.t12Tot + b.t13Tot;
+                            if (tb !== ta) return tb - ta;
+                            return a.idx - b.idx;
+                        }
+                        return a.idx - b.idx;
+                    });
+                    order.forEach(r => {
+                        stratResultsEl.appendChild(r.el); // moving a node keeps its CSS animation running
+                        const sig = r.state + ':' + r.httpOk + '/' + r.httpTot + ':' +
+                            r.t12Ok + '/' + r.t12Tot + ':' + r.t13Ok + '/' + r.t13Tot;
+                        if (r._sig !== sig) { renderRowStatus(r); r._sig = sig; }
+                    });
+                    const doneCount = stratResults.filter(r => r.state === 'done' || r.state === 'skip').length;
+                    stratProgressEl.textContent =
+                        `${langData.test_progress || 'Протестировано'}: ${doneCount} / ${stratResults.length}`;
+                };
+                // Parse @@TESTING / @@RESULT markers; returns true when the run finished
+                const applyTestLog = (text) => {
+                    const started = new Set();
+                    text.split('\n').forEach(line => {
+                        let m = line.match(/^@@TESTING\s+(.+?)\s*$/);
+                        if (m) { started.add(m[1]); return; }
+                        m = line.match(/^@@RESULT\s+(OK|SKIP)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(.+?)\s*$/);
+                        if (m && stratResultMap) {
+                            const r = stratResultMap.get(m[8]);
+                            if (r) {
+                                r.state = (m[1] === 'SKIP') ? 'skip' : 'done';
+                                r.httpOk = +m[2]; r.httpTot = +m[3];
+                                r.t12Ok = +m[4]; r.t12Tot = +m[5];
+                                r.t13Ok = +m[6]; r.t13Tot = +m[7];
+                            }
+                        }
+                    });
+                    started.forEach(name => {
+                        const r = stratResultMap && stratResultMap.get(name);
+                        if (r && r.state === 'pending') r.state = 'testing';
+                    });
+                    return /@@TESTDONE|Best strategy|No strategy produced|No strategies found|did not come up|not functional/i.test(text);
+                };
+                const updateRawLog = async () => {
+                    if (!stratResFile) return;
+                    const tail = await run(`tail -n 400 ${stratResFile} 2>/dev/null | grep -vE '^@@(TESTING|RESULT|TESTDONE)' || true`);
+                    stratConsole.textContent = tail || '...';
+                    stratConsole.scrollTop = stratConsole.scrollHeight;
+                };
+                const openStratTest = () => {
+                    stratList.innerHTML = '';
+                    Array.from(strategySelect.options).forEach(opt => {
+                        const label = document.createElement('label');
+                        const cb = document.createElement('input');
+                        cb.type = 'checkbox';
+                        cb.value = opt.value;
+                        if (opt.value === strategySelect.value) cb.checked = true;
+                        cb.addEventListener('change', updateSelectAllLabel);
+                        const span = document.createElement('span');
+                        span.textContent = opt.textContent;
+                        label.appendChild(cb);
+                        label.appendChild(span);
+                        stratList.appendChild(label);
+                    });
+                    stratResults = null;
+                    stratResultMap = null;
+                    stratResultsEl.innerHTML = '';
+                    stratProgressEl.textContent = '';
+                    stratPickArea.classList.remove('hidden');
+                    stratRunArea.classList.add('hidden');
+                    stratRun.classList.remove('hidden');
+                    stratConsole.classList.add('hidden');
+                    stratConsole.textContent = '';
+                    stratClose.classList.add('hidden');
+                    stratLogToggle.dataset.shown = '0';
+                    stratLogToggle.textContent = langData.test_show_log || 'Показать лог';
+                    updateSelectAllLabel();
+                    stratOverlay.classList.remove('hidden');
+                };
+                const closeStratTest = () => {
+                    stratTestPolling = false;
+                    stratOverlay.classList.add('hidden');
+                };
+                btnTestStrategies.addEventListener('click', openStratTest);
+                stratX.addEventListener('click', () => { closeStratTest(); fetchState(); });
+                stratClose.addEventListener('click', () => { closeStratTest(); fetchState(); });
+                stratSelectAll.addEventListener('click', () => {
+                    const wantAll = stratSelectAll.dataset.state !== 'all';
+                    stratBoxes().forEach(b => { b.checked = wantAll; });
+                    updateSelectAllLabel();
+                });
+                stratLogToggle.addEventListener('click', async () => {
+                    if (stratLogToggle.dataset.shown === '1') {
+                        stratConsole.classList.add('hidden');
+                        stratLogToggle.dataset.shown = '0';
+                        stratLogToggle.textContent = langData.test_show_log || 'Показать лог';
+                    } else {
+                        stratConsole.classList.remove('hidden');
+                        stratLogToggle.dataset.shown = '1';
+                        stratLogToggle.textContent = langData.test_hide_log || 'Скрыть лог';
+                        await updateRawLog();
+                    }
+                });
+                stratRun.addEventListener('click', async () => {
+                    const selected = stratBoxes().filter(b => b.checked)
+                        .map(b => b.value.replace(/[^A-Za-z0-9._-]/g, ''))
+                        .filter(Boolean);
+                    if (selected.length === 0) return;
+                    stratResults = selected.map((name, idx) => ({
+                        name, idx, state: 'pending',
+                        httpOk: 0, httpTot: 0, t12Ok: 0, t12Tot: 0, t13Ok: 0, t13Tot: 0,
+                        el: null, statusEl: null
+                    }));
+                    stratResultMap = new Map(stratResults.map(r => [r.name, r]));
+                    buildResultRows();
+                    stratPickArea.classList.add('hidden');
+                    stratRunArea.classList.remove('hidden');
+                    stratConsole.classList.add('hidden');
+                    stratConsole.textContent = '';
+                    stratClose.classList.add('hidden');
+                    stratLogToggle.classList.remove('hidden');
+                    stratLogToggle.dataset.shown = '0';
+                    stratLogToggle.textContent = langData.test_show_log || 'Показать лог';
+                    renderTestResults();
+                    const selFile = `${MODPATH}/.service/test-selected`;
+                    const resFile = `${MODPATH}/.service/test-webui.log`;
+                    stratResFile = resFile;
+                    try {
+                        await run(`printf '%s\\n' '${selected.join("' '")}' > ${selFile}`);
+                        await run(`: > ${resFile}`);
+                        // Detached so it survives WebUI close; tests each chosen strategy
+                        // then restores the active one. We poll the markers for live state.
+                        // Brace-group sentinel: @@TESTDONE is written after the test
+                        // command returns on ANY exit path (success or early abort), so
+                        // the poll never hangs to the 30-min timeout on a startup failure.
+                        await launchDetached(`{ ZAPRET_TEST_STRATEGIES=${selFile} sh ${CLI} test; echo @@TESTDONE; } > ${resFile} 2>&1`);
+                        stratTestPolling = true;
+                        const start = Date.now();
+                        let done = false;
+                        while (stratTestPolling && Date.now() - start < 1800000) {
+                            await new Promise(r => setTimeout(r, 2500));
+                            // Pull only the marker + finish lines — compact and never scrolls off
+                            const markers = await run(`grep -E '^@@(TESTING|RESULT|TESTDONE)|Best strategy|No strategy produced|No strategies found|did not come up|not functional' ${resFile} 2>/dev/null || true`);
+                            const finished = applyTestLog(markers || '');
+                            renderTestResults();
+                            if (stratLogToggle.dataset.shown === '1') await updateRawLog();
+                            if (finished) { done = true; break; }
+                        }
+                        stratTestPolling = false;
+                        if (done) {
+                            // Any strategy with no result captured (crash/early-exit) → mark skipped
+                            stratResults.forEach(r => {
+                                if (r.state === 'pending' || r.state === 'testing') r.state = 'skip';
+                            });
+                            renderTestResults();
+                            stratClose.classList.remove('hidden');
+                        }
+                    } catch (e) {
+                        stratTestPolling = false;
+                        stratConsole.classList.remove('hidden');
+                        stratConsole.textContent = 'Error: ' + e.message;
+                        stratClose.classList.remove('hidden');
                     }
                 });
                 strategySelect.addEventListener('change', async (e) => {
@@ -1596,28 +2283,41 @@ async function waitForZapret(wantRunning, timeout = 25000) {
                         hideLoading();
                     }
                 });
-                const setupToggle = (element, configName) => {
+                const setupToggle = (element, configName, afterChange) => {
                     element.addEventListener('change', async () => {
                         await writeConfig(configName, element.checked ? '1' : '0');
+                        if (afterChange) await afterChange();
                     });
                 };
                 setupToggle(toggleBypassCalls, 'bypass-calls');
                 setupToggle(toggleDebug, 'debug');
+                toggleTelegramBypass.addEventListener('change', async () => {
+                    const cmd = toggleTelegramBypass.checked ? 'on' : 'off';
+                    await run(`sh ${CLI} telegram-bypass ${cmd} 2>/dev/null`);
+                });
+                btnTgCopyProxy.addEventListener('click', async () => {
+                    try {
+                        const link = await run(`sh ${CLI} telegram-bypass link 2>/dev/null`);
+                        if (navigator.clipboard && link) {
+                            await navigator.clipboard.writeText(link.trim());
+                        }
+                    } catch (e) { console.error(e); }
+                });
                 selectIpsetFilter.addEventListener('change', async () => {
                     await writeConfig('ipset-filter', selectIpsetFilter.value);
                 });
-                const setupLinkInput = (input, configName, requireUrl) => {
+                const setupLinkInput = (input, configName, requireUrl, afterChange) => {
                     input.addEventListener('blur', async () => {
                         const value = input.value.trim();
                         if (value === '') {
                             await removeConfig(configName);
-                            return;
-                        }
-                        if (requireUrl && !/^https?:\/\//i.test(value)) {
+                        } else if (requireUrl && !/^https?:\/\//i.test(value)) {
                             flashError();
                             return;
+                        } else {
+                            await writeConfig(configName, value);
                         }
-                        await writeConfig(configName, value);
+                        if (afterChange) await afterChange();
                     });
                 };
                 setupLinkInput(inputListGeneral, 'list-general-link', true);
@@ -1626,6 +2326,63 @@ async function waitForZapret(wantRunning, timeout = 25000) {
                 setupLinkInput(inputBlockedNames, 'dnscrypt-blocked-names-link', true);
                 setupLinkInput(inputBlockedIps, 'dnscrypt-blocked-ips-link', true);
                 setupLinkInput(inputInterfaceOnly, 'interface-only', false);
+                // Integer-only: --port, --buf-kb and --pool-size are all argparse type=int
+                // in tg-ws-proxy, so a decimal value would make the proxy fail to start.
+                const setupNumericInput = (input, configName, fallback, afterChange) => {
+                    input.addEventListener('blur', async () => {
+                        const raw = input.value.trim();
+                        if (raw === '') {
+                            if (fallback != null) { input.value = fallback; await writeConfig(configName, fallback); }
+                            else await removeConfig(configName);
+                        } else if (!/^\d+$/.test(raw)) {
+                            flashError(); input.value = fallback || ''; return;
+                        } else {
+                            await writeConfig(configName, raw);
+                        }
+                        if (afterChange) await afterChange();
+                    });
+                };
+                // tg-ws-proxy reads its config only at startup, so a change to any of these
+                // settings needs a proxy restart to take effect — but only when the bypass is
+                // currently enabled (otherwise just persist the value for the next start).
+                const tgRestartIfEnabled = async () => {
+                    if (!toggleTelegramBypass.checked) return;
+                    try { await run(`sh ${CLI} telegram-bypass restart 2>/dev/null`); }
+                    catch (e) { console.error(e); }
+                };
+                setupNumericInput(inputTgProxyPort, 'telegram-bypass-port', '1443', tgRestartIfEnabled);
+                inputTgProxySecret.addEventListener('blur', async () => {
+                    const v = inputTgProxySecret.value.trim();
+                    if (v === '') return;
+                    // The proxy requires exactly 32 hex characters; a bad secret makes it exit on start.
+                    if (!/^[0-9a-fA-F]{32}$/.test(v)) { flashError(); return; }
+                    await writeConfig('telegram-bypass-secret', v);
+                    await tgRestartIfEnabled();
+                });
+                setupLinkInput(inputTgCfproxyDomain, 'telegram-bypass-cfproxy-domain', false, tgRestartIfEnabled);
+                setupLinkInput(inputTgCfworkerDomain, 'telegram-bypass-cfworker-domain', false, tgRestartIfEnabled);
+                setupNumericInput(inputTgBufkb, 'telegram-bypass-bufkb', null, tgRestartIfEnabled);
+                setupNumericInput(inputTgPoolSize, 'telegram-bypass-pool-size', null, tgRestartIfEnabled);
+                setupToggle(toggleTgVerbose, 'telegram-bypass-verbose', tgRestartIfEnabled);
+                toggleTgCfproxy.addEventListener('change', async () => {
+                    await writeConfig('telegram-bypass-cfproxy', toggleTgCfproxy.checked ? '1' : '0');
+                    await tgRestartIfEnabled();
+                });
+                textareaTgDcIp.addEventListener('blur', async () => {
+                    const value = textareaTgDcIp.value.trim();
+                    if (value === '') {
+                        await removeConfig('telegram-bypass-dc-ip');
+                    } else {
+                        // Each line must be DC:IPv4 (e.g. 2:149.154.167.220). A malformed line
+                        // makes tg-ws-proxy exit on start, so reject the whole save instead.
+                        const lines = value.split('\n').map(l => l.trim()).filter(l => l !== '');
+                        if (lines.some(l => !/^\d+:[0-9.]+$/.test(l))) { flashError(); return; }
+                        const safe = lines.join('\n').replace(/'/g, "'\\''");
+                        await run(`printf '%s\\n' '${safe}' > ${MODPATH}/config/telegram-bypass-dc-ip`);
+                    }
+                    tgDcIpDirty = false;
+                    await tgRestartIfEnabled();
+                });
                 document.querySelectorAll('.btn-save').forEach(button => {
                     button.addEventListener('click', async () => {
                         const path = button.dataset.path;
@@ -1692,6 +2449,7 @@ async function waitForZapret(wantRunning, timeout = 25000) {
                         // Pull the heavier reads only when the user opens that page.
                         if (targetPageId === 'page-logs') fetchLogs();
                         if (targetPageId === 'page-editor') fetchEditorFiles();
+                        if (targetPageId === 'page-settings') fetchTgDcIp();
                     });
                 });
                 const applyTheme = (theme) => {
@@ -1738,6 +2496,17 @@ async function waitForZapret(wantRunning, timeout = 25000) {
                 }
                 let hasPng = await fileExists('fumo.png');
                 let hasMp3 = await fileExists('fumo.mp3');
+                // Preload the sound once and keep a live reference. A fresh Audio()
+                // created on every click was sometimes garbage-collected before playback
+                // even started, so the sound did not always play. One preloaded element
+                // that we rewind + replay is reliable.
+                let fumoAudio = null;
+                if (hasMp3) {
+                    fumoAudio = new Audio('fumo.mp3');
+                    fumoAudio.preload = 'auto';
+                    fumoAudio.volume = 0.5;
+                    try { fumoAudio.load(); } catch (e) {}
+                }
                 sevcatorLink.addEventListener('click', (e) => {
                     if (!hasPng || !hasMp3) {
                         return;
@@ -1754,12 +2523,14 @@ async function waitForZapret(wantRunning, timeout = 25000) {
                     fumo.style.width = randomSize + 'px';
                     fumo.style.height = 'auto';
                     document.body.appendChild(fumo);
-                    try {
-                        const audio = new Audio('fumo.mp3');
-                        audio.volume = 0.5;
-                        audio.play().catch(e => console.log('Could not play fumo sound:', e));
-                    } catch (e) {
-                        console.log('Could not create fumo audio:', e);
+                    if (fumoAudio) {
+                        try {
+                            fumoAudio.currentTime = 0;
+                            const p = fumoAudio.play();
+                            if (p && p.catch) p.catch(err => console.log('Could not play fumo sound:', err));
+                        } catch (e) {
+                            console.log('Could not play fumo audio:', e);
+                        }
                     }
                     setTimeout(() => {
                         fumo.classList.add('fade-out');
@@ -1783,6 +2554,7 @@ async function waitForZapret(wantRunning, timeout = 25000) {
                 await fetchState();        // learn current strategy first...
                 await fetchStrategies();   // ...so the dropdown can pre-select it
                 await fetchEditorFiles();
+                await fetchTgDcIp();
                 hideLoading();
 
                 // Poll while visible only — closing/backgrounding the WebUI stops the

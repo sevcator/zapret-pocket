@@ -36,6 +36,26 @@ DNSCRYPT_BLOCKED_NAMES_LINK_LEGACY="$CONFIG_DIR/custom-blocked-names-url"
 DNSCRYPT_BLOCKED_IPS_LINK="$CONFIG_DIR/dnscrypt-blocked-ips-link"
 DNSCRYPT_CLOAKING_LINK="$CONFIG_DIR/dnscrypt-cloaking-rules-link"
 DNSCRYPT_CLOAKING_LINK_LEGACY="$CONFIG_DIR/custom-cloaking-rules-url"
+# User overlay files: their rules are appended to the refreshed dnscrypt base files at
+# every start, so user customizations survive base-list updates (refresh_linked_lists ->
+# apply_dnscrypt_user_overlays). Preserved across module updates by customize.sh.
+DNSCRYPT_CLOAKING_USER_FILE="$DNSCRYPT_DIR/cloaking-rules-user.txt"
+DNSCRYPT_BLOCKED_NAMES_USER_FILE="$DNSCRYPT_DIR/blocked-names-user.txt"
+DNSCRYPT_BLOCKED_IPS_USER_FILE="$DNSCRYPT_DIR/blocked-ips-user.txt"
+TELEGRAM_BYPASS_FILE="$CONFIG_DIR/telegram-bypass"
+TELEGRAM_BYPASS_SECRET_FILE="$CONFIG_DIR/telegram-bypass-secret"
+TELEGRAM_BYPASS_PORT_FILE="$CONFIG_DIR/telegram-bypass-port"
+TELEGRAM_BYPASS_DC_IP_FILE="$CONFIG_DIR/telegram-bypass-dc-ip"
+TELEGRAM_BYPASS_CFPROXY_FILE="$CONFIG_DIR/telegram-bypass-cfproxy"
+TELEGRAM_BYPASS_CFPROXY_DOMAIN_FILE="$CONFIG_DIR/telegram-bypass-cfproxy-domain"
+TELEGRAM_BYPASS_CFWORKER_DOMAIN_FILE="$CONFIG_DIR/telegram-bypass-cfworker-domain"
+TELEGRAM_BYPASS_VERBOSE_FILE="$CONFIG_DIR/telegram-bypass-verbose"
+TELEGRAM_BYPASS_BUFKB_FILE="$CONFIG_DIR/telegram-bypass-bufkb"
+TELEGRAM_BYPASS_POOL_SIZE_FILE="$CONFIG_DIR/telegram-bypass-pool-size"
+TG_WS_PROXY_DIR="$MODPATH/tg-ws-proxy"
+TG_WS_PROXY_PID_FILE="$RUN_DIR/tg-ws-proxy.pid"
+TG_WS_PROXY_LOG_FILE="$RUN_DIR/tg-ws-proxy.log"
+TERMUX_PYTHON="/data/data/com.termux/files/usr/bin/python3"
 BYPASS_CALLS_LEGACY_FILE="$CONFIG_DIR/bypass-discord"
 DEBUG_LOG_LEGACY="$CONFIG_DIR/debug.log"
 
@@ -65,6 +85,7 @@ wait_for_boot_complete() {
 
 CHAIN_ZAPRET_POST="ZAPRET_POST"
 CHAIN_ZAPRET_PRE="ZAPRET_PRE"
+CHAIN_ZAPRET_QUIC="ZAPRET_QUIC"
 CHAIN_DNSCRYPT_REDIRECT="ZAPRET_DNS_REDIRECT"
 CHAIN_DNSCRYPT_OUTPUT="ZAPRET_DNS_OUTPUT"
 CHAIN_DNSCRYPT_FORWARD="ZAPRET_DNS_FORWARD"
@@ -110,10 +131,18 @@ copy_strategy_scripts_if_needed() {
     mkdir -p "$STRATEGY_DIR"
     for file in "$src"/*.sh; do
         [ -f "$file" ] || continue
-        case "$(basename "$file")" in
+        base="${file##*/}"
+        case "$base" in
             zapret.sh|make-unkillable.sh) continue ;;
         esac
-        cp -af "$file" "$STRATEGY_DIR/" 2>/dev/null || true
+        dst="$STRATEGY_DIR/$base"
+        # This runs on EVERY service start (zapret.sh, dnscrypt.sh and the CLI all
+        # call ensure_layout) and the strategy set is large (~340 files). Re-copying
+        # all of them each time forks basename+cp per file and delayed nfqws startup
+        # by tens of seconds. Use ${##} (no fork) and skip files that are already
+        # present and not older than the source.
+        [ -e "$dst" ] && [ ! "$file" -nt "$dst" ] && continue
+        cp -af "$file" "$dst" 2>/dev/null || true
     done
 }
 
@@ -190,6 +219,7 @@ ensure_default_config() {
     set_default_file "$IPSET_ALL_USER_FILE" ""
     set_default_file "$IPSET_EXCLUDE_FILE" ""
     set_default_file "$IPSET_EXCLUDE_USER_FILE" ""
+    ensure_telegram_bypass_defaults
     cleanup_deprecated_layout
 }
 
@@ -201,7 +231,10 @@ ensure_runtime_files() {
                 "$IPSET_EXCLUDE_USER_FILE" \
                 "$DNSCRYPT_DIR/cloaking-rules.txt" \
                 "$DNSCRYPT_DIR/blocked-names.txt" \
-                "$DNSCRYPT_DIR/blocked-ips.txt"; do
+                "$DNSCRYPT_DIR/blocked-ips.txt" \
+                "$DNSCRYPT_CLOAKING_USER_FILE" \
+                "$DNSCRYPT_BLOCKED_NAMES_USER_FILE" \
+                "$DNSCRYPT_BLOCKED_IPS_USER_FILE"; do
         [ -e "$file" ] || : > "$file"
     done
 }
@@ -417,9 +450,58 @@ cleanup_dnscrypt_firewall() {
     remove_chain ip6tables filter FORWARD "$CHAIN_DNSCRYPT_FORWARD"
 }
 
+# Resolve an Android package name to its Linux UID (for `-m owner` per-app rules).
+# Multi-tier fallback so it works across roots/ROMs. Ported from ZDT-D pkg_uid.rs.
+resolve_pkg_uid() {
+    _rpu_pkg="$1"
+    _rpu_uid="$(cmd package list packages -U 2>/dev/null | grep "^package:${_rpu_pkg} " | sed -n 's/.*uid:\([0-9][0-9]*\).*/\1/p' | head -1)"
+    [ -n "$_rpu_uid" ] || _rpu_uid="$(dumpsys package "$_rpu_pkg" 2>/dev/null | grep -oE 'userId=[0-9]+' | head -1 | grep -oE '[0-9]+')"
+    [ -n "$_rpu_uid" ] || _rpu_uid="$(stat -c '%u' "/data/data/${_rpu_pkg}" 2>/dev/null)"
+    case "$_rpu_uid" in
+        ''|*[!0-9]*) return 1 ;;
+    esac
+    [ "$_rpu_uid" -gt 0 ] 2>/dev/null && printf '%s\n' "$_rpu_uid"
+}
+
+# QUIC (HTTP/3 over UDP 443) is far harder to desync reliably than TCP on many RU
+# networks, so forcing apps off QUIC onto the TCP path our desync DOES bypass is
+# often the difference between an app working or not. REJECT (icmp[6] port-unreachable)
+# makes the app fall back to TCP instantly instead of waiting out a multi-second QUIC
+# timeout (DROP would stall). Controlled by config/quic-block (idea from ZDT-D
+# blockedquic.rs): "off"/absent = nothing; "global"/"1" = block all udp/443;
+# otherwise = treated as a space/comma list of package names blocked by UID.
+apply_quic_block() {
+    _qb="$(config_value "$CONFIG_DIR/quic-block" "off")"
+    case "$_qb" in
+        off|0|"") return 0 ;;
+    esac
+    iptables_supported iptables filter && { ensure_chain iptables filter "$CHAIN_ZAPRET_QUIC"; insert_unique_jump iptables filter OUTPUT "$CHAIN_ZAPRET_QUIC"; }
+    iptables_supported ip6tables filter && { ensure_chain ip6tables filter "$CHAIN_ZAPRET_QUIC"; insert_unique_jump ip6tables filter OUTPUT "$CHAIN_ZAPRET_QUIC"; }
+    case "$_qb" in
+        global|1)
+            append_unique_rule iptables filter "$CHAIN_ZAPRET_QUIC" -p udp --dport 443 -j REJECT --reject-with icmp-port-unreachable
+            append_unique_rule ip6tables filter "$CHAIN_ZAPRET_QUIC" -p udp --dport 443 -j REJECT --reject-with icmp6-port-unreachable
+            ;;
+        *)
+            for _pkg in $(printf '%s' "$_qb" | tr ',' ' '); do
+                _uid="$(resolve_pkg_uid "$_pkg")" || continue
+                append_unique_rule iptables filter "$CHAIN_ZAPRET_QUIC" -p udp --dport 443 -m owner --uid-owner "$_uid" -j REJECT --reject-with icmp-port-unreachable
+                append_unique_rule ip6tables filter "$CHAIN_ZAPRET_QUIC" -p udp --dport 443 -m owner --uid-owner "$_uid" -j REJECT --reject-with icmp6-port-unreachable
+            done
+            ;;
+    esac
+    return 0
+}
+
+cleanup_quic_block() {
+    remove_chain iptables filter OUTPUT "$CHAIN_ZAPRET_QUIC"
+    remove_chain ip6tables filter OUTPUT "$CHAIN_ZAPRET_QUIC"
+}
+
 cleanup_all_firewall() {
     cleanup_zapret_firewall
     cleanup_dnscrypt_firewall
+    cleanup_quic_block
 }
 
 sysctl_state_file() {
@@ -483,11 +565,60 @@ restore_managed_sysctl() {
     rm -f "$state_file"
 }
 
+# Network tuning that improves DPI-bypass reliability and throughput (ported from
+# ZDT-D's service.sh). fq_codel + BBR cut bufferbloat so nfqws packet-injection
+# timing stays accurate; bigger socket buffers fix throughput stalls; tcp_mtu_probing
+# survives PMTU black holes that desync/splits can trigger; tcp_slow_start_after_idle=0
+# avoids the post-idle/Doze throughput crater that kills the first connections; a
+# bigger conntrack table avoids silent DROPs that large hostlists/ipsets cause. Every
+# write is a no-op where the knob is absent, and originals are remembered + restored
+# on stop. NOTE: nf_conntrack_tcp_be_liberal stays at the module's deliberate 1
+# (set in service.sh) — do not force it to 0.
 apply_optional_network_tweaks() {
+    case "$(read_sysctl_value net.ipv4.tcp_available_congestion_control)" in
+        *bbr*) apply_managed_sysctl "cc" "net.ipv4.tcp_congestion_control" "bbr" || true ;;
+    esac
+    for _q in fq_codel fq codel; do
+        apply_managed_sysctl "qdisc" "net.core.default_qdisc" "$_q" || true
+        [ "$(read_sysctl_value net.core.default_qdisc)" = "$_q" ] && break
+    done
+    apply_managed_sysctl "rmem_max" "net.core.rmem_max" "4194304" || true
+    apply_managed_sysctl "wmem_max" "net.core.wmem_max" "4194304" || true
+    apply_managed_sysctl "backlog" "net.core.netdev_max_backlog" "4096" || true
+    apply_managed_sysctl "mtu_probing" "net.ipv4.tcp_mtu_probing" "1" || true
+    apply_managed_sysctl "ss_idle" "net.ipv4.tcp_slow_start_after_idle" "0" || true
+    apply_managed_sysctl "ct_max" "net.netfilter.nf_conntrack_max" "262144" || true
     return 0
 }
 
 restore_optional_network_tweaks() {
+    restore_managed_sysctl "cc" "net.ipv4.tcp_congestion_control"
+    restore_managed_sysctl "qdisc" "net.core.default_qdisc"
+    restore_managed_sysctl "rmem_max" "net.core.rmem_max"
+    restore_managed_sysctl "wmem_max" "net.core.wmem_max"
+    restore_managed_sysctl "backlog" "net.core.netdev_max_backlog"
+    restore_managed_sysctl "mtu_probing" "net.ipv4.tcp_mtu_probing"
+    restore_managed_sysctl "ss_idle" "net.ipv4.tcp_slow_start_after_idle"
+    restore_managed_sysctl "ct_max" "net.netfilter.nf_conntrack_max"
+    return 0
+}
+
+# Boot race (ported from ZDT-D internet_wait): Magisk service.sh runs during the
+# boot animation, before the network stack / default route / conntrack are ready, so
+# iptables rules and nfqws started too early are silently lost. Probe a few known
+# TCP:443 endpoints (not ICMP — captive portals and RU networks drop it) and proceed
+# once one answers, or after ~2 min so boot never hangs. Always returns 0.
+wait_for_internet() {
+    _wfi=0
+    while [ "$_wfi" -lt 120 ]; do
+        for _wfi_ip in 1.1.1.1 8.8.8.8 9.9.9.9; do
+            if timeout 2 nc "$_wfi_ip" 443 </dev/null >/dev/null 2>&1; then
+                return 0
+            fi
+        done
+        sleep 3
+        _wfi=$((_wfi + 3))
+    done
     return 0
 }
 
@@ -779,11 +910,111 @@ refresh_linked_file() {
     esac
 }
 
+# Append one user overlay file to its refreshed dnscrypt base, idempotently. The base may
+# have just been re-downloaded (refresh_linked_file) or already carry a previous overlay;
+# either way we first strip everything from our marker onward, then re-append the user
+# rules. The marker line is a comment ("#...") in all three formats, so dnscrypt ignores it.
+append_dnscrypt_user_overlay() {
+    _ov_base="$1"; _ov_user="$2"
+    [ -f "$_ov_base" ] || return 0
+    [ -f "$_ov_user" ] || return 0
+    if grep -qF '### ZAPRET-USER-OVERLAY ###' "$_ov_base" 2>/dev/null; then
+        if awk '/### ZAPRET-USER-OVERLAY ###/{exit} {print}' "$_ov_base" > "$_ov_base.ovtmp" 2>/dev/null; then
+            cat "$_ov_base.ovtmp" > "$_ov_base"
+        fi
+        rm -f "$_ov_base.ovtmp"
+    fi
+    printf '\n### ZAPRET-USER-OVERLAY ###\n' >> "$_ov_base"
+    cat "$_ov_user" >> "$_ov_base"
+}
+
+# After the dnscrypt base lists are refreshed, append the user's own rules so they are
+# never lost when a base list is updated. Idempotent (safe to re-run). Called at the end
+# of refresh_linked_lists and by the dnscrypt supervisor before dnscrypt-proxy loads them.
+apply_dnscrypt_user_overlays() {
+    append_dnscrypt_user_overlay "$DNSCRYPT_DIR/cloaking-rules.txt" "$DNSCRYPT_CLOAKING_USER_FILE"
+    append_dnscrypt_user_overlay "$DNSCRYPT_DIR/blocked-names.txt"  "$DNSCRYPT_BLOCKED_NAMES_USER_FILE"
+    append_dnscrypt_user_overlay "$DNSCRYPT_DIR/blocked-ips.txt"    "$DNSCRYPT_BLOCKED_IPS_USER_FILE"
+}
+
 refresh_linked_lists() {
     refresh_linked_file "$DNSCRYPT_DIR/cloaking-rules.txt" "$DNSCRYPT_CLOAKING_LINK" "$DNSCRYPT_CLOAKING_LINK_LEGACY" || true
     refresh_linked_file "$DNSCRYPT_DIR/blocked-names.txt" "$DNSCRYPT_BLOCKED_NAMES_LINK" "$DNSCRYPT_BLOCKED_NAMES_LINK_LEGACY" || true
     refresh_linked_file "$DNSCRYPT_DIR/blocked-ips.txt" "$DNSCRYPT_BLOCKED_IPS_LINK" || true
     refresh_linked_file "$LIST_DIR/list-general.txt" "$LIST_GENERAL_LINK" "$LIST_GENERAL_LINK_LEGACY" || true
+    # User rules are appended LAST so they always win over / extend the refreshed base.
+    apply_dnscrypt_user_overlays
+}
+
+ensure_telegram_bypass_defaults() {
+    set_default_file "$TELEGRAM_BYPASS_FILE" "0"
+    set_default_file "$TELEGRAM_BYPASS_PORT_FILE" "1443"
+    if [ ! -e "$TELEGRAM_BYPASS_SECRET_FILE" ]; then
+        _hex="$(cat /dev/urandom 2>/dev/null | head -c 16 | od -An -tx1 | tr -d ' \n')"
+        printf '%s\n' "$_hex" > "$TELEGRAM_BYPASS_SECRET_FILE"
+    fi
+}
+
+tg_ws_proxy_running() {
+    [ -f "$TG_WS_PROXY_PID_FILE" ] || return 1
+    _pid="$(cat "$TG_WS_PROXY_PID_FILE" 2>/dev/null)"
+    [ -n "$_pid" ] && kill -0 "$_pid" 2>/dev/null
+}
+
+start_tg_ws_proxy() {
+    config_enabled "$TELEGRAM_BYPASS_FILE" "0" || return 0
+    [ -x "$TERMUX_PYTHON" ] || return 1
+    [ -f "$TG_WS_PROXY_DIR/run.py" ] || return 1
+    tg_ws_proxy_running && return 0
+
+    _port="$(cat "$TELEGRAM_BYPASS_PORT_FILE" 2>/dev/null)"
+    _port="${_port:-1443}"
+    _secret="$(cat "$TELEGRAM_BYPASS_SECRET_FILE" 2>/dev/null)"
+    [ -n "$_secret" ] || return 1
+
+    set -- --host 127.0.0.1 --port "$_port" --secret "$_secret"
+
+    _pool="$(cat "$TELEGRAM_BYPASS_POOL_SIZE_FILE" 2>/dev/null)"
+    [ -n "$_pool" ] && set -- "$@" --pool-size "$_pool"
+
+    _bufkb="$(cat "$TELEGRAM_BYPASS_BUFKB_FILE" 2>/dev/null)"
+    [ -n "$_bufkb" ] && set -- "$@" --buf-kb "$_bufkb"
+
+    config_enabled "$TELEGRAM_BYPASS_VERBOSE_FILE" "0" && set -- "$@" -v
+
+    _cfproxy="$(cat "$TELEGRAM_BYPASS_CFPROXY_FILE" 2>/dev/null)"
+    [ "$_cfproxy" = "0" ] && set -- "$@" --no-cfproxy
+
+    _cfdomain="$(cat "$TELEGRAM_BYPASS_CFPROXY_DOMAIN_FILE" 2>/dev/null)"
+    [ -n "$_cfdomain" ] && set -- "$@" --cfproxy-domain "$_cfdomain"
+
+    _cfworker="$(cat "$TELEGRAM_BYPASS_CFWORKER_DOMAIN_FILE" 2>/dev/null)"
+    [ -n "$_cfworker" ] && set -- "$@" --cfproxy-worker-domain "$_cfworker"
+
+    if [ -f "$TELEGRAM_BYPASS_DC_IP_FILE" ]; then
+        while IFS= read -r _line || [ -n "$_line" ]; do
+            _line="$(printf '%s' "$_line" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+            [ -n "$_line" ] && set -- "$@" --dc-ip "$_line"
+        done < "$TELEGRAM_BYPASS_DC_IP_FILE"
+    fi
+
+    export LD_LIBRARY_PATH="/data/data/com.termux/files/usr/lib:${LD_LIBRARY_PATH:-}"
+    nohup "$TERMUX_PYTHON" "$TG_WS_PROXY_DIR/run.py" "$@" \
+        > "$TG_WS_PROXY_LOG_FILE" 2>&1 &
+    echo $! > "$TG_WS_PROXY_PID_FILE"
+}
+
+stop_tg_ws_proxy() {
+    terminate_pidfile_gracefully "$TG_WS_PROXY_PID_FILE"
+    pkill -TERM -f "tg-ws-proxy/run.py" >/dev/null 2>&1 || true
+}
+
+tg_proxy_deep_link() {
+    _port="$(cat "$TELEGRAM_BYPASS_PORT_FILE" 2>/dev/null)"
+    _port="${_port:-1443}"
+    _secret="$(cat "$TELEGRAM_BYPASS_SECRET_FILE" 2>/dev/null)"
+    [ -n "$_secret" ] || return 1
+    printf 'tg://proxy?server=127.0.0.1&port=%s&secret=dd%s' "$_port" "$_secret"
 }
 
 stop_module_service() {

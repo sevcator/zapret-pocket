@@ -421,6 +421,7 @@ command_info() {
     echo "  strategy                           - Show strategies and prompt for selection"
     echo "  import-strategy <url>              - Download a strategy script"
     echo "  test [url1 url2 ...]               - Test all strategies via curl and report the best"
+    echo "  testurl [url1 url2 ...]            - Quick-test the CURRENT strategy against blocked sites"
     echo "  ipset-update                       - Download ipset-service.txt into service cache"
     echo "  custom [entry1 entry2 ...]         - Add custom domains/IPs or CIDR/ranges"
     echo "  custom list                        - Show custom user lists"
@@ -438,6 +439,10 @@ command_info() {
     echo "  setup interface-only [none|iface[,iface...]] - Restrict iptables rules to interface(s)"
     echo "  engine                             - Show the current strategy's engine (set ZAPRET=2"
     echo "                                       in a strategy file to use zapret2 / nfqws2)"
+    echo "  telegram-bypass [on|off]           - Enable/disable Telegram bypass (tg-ws-proxy)"
+    echo "  telegram-bypass status             - Show Telegram bypass status"
+    echo "  telegram-bypass link               - Print MTProto proxy deep link"
+    echo "  telegram-bypass restart            - Restart tg-ws-proxy"
 }
 
 list_strategies() {
@@ -590,6 +595,10 @@ start_service() {
     ensure_layout
     ensure_default_config
     ensure_runtime_files
+    # Don't apply firewall rules / start nfqws before the network is actually up
+    # (boot race) — rules applied too early are silently lost. Returns fast when
+    # connectivity is already present (manual start/restart), caps at ~2 min at boot.
+    wait_for_internet
     refresh_linked_lists
     # Refreshing ipset-all.txt may need the network (mode "any" downloads the
     # service list). A failure here must NOT prevent the DPI-bypass service from
@@ -1041,7 +1050,13 @@ test_command() {
         HAS_IP6_NFQUEUE=1
     fi
 
-    strategies="$(list_strategies)"
+    # If ZAPRET_TEST_STRATEGIES points to a file with strategy names (one per line,
+    # written by the WebUI strategy tester), test ONLY those; otherwise test all.
+    if [ -n "$ZAPRET_TEST_STRATEGIES" ] && [ -f "$ZAPRET_TEST_STRATEGIES" ]; then
+        strategies="$(tr -d '\r' < "$ZAPRET_TEST_STRATEGIES" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | grep -v '^[[:space:]]*$')"
+    else
+        strategies="$(list_strategies)"
+    fi
     [ -n "$strategies" ] || { echo "! No strategies found in $STRATEGY_DIR"; return 1; }
 
     if [ "$TEST_NO_STOP" != "1" ] && {
@@ -1134,6 +1149,7 @@ test_command() {
         echo "----------------------------------------------------"
         printf ' [%s]\n' "$strategy_name"
         echo "----------------------------------------------------"
+        printf '@@TESTING %s\n' "$strategy_name"
 
         config=""
         ZAPRET=1
@@ -1156,12 +1172,14 @@ test_command() {
         if [ -z "$config" ]; then
             echo "  ! Empty config — skipped"
             printf 'SKIP:0:0:0:0:0:%s\n' "$strategy_name" >> "$RESULT_FILE"
+            printf '@@RESULT SKIP 0 0 0 0 0 0 %s\n' "$strategy_name"
             continue
         fi
 
         if [ ! -x "$_test_nfqws" ]; then
             echo "  ! zapret2 engine (nfqws2) not installed — ZAPRET=2 strategy skipped"
             printf 'SKIP:0:0:0:0:0:0:0:%s\n' "$strategy_name" >> "$RESULT_FILE"
+            printf '@@RESULT SKIP 0 0 0 0 0 0 %s\n' "$strategy_name"
             continue
         fi
 
@@ -1173,20 +1191,47 @@ test_command() {
         _udp_ports="$(printf '%s\n' "$config" | grep -oE 'filter-udp=[0-9,-]+' | \
             sed -e 's/.*=//g' -e 's/,/\n/g' | sort -un)"
 
+        # Mirror the LIVE service's packet matches (see zapret.sh ipt_add):
+        #   * connbytes limits desync to the first packets of each connection — the
+        #     handshake — so nfqws never mangles mid-stream data (which corrupts the
+        #     whole connection and makes EVERY site fail).
+        #   * the mark match excludes nfqws's own injected desync packets so they are
+        #     not re-queued into an infinite loop.
+        # Without these the test breaks all connections even for strategies that work
+        # live, which is exactly what this harness routes around.
+        _iCBo=""; _iCBr=""; _i6CBo=""; _i6CBr=""; _iMark=""; _i6Mark=""
+        if grep -q 'connbytes' /proc/net/ip_tables_matches 2>/dev/null; then
+            _iCBo="-m connbytes --connbytes-dir=original --connbytes-mode=packets --connbytes 1:12"
+            _iCBr="-m connbytes --connbytes-dir=reply --connbytes-mode=packets --connbytes 1:3"
+        fi
+        if grep -q 'mark' /proc/net/ip_tables_matches 2>/dev/null; then
+            _iMark="-m mark ! --mark 0x40000000/0x40000000"
+        fi
+        if [ "$HAS_IP6_NFQUEUE" = "1" ] && grep -q 'connbytes' /proc/net/ip6_tables_matches 2>/dev/null; then
+            _i6CBo="-m connbytes --connbytes-dir=original --connbytes-mode=packets --connbytes 1:12"
+            _i6CBr="-m connbytes --connbytes-dir=reply --connbytes-mode=packets --connbytes 1:3"
+        fi
+        if [ "$HAS_IP6_NFQUEUE" = "1" ] && grep -q 'mark' /proc/net/ip6_tables_matches 2>/dev/null; then
+            _i6Mark="-m mark ! --mark 0x40000000/0x40000000"
+        fi
         _add_ipt() {
             _pr="$1"; _pt="$2"
+            # shellcheck disable=SC2086
             append_unique_rule iptables mangle "$CHAIN_ZAPRET_POST" \
-                -p "$_pr" --dport "$_pt" -j NFQUEUE --queue-num 200 --queue-bypass 2>/dev/null
+                -p "$_pr" --dport "$_pt" $_iCBo $_iMark -j NFQUEUE --queue-num 200 --queue-bypass 2>/dev/null
+            # shellcheck disable=SC2086
             append_unique_rule iptables mangle "$CHAIN_ZAPRET_PRE" \
-                -p "$_pr" --sport "$_pt" -j NFQUEUE --queue-num 200 --queue-bypass 2>/dev/null
+                -p "$_pr" --sport "$_pt" $_iCBr $_iMark -j NFQUEUE --queue-num 200 --queue-bypass 2>/dev/null
         }
         _add_ip6t() {
             _pr="$1"; _pt="$2"
             [ "$HAS_IP6_NFQUEUE" = "1" ] || return 0
+            # shellcheck disable=SC2086
             append_unique_rule ip6tables mangle "$CHAIN_ZAPRET_POST" \
-                -p "$_pr" --dport "$_pt" -j NFQUEUE --queue-num 200 --queue-bypass 2>/dev/null
+                -p "$_pr" --dport "$_pt" $_i6CBo $_i6Mark -j NFQUEUE --queue-num 200 --queue-bypass 2>/dev/null
+            # shellcheck disable=SC2086
             append_unique_rule ip6tables mangle "$CHAIN_ZAPRET_PRE" \
-                -p "$_pr" --sport "$_pt" -j NFQUEUE --queue-num 200 --queue-bypass 2>/dev/null
+                -p "$_pr" --sport "$_pt" $_i6CBr $_i6Mark -j NFQUEUE --queue-num 200 --queue-bypass 2>/dev/null
         }
         for _p in $_tcp_ports; do _add_ipt tcp "$_p"; done
         for _p in $_udp_ports; do _add_ipt udp "$_p"; done
@@ -1210,11 +1255,15 @@ test_command() {
             } >> "$TEST_DEBUG_LOG"
             cleanup_zapret_firewall 2>/dev/null
             printf 'SKIP:0:0:0:0:0:0:0:%s\n' "$strategy_name" >> "$RESULT_FILE"
+            printf '@@RESULT SKIP 0 0 0 0 0 0 %s\n' "$strategy_name"
             continue
         fi
         echo "OK (pid $_nfqws_pid)"
 
         st_ok=0; st_err=0; st_unsup=0; st_dpi_bypassed=0; st_dpi_fail=0; st_thr_ok=0; st_thr_fail=0
+        # Per-protocol pass/total (UNSUP excluded from total) — drives the WebUI's
+        # HTTP | TLS 1.2 | TLS 1.3 columns.
+        st_http_ok=0; st_http_tot=0; st_t12_ok=0; st_t12_tot=0; st_t13_ok=0; st_t13_tot=0
 
         printf '  > HTTP/TLS checks:\n'
 
@@ -1360,13 +1409,24 @@ test_command() {
                 } >> "$TEST_DEBUG_LOG"
             fi
 
-            for _tok in "$_r_http" "$_r_12" "$_r_13"; do
-                case "$_tok" in
-                    OK)          st_ok=$((st_ok+1)) ;;
-                    ERR|SSL|DNS) st_err=$((st_err+1)) ;;
-                    UNSUP)       st_unsup=$((st_unsup+1)) ;;
-                esac
-            done
+            # HTTP/1.1 column
+            case "$_r_http" in
+                OK)    st_ok=$((st_ok+1));   st_http_ok=$((st_http_ok+1)); st_http_tot=$((st_http_tot+1)) ;;
+                UNSUP) st_unsup=$((st_unsup+1)) ;;
+                *)     st_err=$((st_err+1)); st_http_tot=$((st_http_tot+1)) ;;
+            esac
+            # TLS 1.2 column
+            case "$_r_12" in
+                OK)    st_ok=$((st_ok+1));   st_t12_ok=$((st_t12_ok+1)); st_t12_tot=$((st_t12_tot+1)) ;;
+                UNSUP) st_unsup=$((st_unsup+1)) ;;
+                *)     st_err=$((st_err+1)); st_t12_tot=$((st_t12_tot+1)) ;;
+            esac
+            # TLS 1.3 column
+            case "$_r_13" in
+                OK)    st_ok=$((st_ok+1));   st_t13_ok=$((st_t13_ok+1)); st_t13_tot=$((st_t13_tot+1)) ;;
+                UNSUP) st_unsup=$((st_unsup+1)) ;;
+                *)     st_err=$((st_err+1)); st_t13_tot=$((st_t13_tot+1)) ;;
+            esac
         done
 
         # Read back DPI host results (suite.v2.json)
@@ -1421,6 +1481,9 @@ test_command() {
         _total=$(( st_ok + st_dpi_bypassed + st_thr_ok ))
         printf '  > Score: HTTP_OK=%s  ERR=%s  UNSUP=%s  DPI_BYPASSED=%s  DPI_FAIL=%s  THR_OK=%s  THR_FAIL=%s  TOTAL=%s\n' \
             "$st_ok" "$st_err" "$st_unsup" "$st_dpi_bypassed" "$st_dpi_fail" "$st_thr_ok" "$st_thr_fail" "$_total"
+        # @@RESULT <status> <httpOk> <httpTot> <t12Ok> <t12Tot> <t13Ok> <t13Tot> <name>
+        printf '@@RESULT OK %s %s %s %s %s %s %s\n' \
+            "$st_http_ok" "$st_http_tot" "$st_t12_ok" "$st_t12_tot" "$st_t13_ok" "$st_t13_tot" "$strategy_name"
         printf 'OK:%s:%s:%s:%s:%s:%s:%s:%s\n' \
             "$st_ok" "$st_err" "$st_unsup" "$st_dpi_bypassed" "$st_dpi_fail" "$st_thr_ok" "$st_thr_fail" "$strategy_name" \
             >> "$RESULT_FILE"
@@ -1503,7 +1566,94 @@ while [ $# -gt 0 ]; do
     esac
 done
 
+# Quick check of the CURRENTLY running strategy: curl a set of commonly-blocked
+# sites through the live stack and report which load. Fast (no restart, no
+# per-strategy sweep). For the exhaustive search across all strategies use `test`.
+testurl_command() {
+    _tc="$(resolve_downloader 2>/dev/null)"
+    [ -n "$_tc" ] || { echo "! curl not available"; return 1; }
+    if [ "$#" -gt 0 ]; then _urls="$*"; else
+        _urls="https://www.youtube.com https://rutracker.org https://www.instagram.com https://x.com https://discord.com"
+    fi
+    echo "- Strategy: $(current_strategy)"
+    zapret_core_running || echo "! zapret core (nfqws) is not running"
+    _ok=0; _n=0
+    for _u in $_urls; do
+        _n=$((_n + 1))
+        _code="$("$_tc" -m 10 -s -k -o /dev/null -w '%{http_code}' "$_u" 2>/dev/null)"
+        case "$_code" in
+            ""|000) echo "  FAIL       $_u" ;;
+            *) echo "  OK ($_code)  $_u"; _ok=$((_ok + 1)) ;;
+        esac
+    done
+    echo "- $_ok/$_n loaded"
+    [ "$_ok" -gt 0 ]
+}
+
 export CLI_DEBUG
+telegram_bypass_command() {
+    ensure_telegram_bypass_defaults
+    case "$1" in
+        1|on|true|enable)
+            if [ ! -x "$TERMUX_PYTHON" ]; then
+                echo "! Python not found at $TERMUX_PYTHON"
+                echo "! Install Python in Termux: pkg install python"
+                return 1
+            fi
+            printf '1\n' > "$TELEGRAM_BYPASS_FILE"
+            start_tg_ws_proxy
+            echo "- Telegram bypass: enabled"
+            _link="$(tg_proxy_deep_link 2>/dev/null)"
+            [ -n "$_link" ] && echo "  Proxy link: $_link"
+            ;;
+        0|off|false|disable)
+            printf '0\n' > "$TELEGRAM_BYPASS_FILE"
+            stop_tg_ws_proxy
+            echo "- Telegram bypass: disabled"
+            ;;
+        status|"")
+            echo "Telegram bypass (tg-ws-proxy)"
+            if config_enabled "$TELEGRAM_BYPASS_FILE" "0"; then
+                echo "  Status: enabled"
+            else
+                echo "  Status: disabled"
+            fi
+            if tg_ws_proxy_running; then
+                echo "  Proxy: running (pid $(cat "$TG_WS_PROXY_PID_FILE" 2>/dev/null))"
+            else
+                echo "  Proxy: stopped"
+            fi
+            if [ -x "$TERMUX_PYTHON" ]; then
+                echo "  Python: $("$TERMUX_PYTHON" --version 2>/dev/null || echo found)"
+            else
+                echo "  Python: NOT found"
+            fi
+            _link="$(tg_proxy_deep_link 2>/dev/null)"
+            [ -n "$_link" ] && echo "  Proxy link: $_link"
+            ;;
+        link)
+            _link="$(tg_proxy_deep_link 2>/dev/null)"
+            if [ -n "$_link" ]; then
+                echo "$_link"
+            else
+                echo "! Cannot generate link: secret not found"
+                return 1
+            fi
+            ;;
+        restart)
+            stop_tg_ws_proxy
+            sleep 1
+            start_tg_ws_proxy
+            echo "- Proxy restarted"
+            ;;
+        *)
+            echo "! Unknown telegram-bypass subcommand: $1"
+            echo "  Usage: zapret telegram-bypass [on|off|status|link|restart]"
+            return 1
+            ;;
+    esac
+}
+
 [ "$CLI_DEBUG" = "1" ] && set -x
 
 case "$1" in
@@ -1517,10 +1667,12 @@ case "$1" in
     import-strategy) import_strategy "$2" ;;
     engine) engine_command ;;
     test) shift; test_command "$@" ;;
+    testurl) shift; testurl_command "$@" ;;
     ipset-update) ipset_update ;;
     custom) shift; custom_command "$@" ;;
     exclude) shift; exclude_command "$@" ;;
     search) shift; search_command "$@" ;;
     setup) setup_command "$2" "$3" "$4" ;;
+    telegram-bypass) shift; telegram_bypass_command "$@" ;;
     *) command_info ;;
 esac
