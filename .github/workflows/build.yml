@@ -513,7 +513,16 @@ jobs:
 
       - name: Download upstream archive
         run: |
-          curl -L -o flowseal-upstream.zip https://github.com/Flowseal/zapret-discord-youtube/archive/refs/heads/main.zip
+          # -f so an HTTP error (the upstream repo has been removed) fails instead of
+          # saving the error page as a bogus zip. Non-fatal: generate-assets.py falls
+          # back to the assets already committed under module/ when the zip is absent.
+          if curl -fL --retry 3 --retry-delay 2 -o flowseal-upstream.zip \
+              https://github.com/Flowseal/zapret-discord-youtube/archive/refs/heads/main.zip; then
+            echo "Downloaded upstream archive"
+          else
+            echo "! Upstream archive unavailable — building with committed module assets"
+            rm -f flowseal-upstream.zip
+          fi
 
       - name: Sync module assets from upstream zip
         run: |

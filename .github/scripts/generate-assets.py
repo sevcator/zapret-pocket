@@ -416,12 +416,46 @@ def copy_zip_member(zf: zipfile.ZipFile, entry: zipfile.ZipInfo, dest: Path) -> 
         dest.write_bytes(source.read())
 
 
-def main() -> int:
+def open_source_zip() -> zipfile.ZipFile | None:
+    # The upstream asset repo (Flowseal/zapret-discord-youtube) can be unavailable —
+    # it was removed from GitHub — in which case the download step leaves no file or a
+    # non-zip error page. Fall back to the assets already committed under module/ rather
+    # than hard-failing the whole release.
     if not SOURCE_ZIP.exists():
-        raise FileNotFoundError(SOURCE_ZIP)
+        return None
+    try:
+        archive = zipfile.ZipFile(SOURCE_ZIP)
+    except zipfile.BadZipFile:
+        return None
+    return archive
 
+
+def apply_extra_cloaking_rules(root: Path) -> None:
+    # In fallback mode we can't regenerate cloaking-rules.txt from the upstream hosts
+    # file, so make sure our static cloaks are still present in the committed file.
+    dest = root / "dnscrypt" / "cloaking-rules.txt"
+    existing = dest.read_text(encoding="utf-8", errors="ignore") if dest.exists() else ""
+    missing = [f"={domain} {ip}" for domain, ip in EXTRA_CLOAKING_RULES.items()
+               if f"={domain} {ip}" not in existing]
+    if not missing:
+        return
+    if existing and not existing.endswith("\n"):
+        existing += "\n"
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    dest.write_text(existing + "\n".join(missing) + "\n", encoding="utf-8")
+
+
+def main() -> int:
     stage_repo(MODULE_ROOT)
-    with zipfile.ZipFile(SOURCE_ZIP) as archive:
+
+    archive = open_source_zip()
+    if archive is None:
+        print(f"! Upstream asset zip unavailable or invalid ({SOURCE_ZIP.name}); "
+              "packaging with the committed module assets.")
+        apply_extra_cloaking_rules(MODULE_ROOT)
+        return 0
+
+    with archive:
         sync_from_zip(MODULE_ROOT, archive)
 
     return 0
