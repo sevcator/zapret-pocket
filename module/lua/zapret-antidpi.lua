@@ -95,7 +95,7 @@ function send(ctx, desync)
 		apply_fooling(desync, dis)
 		apply_ip_id(desync, dis, nil, "none")
 		if desync.arg.delay then
-			local tname = "send_"..desync_timer_name(desync)
+			local tname = desync_timer_name(desync)
 			timer_set(tname, "send_timer_delayed", tonumber(desync.arg.delay), true, {dis = dis, opts = desync_opts(desync)})
 		else
 			-- it uses rawsend, reconstruct and ipfrag options

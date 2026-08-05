@@ -550,7 +550,7 @@ function blob(desync, name, def)
 			-- use global var if no field in dissect table
 			blob = _G[name]
 			if not blob then
-				error("blob  '"..name.."' unavailable")
+				error("blob '"..name.."' unavailable")
 			end
 		end
 		blob = tostring(blob)
@@ -808,7 +808,7 @@ function dis_timer_name(dis)
 	return table.concat({ntop(dis_ipsrc(dis)),"->",ntop(dis_ipdst(dis)),"_",dis_l4_name(dis),"_",dis_l4_ports(dis)})
 end
 function desync_timer_name(desync)
-	local name = dis_timer_name(desync.dis)
+	local name = desync.func_instance.."_"..dis_timer_name(desync.dis)
 	if desync.track then
 		name = name.."_n"..desync.track.pos.direct.pcounter
 	else
