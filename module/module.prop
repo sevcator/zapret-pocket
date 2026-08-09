@@ -1,7 +1,7 @@
 id=zapret
 name=zapret
-version=v56
-versionCode=56
+version=v57
+versionCode=57
 author=sevcator
 description=⚡ Bypass censorship via zapret on rooted Android devices
 updateJson=https://raw.githubusercontent.com/sevcator/zapret-pocket/main/update.json
