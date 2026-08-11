@@ -8,4 +8,4 @@
 
 [Author](https://github.com/sevcator/)
 
-- chore: update version, changelog, update.json, lua [skip ci] a866d00
+- chore: update version, changelog, update.json, lua [skip ci] 02dfa64
