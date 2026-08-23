@@ -24,15 +24,16 @@ function luaexec(ctx, desync)
 		_G[fname], err = load(desync.arg.code, fname)
 		if not _G[fname] then
 			error(err)
-			return
 		end
 	end
 	-- allow dynamic code to access desync
 	_G.desync = desync
-	local res, err = pcall(_G[fname])
+	local res, ret = pcall(_G[fname])
 	_G.desync = nil
 	if not res then
-		error(err);
+		error(ret)
+	else
+		return ret or VERDICT_PASS -- older nfqws2 failed if desync function returned explicit nil
 	end
 end
 
@@ -1607,7 +1608,11 @@ function tls_client_hello_mod(tls, options)
 	end
 	local idx_sni
 	if options.sni_snt or options.sni_del_ext or options.sni_del or options.sni_first or options.sni_last then
-		idx_sni = array_field_search(tdis.handshake[TLS_HANDSHAKE_TYPE_CLIENT].dis.ext, "type", TLS_EXT_SERVER_NAME)
+		if tdis.handshake[TLS_HANDSHAKE_TYPE_CLIENT].dis.ext then
+			idx_sni = array_field_search(tdis.handshake[TLS_HANDSHAKE_TYPE_CLIENT].dis.ext, "type", TLS_EXT_SERVER_NAME)
+		else
+			tdis.handshake[TLS_HANDSHAKE_TYPE_CLIENT].dis.ext={}
+		end
 		if not idx_sni then
 			DLOG("tls_client_hello_mod: no SNI extension. adding")
 			table.insert(tdis.handshake[TLS_HANDSHAKE_TYPE_CLIENT].dis.ext, 1, { type = TLS_EXT_SERVER_NAME, dis = { list = {} } } )
@@ -2441,7 +2446,7 @@ function tls_dissect_handshake(handshake, partialOK)
 		handshake.dis = { type = typ , ver = u16(handshake.data, 5), name = tostring(TLS_HANDSHAKE_TYPE_NAMES[typ]) }
 
 		-- random
-		if hlen<36 then return partialOK end
+		if hlen<38 then return partialOK end
 		handshake.dis.random = string.sub(handshake.data, 7, 38)
 
 		-- session_id
@@ -2649,8 +2654,10 @@ function tls_reconstruct_handshake(handshake)
 					end
 					exts = exts .. bu16(handshake.dis.ext[i].type) .. bu16(#handshake.dis.ext[i].data) .. handshake.dis.ext[i].data
 				end
+				handshake.data = bu8(handshake.type) .. bu24(#header + 2 + #exts) .. header .. bu16(#exts) .. exts
+			else
+				handshake.data = bu8(handshake.type) .. bu24(#header) .. header
 			end
-			handshake.data = bu8(handshake.type) .. bu24(#header + 2 + #exts) .. header .. bu16(#exts) .. exts
 		end
 	end
 
@@ -2701,11 +2708,10 @@ function tls_reconstruct(tdis)
 			if not rec.data then return nil end
 		end
 		tls = barray(tdis.rec, function(a) return (#a.data > 0) and (bu8(a.type) .. bu16(a.ver) .. bu16(#a.data) .. a.data) or "" end)
-	elseif tdis.handshake and #tdis.handshake==1 then
-		-- without record layer
-		for k,handshake in pairs(tdis.handshake) do
-			tls = handshake.data
-			break
+	elseif tdis.handshake then
+		local i = next(tdis.handshake)
+		if i~=nil then
+			tls = tdis.handshake[i].data
 		end
 	end
 
