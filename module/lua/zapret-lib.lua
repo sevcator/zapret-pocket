@@ -1290,7 +1290,7 @@ function rawsend_payload_segmented(desync, payload, seq, options)
 end
 
 
--- check if desync.outgoing comply with arg.dir or def if it's not present or "out" of they are not present both. dir can be "in","out","any"
+-- check if desync.outgoing complies with arg.dir or def if it's not present or "out" if they are not present both. dir can be "in","out","any"
 function direction_check(desync, def)
 	local dir = desync.arg.dir or def or "out"
 	return desync.outgoing and dir~="in" or not desync.outgoing and dir~="out"
@@ -1314,7 +1314,7 @@ function payload_match_filter(l7payload, l7payload_filter, def)
 	local pl = neg and string.sub(argpl,2) or argpl
 	return neg ~= (in_list(pl, "all") or in_list(pl, l7payload) or in_list(pl, "known") and l7payload~="unknown" and l7payload~="empty")
 end
--- check if desync payload type comply with payload type list in arg.payload
+-- check if desync payload type complies with payload type list in arg.payload
 -- if arg.payload is not present - check for known payload - not empty and not unknown (nfqws1 behavior without "--desync-any-protocol" option)
 -- if arg.payload is prefixed with '~' - it means negation
 function payload_check(desync, def)
